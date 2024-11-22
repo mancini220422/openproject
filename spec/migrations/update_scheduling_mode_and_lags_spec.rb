@@ -53,9 +53,9 @@ RSpec.describe UpdateSchedulingModeAndLags, type: :model do
   describe "journal creation" do
     context "when scheduling mode is changed by the migration" do
       let_work_packages(<<~TABLE)
-        subject           | schedule manually
-        wp already manual | true
-        wp automatic      | false
+        subject           | scheduling mode
+        wp already manual | manual
+        wp automatic      | automatic
       TABLE
 
       before do
@@ -96,15 +96,15 @@ RSpec.describe UpdateSchedulingModeAndLags, type: :model do
   # spec from #42388, "Migration from an earlier version" section
   context "for work packages with no predecessors" do
     let_work_packages(<<~TABLE)
-      subject        | start date | due date   | schedule manually
-      wp automatic 1 | 2024-11-20 | 2024-11-21 | false
-      wp automatic 2 |            | 2024-11-21 | false
-      wp automatic 3 | 2024-11-20 |            | false
-      wp automatic 4 |            |            | false
-      wp manual 1    | 2024-11-20 | 2024-11-21 | true
-      wp manual 2    |            | 2024-11-21 | true
-      wp manual 3    | 2024-11-20 |            | true
-      wp manual 4    |            |            | true
+      subject        | start date | due date   | scheduling mode
+      wp automatic 1 | 2024-11-20 | 2024-11-21 | automatic
+      wp automatic 2 |            | 2024-11-21 | automatic
+      wp automatic 3 | 2024-11-20 |            | automatic
+      wp automatic 4 |            |            | automatic
+      wp manual 1    | 2024-11-20 | 2024-11-21 | manual
+      wp manual 2    |            | 2024-11-21 | manual
+      wp manual 3    | 2024-11-20 |            | manual
+      wp manual 4    |            |            | manual
     TABLE
 
     it "switches to manual scheduling" do

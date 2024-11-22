@@ -36,6 +36,7 @@ require_relative "column_type/hierarchy"
 require_relative "column_type/percentage"
 require_relative "column_type/properties"
 require_relative "column_type/schedule"
+require_relative "column_type/scheduling_mode"
 require_relative "column_type/status"
 require_relative "column_type/subject"
 
@@ -53,6 +54,7 @@ module TableHelpers
       hierarchy: ColumnType::Hierarchy,
       properties: ColumnType::Properties,
       schedule: ColumnType::Schedule,
+      schedule_manually: ColumnType::SchedulingMode,
       status: ColumnType::Status,
       subject: ColumnType::Subject,
       __fallback__: ColumnType::Generic
@@ -88,6 +90,8 @@ module TableHelpers
         :due_date
       when /.*MTWTFSS.*/
         :schedule
+      when /\s*scheduling mode\s*/
+        :schedule_manually
       when /\s*properties\s*/
         :properties
       when /status/, /hierarchy/
