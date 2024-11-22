@@ -28,8 +28,9 @@
 
 module TableHelpers
   class Table
-    def initialize(work_packages_by_identifier)
+    def initialize(work_packages_by_identifier, relations)
       @work_packages_by_identifier = work_packages_by_identifier
+      @relations = relations
     end
 
     def work_package(name)
@@ -39,6 +40,10 @@ module TableHelpers
 
     def work_packages
       @work_packages_by_identifier.values
+    end
+
+    def relations
+      @relations
     end
 
     private

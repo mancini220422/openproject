@@ -32,6 +32,7 @@ class WorkPackages::AutomaticMode::MigrateValuesJob < ApplicationJob
       change_scheduling_mode_to_manual
       change_scheduling_mode_to_automatic_for_followers
       change_scheduling_mode_to_automatic_for_parents
+      set_lags_for_follows_relations
       copy_values_to_work_packages_and_update_journals
     end
   end
@@ -94,6 +95,19 @@ class WorkPackages::AutomaticMode::MigrateValuesJob < ApplicationJob
         FROM work_packages
         WHERE parent_id IS NOT NULL
       )
+    SQL
+  end
+
+  def set_lags_for_follows_relations
+    execute(<<~SQL.squish)
+      UPDATE relations
+      SET lag = COALESCE(wp_succ.start_date, wp_succ.due_date) - COALESCE(wp_pred.due_date, wp_pred.start_date) - 1
+      FROM work_packages wp_pred, work_packages wp_succ
+      WHERE relations.relation_type = 'follows'
+        AND relations.to_id = wp_pred.id
+        AND relations.from_id = wp_succ.id
+        AND COALESCE(wp_succ.start_date, wp_succ.due_date) IS NOT NULL
+        AND COALESCE(wp_pred.due_date, wp_pred.start_date) IS NOT NULL
     SQL
   end
 

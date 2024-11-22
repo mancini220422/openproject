@@ -154,4 +154,53 @@ RSpec.describe UpdateSchedulingModeAndLags, type: :model do
       expect(child).to be_schedule_manually
     end
   end
+
+  context "for 2 work packages following each other with distant dates" do
+    let_work_packages(<<~TABLE)
+      subject       | MTWTFSS | properties
+      predecessor 1 | XX      |
+      follower 1    |     XX  | follows predecessor 1
+
+      # only start dates
+      predecessor 2 |  [      |
+      follower 2    |     [   | follows predecessor 2
+
+      # only due dates
+      predecessor 3 |  ]      |
+      follower 3    |     ]   | follows predecessor 3 with lag 1
+    TABLE
+
+    it "sets a lag to the relation to ensure the distance is kept" do
+      run_migration
+
+      expect(follower1).to be_schedule_automatically
+      relations = _table.relations.map(&:reload)
+      expect(relations.map(&:lag)).to all(eq(2))
+    end
+  end
+
+  context "for 2 work packages following each other with missing dates" do
+    let_work_packages(<<~TABLE)
+      subject       | MTWTFSS | properties
+      # only predecessor has dates
+      predecessor 1 | XX      |
+      follower 1    |         | follows predecessor 1
+
+      # only successor has dates
+      predecessor 2 |         |
+      follower 2    |     XX  | follows predecessor 2
+
+      # none have dates
+      predecessor 3 |         |
+      follower 3    |         | follows predecessor 3 with lag 1
+    TABLE
+
+    it "does not change the existing lag" do
+      run_migration
+
+      expect(follower1).to be_schedule_automatically
+      relations = _table.relations.map(&:reload)
+      expect(relations.map(&:lag)).to eq([0, 0, 1])
+    end
+  end
 end

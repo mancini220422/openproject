@@ -73,7 +73,7 @@ module TableHelpers
 
       def parse_property(property)
         case property
-        when /^follows (\w+)(?: with lag (\d+))?/
+        when /^follows (.+?)(?: with lag (\d+))?\s*$/
           {
             relations: {
               raw: property,
