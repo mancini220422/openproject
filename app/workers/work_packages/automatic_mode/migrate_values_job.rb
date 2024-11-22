@@ -29,7 +29,9 @@
 class WorkPackages::AutomaticMode::MigrateValuesJob < ApplicationJob
   def perform
     with_temporary_table do
-      change_scheduling_mode_to_manual_mode
+      change_scheduling_mode_to_manual
+      change_scheduling_mode_to_automatic_for_followers
+      change_scheduling_mode_to_automatic_for_parents
       copy_values_to_work_packages_and_update_journals
     end
   end
@@ -63,10 +65,35 @@ class WorkPackages::AutomaticMode::MigrateValuesJob < ApplicationJob
     SQL
   end
 
-  def change_scheduling_mode_to_manual_mode
+  def change_scheduling_mode_to_manual
     execute(<<~SQL.squish)
       UPDATE temp_wp_values
       SET schedule_manually = true
+    SQL
+  end
+
+  def change_scheduling_mode_to_automatic_for_followers
+    execute(<<~SQL.squish)
+      UPDATE temp_wp_values
+      SET schedule_manually = false
+      WHERE EXISTS (
+        SELECT 1
+        FROM relations
+        WHERE relations.from_id = temp_wp_values.id
+          AND relations.relation_type = 'follows'
+      )
+    SQL
+  end
+
+  def change_scheduling_mode_to_automatic_for_parents
+    execute(<<~SQL.squish)
+      UPDATE temp_wp_values
+      SET schedule_manually = false
+      WHERE id IN (
+        SELECT DISTINCT parent_id
+        FROM work_packages
+        WHERE parent_id IS NOT NULL
+      )
     SQL
   end
 

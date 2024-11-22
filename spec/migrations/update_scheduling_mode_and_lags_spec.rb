@@ -35,6 +35,7 @@ RSpec.describe UpdateSchedulingModeAndLags, type: :model do
     perform_enqueued_jobs do
       ActiveRecord::Migration.suppress_messages { described_class.new.up }
     end
+    table_work_packages.map(&:reload) if defined?(table_work_packages)
   end
 
   shared_let(:author) { create(:user) }
@@ -58,11 +59,13 @@ RSpec.describe UpdateSchedulingModeAndLags, type: :model do
         wp automatic      | automatic
       TABLE
 
-      before do
-        run_migration
-      end
-
       it "creates a journal entry only for the changed work packages" do
+        expect(wp_already_manual.journals.count).to eq(1)
+        expect(wp_automatic.journals.count).to eq(1)
+        expect(wp_automatic.lock_version).to eq(0)
+
+        run_migration
+
         expect(wp_already_manual.journals.count).to eq(1)
         expect(wp_automatic.journals.count).to eq(2)
 
@@ -76,9 +79,7 @@ RSpec.describe UpdateSchedulingModeAndLags, type: :model do
         end
 
         aggregate_failures "the lock_version of the work package is incremented" do
-          previous_lock_version = wp_automatic.lock_version
-          wp_automatic.reload
-          expect(wp_automatic.lock_version).to be > previous_lock_version
+          expect(wp_automatic.lock_version).to be > 0
         end
 
         aggregate_failures "changes the updated_at of the work package" do
@@ -110,8 +111,47 @@ RSpec.describe UpdateSchedulingModeAndLags, type: :model do
     it "switches to manual scheduling" do
       run_migration
 
-      table_work_packages.map(&:reload)
       expect(table_work_packages).to all(be_schedule_manually)
+    end
+  end
+
+  # spec from #42388, "Migration from an earlier version" section
+  context "for work packages following another one" do
+    let_work_packages(<<~TABLE)
+      subject        | start date | due date   | scheduling mode | properties
+      main           | 2024-11-19 | 2024-11-19 | manual          |
+      wp automatic 1 | 2024-11-20 | 2024-11-21 | automatic       | follows main
+      wp automatic 2 |            | 2024-11-21 | automatic       | follows main
+      wp automatic 3 | 2024-11-20 |            | automatic       | follows main
+      wp automatic 4 |            |            | automatic       | follows main
+      wp manual 1    | 2024-11-20 | 2024-11-21 | manual          | follows main
+      wp manual 2    |            | 2024-11-21 | manual          | follows main
+      wp manual 3    | 2024-11-20 |            | manual          | follows main
+      wp manual 4    |            |            | manual          | follows main
+    TABLE
+
+    # TODO: should work packages without any dates really be switched to manual like the specs say?
+    it "switches to automatic scheduling" do
+      run_migration
+
+      expect(main).to be_schedule_manually
+      expect(table_work_packages - [main]).to all(be_schedule_automatically)
+    end
+  end
+
+  # spec from #42388, "Migration from an earlier version" section
+  context "for parent work packages" do
+    let_work_packages(<<~TABLE)
+      hierarchy | scheduling mode |
+      parent    | manual          |
+        child   | manual          |
+    TABLE
+
+    it "switches to automatic scheduling" do
+      run_migration
+
+      expect(parent).to be_schedule_automatically
+      expect(child).to be_schedule_manually
     end
   end
 end
