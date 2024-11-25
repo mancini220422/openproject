@@ -156,18 +156,19 @@ RSpec.describe UpdateSchedulingModeAndLags, type: :model do
   end
 
   context "for 2 work packages following each other with distant dates" do
-    let_work_packages(<<~TABLE)
+    shared_let_work_packages(<<~TABLE)
       subject       | MTWTFSS | properties
       predecessor 1 | XX      |
-      follower 1    |     XX  | follows predecessor 1
+      follower 1    |      XX | follows predecessor 1
 
       # only start dates
       predecessor 2 |  [      |
-      follower 2    |     [   | follows predecessor 2
+      follower 2    |      [  | follows predecessor 2
 
       # only due dates
+      # if lag is already set, it's overwritten
       predecessor 3 |  ]      |
-      follower 3    |     ]   | follows predecessor 3 with lag 1
+      follower 3    |      ]  | follows predecessor 3 with lag 2
     TABLE
 
     it "sets a lag to the relation to ensure the distance is kept" do
@@ -175,7 +176,25 @@ RSpec.describe UpdateSchedulingModeAndLags, type: :model do
 
       expect(follower1).to be_schedule_automatically
       relations = _table.relations.map(&:reload)
-      expect(relations.map(&:lag)).to all(eq(2))
+      expect(relations.map(&:lag)).to all(eq(3))
+    end
+
+    context "when there are non-working days between the dates" do
+      before do
+        # Wednesday is a recurring non-working day
+        set_non_working_week_days("wednesday")
+        # Thursday is a fixed non-working day
+        thursday = Date.current.next_occurring(:monday) + 3.days
+        create(:non_working_day, date: thursday)
+      end
+
+      it "computes the lag correctly by excluding non-working days" do
+        run_migration
+
+        expect(follower1).to be_schedule_automatically
+        relations = _table.relations.map(&:reload)
+        expect(relations.map(&:lag)).to all(eq(1))
+      end
     end
   end
 
@@ -188,11 +207,11 @@ RSpec.describe UpdateSchedulingModeAndLags, type: :model do
 
       # only successor has dates
       predecessor 2 |         |
-      follower 2    |     XX  | follows predecessor 2
+      follower 2    |      XX | follows predecessor 2
 
       # none have dates
       predecessor 3 |         |
-      follower 3    |         | follows predecessor 3 with lag 1
+      follower 3    |         | follows predecessor 3 with lag 2
     TABLE
 
     it "does not change the existing lag" do
@@ -200,7 +219,7 @@ RSpec.describe UpdateSchedulingModeAndLags, type: :model do
 
       expect(follower1).to be_schedule_automatically
       relations = _table.relations.map(&:reload)
-      expect(relations.map(&:lag)).to eq([0, 0, 1])
+      expect(relations.map(&:lag)).to eq([0, 0, 2])
     end
   end
 end

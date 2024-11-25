@@ -99,15 +99,46 @@ class WorkPackages::AutomaticMode::MigrateValuesJob < ApplicationJob
   end
 
   def set_lags_for_follows_relations
+    working_days = Setting.working_days
+
+    # Here is the algorithm:
+    # - Take all follows relations with dates
+    # - Generate a series of dates between the min date and the max date and
+    #   filter for working days
+    # - Use both information to count the number of working days between
+    #   predecessor and successor dates and update the lag with it
     execute(<<~SQL.squish)
+      WITH follows_relations_with_dates AS (
+        SELECT
+          relations.id as id,
+          COALESCE(wp_pred.due_date, wp_pred.start_date) as pred_date,
+          COALESCE(wp_succ.start_date, wp_succ.due_date) as succ_date
+        FROM relations
+        LEFT JOIN work_packages wp_pred ON relations.to_id = wp_pred.id
+        LEFT JOIN work_packages wp_succ ON relations.from_id = wp_succ.id
+        WHERE relation_type = 'follows'
+          AND COALESCE(wp_pred.due_date, wp_pred.start_date) IS NOT NULL
+          AND COALESCE(wp_succ.start_date, wp_succ.due_date) IS NOT NULL
+      ),
+      working_dates AS (
+        SELECT date::date
+        FROM generate_series(
+          (SELECT MIN(pred_date) FROM follows_relations_with_dates),
+          (SELECT MAX(succ_date) FROM follows_relations_with_dates),
+          '1 day'::interval
+        ) AS date
+        WHERE EXTRACT(ISODOW FROM date)::integer IN (#{working_days.join(',')})
+          AND NOT date IN (SELECT date FROM non_working_days)
+      )
       UPDATE relations
-      SET lag = COALESCE(wp_succ.start_date, wp_succ.due_date) - COALESCE(wp_pred.due_date, wp_pred.start_date) - 1
-      FROM work_packages wp_pred, work_packages wp_succ
-      WHERE relations.relation_type = 'follows'
-        AND relations.to_id = wp_pred.id
-        AND relations.from_id = wp_succ.id
-        AND COALESCE(wp_succ.start_date, wp_succ.due_date) IS NOT NULL
-        AND COALESCE(wp_pred.due_date, wp_pred.start_date) IS NOT NULL
+      SET lag = (
+        SELECT COUNT(*)
+        FROM working_dates
+        WHERE date > pred_date
+          AND date < succ_date
+      )
+      FROM follows_relations_with_dates
+      WHERE relations.id = follows_relations_with_dates.id
     SQL
   end
 
