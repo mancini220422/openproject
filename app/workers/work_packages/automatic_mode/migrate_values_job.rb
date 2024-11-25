@@ -103,6 +103,7 @@ class WorkPackages::AutomaticMode::MigrateValuesJob < ApplicationJob
 
     # Here is the algorithm:
     # - Take all follows relations with dates
+    # - Filter to keep only the closest relation for a same successor
     # - Generate a series of dates between the min date and the max date and
     #   filter for working days
     # - Use both information to count the number of working days between
@@ -111,6 +112,7 @@ class WorkPackages::AutomaticMode::MigrateValuesJob < ApplicationJob
       WITH follows_relations_with_dates AS (
         SELECT
           relations.id as id,
+          relations.from_id as succ_id,
           COALESCE(wp_pred.due_date, wp_pred.start_date) as pred_date,
           COALESCE(wp_succ.start_date, wp_succ.due_date) as succ_date
         FROM relations
@@ -119,6 +121,14 @@ class WorkPackages::AutomaticMode::MigrateValuesJob < ApplicationJob
         WHERE relation_type = 'follows'
           AND COALESCE(wp_pred.due_date, wp_pred.start_date) IS NOT NULL
           AND COALESCE(wp_succ.start_date, wp_succ.due_date) IS NOT NULL
+      ),
+      closest_follows_relations_with_dates AS (
+        SELECT DISTINCT ON (succ_id)
+          id,
+          pred_date,
+          succ_date
+        FROM follows_relations_with_dates
+        ORDER BY succ_id, pred_date DESC
       ),
       working_dates AS (
         SELECT date::date
@@ -137,8 +147,8 @@ class WorkPackages::AutomaticMode::MigrateValuesJob < ApplicationJob
         WHERE date > pred_date
           AND date < succ_date
       )
-      FROM follows_relations_with_dates
-      WHERE relations.id = follows_relations_with_dates.id
+      FROM closest_follows_relations_with_dates
+      WHERE relations.id = closest_follows_relations_with_dates.id
     SQL
   end
 

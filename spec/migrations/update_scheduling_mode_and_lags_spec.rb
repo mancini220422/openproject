@@ -222,4 +222,21 @@ RSpec.describe UpdateSchedulingModeAndLags, type: :model do
       expect(relations.map(&:lag)).to eq([0, 0, 2])
     end
   end
+
+  context "for a work package following multiple work packages" do
+    shared_let_work_packages(<<~TABLE)
+      subject       | MTWTFSS | properties
+      predecessor 1 | XX      |
+      predecessor 2 |  XX     |
+      predecessor 3 | X       |
+      follower      |      XX | follows predecessor 1, follows predecessor 2, follows predecessor 3
+    TABLE
+
+    it "sets a lag only to the closest relation" do
+      run_migration
+
+      relations = _table.relations.map(&:reload)
+      expect(relations.map(&:lag)).to eq([0, 2, 0])
+    end
+  end
 end
