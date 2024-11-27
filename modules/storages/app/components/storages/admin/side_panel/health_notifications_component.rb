@@ -39,7 +39,7 @@ module Storages
       end
 
       def render?
-        @storage.automatically_managed?
+        @storage.automatic_management_enabled?
       end
 
       def notification_status

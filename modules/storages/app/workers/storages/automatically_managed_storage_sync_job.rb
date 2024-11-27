@@ -55,7 +55,7 @@ module Storages
     def self.key(storage) = "sync-#{storage}-#{storage.id}"
 
     def perform(storage)
-      return unless storage.configured? && storage.automatically_managed?
+      return unless storage.configured? && storage.automatic_management_enabled?
 
       sync_result = case storage.short_provider_type
                     when "nextcloud"
