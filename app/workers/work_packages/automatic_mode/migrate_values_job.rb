@@ -28,10 +28,8 @@
 
 class WorkPackages::AutomaticMode::MigrateValuesJob < ApplicationJob
   def perform
-    with_temporary_table do
-      change_scheduling_mode_to_manual
-      change_scheduling_mode_to_automatic_for_followers
-      change_scheduling_mode_to_automatic_for_parents
+    with_temporary_tables do
+      change_independent_childless_work_packages_scheduling_mode_to_manual
       set_lags_for_follows_relations
       copy_values_to_work_packages_and_update_journals
     end
@@ -39,16 +37,16 @@ class WorkPackages::AutomaticMode::MigrateValuesJob < ApplicationJob
 
   private
 
-  def with_temporary_table
+  def with_temporary_tables
     WorkPackage.transaction do
-      create_temporary_table
+      create_temporary_tables
       yield
     ensure
-      drop_temporary_table
+      drop_temporary_tables
     end
   end
 
-  def create_temporary_table
+  def create_temporary_tables
     execute(<<~SQL.squish)
       CREATE UNLOGGED TABLE temp_wp_values
       AS SELECT
@@ -58,42 +56,44 @@ class WorkPackages::AutomaticMode::MigrateValuesJob < ApplicationJob
         schedule_manually
       FROM work_packages
     SQL
-  end
-
-  def drop_temporary_table
     execute(<<~SQL.squish)
-      DROP TABLE temp_wp_values
+      CREATE MATERIALIZED VIEW follows_relations
+      AS SELECT
+        relations.id as id,
+        relations.from_id as succ_id,
+        COALESCE(wp_pred.due_date, wp_pred.start_date) as pred_date,
+        COALESCE(wp_succ.start_date, wp_succ.due_date) as succ_date,
+        wp_succ.schedule_manually as succ_schedule_manually
+      FROM relations
+      LEFT JOIN work_packages wp_pred ON relations.to_id = wp_pred.id
+      LEFT JOIN work_packages wp_succ ON relations.from_id = wp_succ.id
+      WHERE relation_type = 'follows'
     SQL
+    execute("CREATE INDEX ON follows_relations (succ_id)")
   end
 
-  def change_scheduling_mode_to_manual
+  def drop_temporary_tables
+    execute("DROP TABLE temp_wp_values")
+    execute("DROP MATERIALIZED VIEW follows_relations")
+  end
+
+  # Change the scheduling mode to manual for:
+  # - non-successor (independent) and non-parent (childless) work packages
+  # - successor work packages with dates but without any predecessor with dates
+  def change_independent_childless_work_packages_scheduling_mode_to_manual
     execute(<<~SQL.squish)
       UPDATE temp_wp_values
       SET schedule_manually = true
-    SQL
-  end
-
-  def change_scheduling_mode_to_automatic_for_followers
-    execute(<<~SQL.squish)
-      UPDATE temp_wp_values
-      SET schedule_manually = false
-      WHERE EXISTS (
+      WHERE NOT EXISTS (
         SELECT 1
-        FROM relations
-        WHERE relations.from_id = temp_wp_values.id
-          AND relations.relation_type = 'follows'
-      )
-    SQL
-  end
-
-  def change_scheduling_mode_to_automatic_for_parents
-    execute(<<~SQL.squish)
-      UPDATE temp_wp_values
-      SET schedule_manually = false
-      WHERE id IN (
-        SELECT DISTINCT parent_id
+        FROM follows_relations
+        WHERE follows_relations.succ_id = temp_wp_values.id
+          AND (follows_relations.pred_date IS NOT NULL
+               OR follows_relations.succ_date IS NULL)
+      ) AND NOT EXISTS (
+        SELECT 1
         FROM work_packages
-        WHERE parent_id IS NOT NULL
+        WHERE work_packages.parent_id = temp_wp_values.id
       )
     SQL
   end
@@ -109,32 +109,21 @@ class WorkPackages::AutomaticMode::MigrateValuesJob < ApplicationJob
     # - Use both information to count the number of working days between
     #   predecessor and successor dates and update the lag with it
     execute(<<~SQL.squish)
-      WITH follows_relations_with_dates AS (
-        SELECT
-          relations.id as id,
-          relations.from_id as succ_id,
-          COALESCE(wp_pred.due_date, wp_pred.start_date) as pred_date,
-          COALESCE(wp_succ.start_date, wp_succ.due_date) as succ_date
-        FROM relations
-        LEFT JOIN work_packages wp_pred ON relations.to_id = wp_pred.id
-        LEFT JOIN work_packages wp_succ ON relations.from_id = wp_succ.id
-        WHERE relation_type = 'follows'
-          AND COALESCE(wp_pred.due_date, wp_pred.start_date) IS NOT NULL
-          AND COALESCE(wp_succ.start_date, wp_succ.due_date) IS NOT NULL
-      ),
-      closest_follows_relations_with_dates AS (
+      WITH closest_follows_relations_with_dates AS (
         SELECT DISTINCT ON (succ_id)
           id,
           pred_date,
           succ_date
-        FROM follows_relations_with_dates
+        FROM follows_relations
+        WHERE pred_date IS NOT NULL
+          AND succ_date IS NOT NULL
         ORDER BY succ_id, pred_date DESC
       ),
       working_dates AS (
         SELECT date::date
         FROM generate_series(
-          (SELECT MIN(pred_date) FROM follows_relations_with_dates),
-          (SELECT MAX(succ_date) FROM follows_relations_with_dates),
+          (SELECT MIN(pred_date) FROM closest_follows_relations_with_dates),
+          (SELECT MAX(succ_date) FROM closest_follows_relations_with_dates),
           '1 day'::interval
         ) AS date
         WHERE EXTRACT(ISODOW FROM date)::integer IN (#{working_days.join(',')})

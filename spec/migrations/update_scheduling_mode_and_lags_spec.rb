@@ -94,8 +94,11 @@ RSpec.describe UpdateSchedulingModeAndLags, type: :model do
     end
   end
 
-  # spec from #42388, "Migration from an earlier version" section
-  context "for work packages with no predecessors" do
+  # spec from #59539, "Migration from an earlier version" section:
+  #
+  # > - For work packages with no predecessors (or with no relations at all), they will be
+  # >   switched to manual scheduling.
+  context "for work packages with no predecessors nor children" do
     let_work_packages(<<~TABLE)
       subject        | start date | due date   | scheduling mode
       wp automatic 1 | 2024-11-20 | 2024-11-21 | automatic
@@ -115,43 +118,110 @@ RSpec.describe UpdateSchedulingModeAndLags, type: :model do
     end
   end
 
-  # spec from #42388, "Migration from an earlier version" section
-  context "for work packages following another one" do
+  # spec from #59539, "Migration from an earlier version" section:
+  #
+  # > - Manually scheduled work packages remain so.
+  context "for manually scheduled work packages following another one" do
     let_work_packages(<<~TABLE)
       subject        | start date | due date   | scheduling mode | properties
-      main           | 2024-11-19 | 2024-11-19 | manual          |
-      wp automatic 1 | 2024-11-20 | 2024-11-21 | automatic       | follows main
-      wp automatic 2 |            | 2024-11-21 | automatic       | follows main
-      wp automatic 3 | 2024-11-20 |            | automatic       | follows main
-      wp automatic 4 |            |            | automatic       | follows main
-      wp manual 1    | 2024-11-20 | 2024-11-21 | manual          | follows main
-      wp manual 2    |            | 2024-11-21 | manual          | follows main
-      wp manual 3    | 2024-11-20 |            | manual          | follows main
-      wp manual 4    |            |            | manual          | follows main
+      main           |            |            | manual          |
+      wp 1           | 2024-11-20 | 2024-11-21 | manual          | follows main
+      wp 2           |            | 2024-11-21 | manual          | follows main
+      wp 3           | 2024-11-20 |            | manual          | follows main
+      wp 4           |            |            | manual          | follows main
     TABLE
 
-    # TODO: should work packages without any dates really be switched to manual like the specs say?
-    it "switches to automatic scheduling" do
+    it "remains manually scheduled" do
       run_migration
 
-      expect(main).to be_schedule_manually
-      expect(table_work_packages - [main]).to all(be_schedule_automatically)
+      expect(table_work_packages).to all(be_schedule_manually)
+    end
+  end
+
+  # spec from #59539, "Migration from an earlier version" section
+  #
+  # > - If the successor is in automatic scheduling mode, has dates and some predecessors
+  # >   have dates too:
+  # >   - The successor remains in automatic mode
+  context "for automatically scheduled work packages following another one having dates" do
+    let_work_packages(<<~TABLE)
+      subject            | start date | due date   | scheduling mode | properties
+      pred with dates    | 2024-11-19 | 2024-11-19 | manual          |
+      pred without dates |            |            | manual          |
+      wp 1               | 2024-11-20 | 2024-11-21 | automatic       | follows pred with dates, follows pred without dates
+      wp 2               |            | 2024-11-21 | automatic       | follows pred with dates, follows pred without dates
+      wp 3               | 2024-11-20 |            | automatic       | follows pred with dates, follows pred without dates
+      wp 4               |            |            | automatic       | follows pred with dates, follows pred without dates
+    TABLE
+
+    it "remains automatically scheduled" do
+      run_migration
+
+      expect([wp1, wp2, wp3, wp4]).to all(be_schedule_automatically)
+    end
+  end
+
+  # spec from #59539, "Migration from an earlier version" section
+  # > - If the successor is in automatic scheduling mode and has no dates
+  # >   - The successor remains in automatic mode and continues to have no dates,
+  # >     regardless of having predecessor with dates or not.
+  # > - If the successor is in automatic scheduling mode, has dates and none of the
+  # >   predecessors have any dates
+  # >   - The successor is switched to manual mode to preserve its dates and duration
+  context "for automatically scheduled work packages without dates following another one" do
+    let_work_packages(<<~TABLE)
+      subject            | start date | due date   | scheduling mode | properties
+      pred without dates |            |            | manual          |
+      succ               |            |            | automatic       | follows pred without dates
+    TABLE
+
+    it "remains automatically scheduled and continues to have no dates" do
+      run_migration
+
+      expect(succ).to be_schedule_automatically
+    end
+  end
+
+  # spec from #59539, "Migration from an earlier version" section
+  #
+  # > - If the successor is in automatic scheduling mode, has dates and none of the
+  # >   predecessors have any dates
+  # >   - The successor is switched to manual mode to preserve its dates and duration
+  context "for automatically scheduled work packages following another one having no dates" do
+    let_work_packages(<<~TABLE)
+      subject            | start date | due date   | scheduling mode | properties
+      pred without dates |            |            | manual          |
+      succ 1             | 2024-11-20 | 2024-11-21 | automatic       | follows pred without dates
+      succ 2             |            | 2024-11-21 | automatic       | follows pred without dates
+      succ 3             | 2024-11-20 |            | automatic       | follows pred without dates
+    TABLE
+
+    it "switches to manual scheduling to preserve its dates and duration" do
+      run_migration
+
+      expect([succ1, succ2, succ3]).to all(be_schedule_manually)
     end
   end
 
   # spec from #42388, "Migration from an earlier version" section
+  #
+  # > - Manually scheduled work packages remain so.
+  # > - If the relationship is parent-child, there are no changes to dates; the parent
+  # >   remains in automatic mode.
   context "for parent work packages" do
     let_work_packages(<<~TABLE)
-      hierarchy | scheduling mode |
-      parent    | manual          |
-        child   | manual          |
+      hierarchy        | scheduling mode |
+      parent_automatic | automatic       |
+        child1         | manual          |
+      parent_manual    | manual          |
+        child2         | manual          |
     TABLE
 
-    it "switches to automatic scheduling" do
+    it "keep their scheduling mode" do
       run_migration
 
-      expect(parent).to be_schedule_automatically
-      expect(child).to be_schedule_manually
+      expect(parent_automatic).to be_schedule_automatically
+      expect(parent_manual).to be_schedule_manually
     end
   end
 
