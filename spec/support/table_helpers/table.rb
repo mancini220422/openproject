@@ -42,6 +42,10 @@ module TableHelpers
       @work_packages_by_identifier.values
     end
 
+    def relation(successor:)
+      @relations.find { |relation| relation.follows? && relation.from.subject == successor }
+    end
+
     def relations
       @relations
     end

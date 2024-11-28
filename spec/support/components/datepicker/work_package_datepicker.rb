@@ -133,10 +133,18 @@ module Components
 
     def expect_scheduling_mode(manually)
       if manually
-        expect(container).to have_checked_field("scheduling", visible: :all)
+        expect_manual_scheduling_mode
       else
-        expect(container).to have_unchecked_field("scheduling", visible: :all)
+        expect_automatic_scheduling_mode
       end
+    end
+
+    def expect_manual_scheduling_mode
+      expect(container).to have_checked_field("scheduling", visible: :all)
+    end
+
+    def expect_automatic_scheduling_mode
+      expect(container).to have_unchecked_field("scheduling", visible: :all)
     end
 
     def toggle_scheduling_mode

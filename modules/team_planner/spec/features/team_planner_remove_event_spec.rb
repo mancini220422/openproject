@@ -61,6 +61,7 @@ RSpec.describe "Team planner remove event",
            project:,
            subject: "Parent work package",
            assigned_to: other_user,
+           schedule_manually: false, # because parent of child_wp
            start_date: Time.zone.today.beginning_of_week.next_occurring(:wednesday),
            due_date: Time.zone.today.beginning_of_week.next_occurring(:thursday),
            derived_start_date: Time.zone.today.beginning_of_week.next_occurring(:wednesday),

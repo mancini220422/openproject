@@ -52,6 +52,7 @@ RSpec.describe "scheduling mode", :js do
   let!(:wp) do
     create(:work_package,
            project:,
+           schedule_manually: false, # because parent of wp_child and follows wp_pre
            start_date: Date.parse("2016-01-01"),
            due_date: Date.parse("2016-01-05"),
            parent: wp_parent)
@@ -59,12 +60,14 @@ RSpec.describe "scheduling mode", :js do
   let!(:wp_parent) do
     create(:work_package,
            project:,
+           schedule_manually: false, # because parent of wp
            start_date: Date.parse("2016-01-01"),
            due_date: Date.parse("2016-01-05"))
   end
   let!(:wp_child) do
     create(:work_package,
            project:,
+           schedule_manually: false, # because needed to have rescheduling working
            start_date: Date.parse("2016-01-01"),
            due_date: Date.parse("2016-01-05"),
            parent: wp)
@@ -80,6 +83,7 @@ RSpec.describe "scheduling mode", :js do
   let!(:wp_suc) do
     create(:work_package,
            project:,
+           schedule_manually: false, # because parent of wp_suc_child and follows wp
            start_date: Date.parse("2016-01-06"),
            due_date: Date.parse("2016-01-10"),
            parent: wp_suc_parent).tap do |suc|
@@ -89,12 +93,14 @@ RSpec.describe "scheduling mode", :js do
   let!(:wp_suc_parent) do
     create(:work_package,
            project:,
+           schedule_manually: false, # because parent of wp_suc
            start_date: Date.parse("2016-01-06"),
            due_date: Date.parse("2016-01-10"))
   end
   let!(:wp_suc_child) do
     create(:work_package,
            project:,
+           schedule_manually: false, # because needed to have rescheduling working
            start_date: Date.parse("2016-01-06"),
            due_date: Date.parse("2016-01-10"),
            parent: wp_suc)

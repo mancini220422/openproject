@@ -213,6 +213,10 @@ RSpec.describe API::V3::WorkPackages::Schema::SpecificWorkPackageSchema do
         end
 
         context "when scheduled automatically" do
+          before do
+            work_package.schedule_manually = false
+          end
+
           it "is not writable" do
             expect(subject).not_to be_writable(:start_date)
           end
@@ -246,6 +250,10 @@ RSpec.describe API::V3::WorkPackages::Schema::SpecificWorkPackageSchema do
         end
 
         context "when scheduled automatically" do
+          before do
+            work_package.schedule_manually = false
+          end
+
           it "is not writable" do
             expect(subject).not_to be_writable(:due_date)
           end
@@ -277,9 +285,16 @@ RSpec.describe API::V3::WorkPackages::Schema::SpecificWorkPackageSchema do
         allow(work_package.type).to receive(:is_milestone?).and_return(true)
       end
 
-      it "is not writable when the work package is a parent" do
+      it "is not writable when the work package is a parent scheduled automatically" do
         allow(work_package).to receive(:leaf?).and_return(false)
+        work_package.schedule_manually = false
         expect(subject).not_to be_writable(:date)
+      end
+
+      it "is writable when the work package is a parent scheduled manually" do
+        allow(work_package).to receive(:leaf?).and_return(false)
+        work_package.schedule_manually = true
+        expect(subject).to be_writable(:date)
       end
 
       it "is writable when the work package is a leaf" do

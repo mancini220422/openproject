@@ -187,7 +187,7 @@ RSpec.describe "API v3 Work package resource",
         # mind the () for the super call, those are required in rspec's super
         let(:parameters) { super().merge(scheduleManually: true) }
 
-        it "sets the scheduling mode to true" do
+        it "sets the scheduling mode to manual (schedule_manually: true)" do
           expect(work_package.schedule_manually).to be true
         end
       end
@@ -195,14 +195,14 @@ RSpec.describe "API v3 Work package resource",
       context "with false" do
         let(:parameters) { super().merge(scheduleManually: false) }
 
-        it "sets the scheduling mode to false" do
+        it "sets the scheduling mode to automatic (schedule_manually: false)" do
           expect(work_package.schedule_manually).to be false
         end
       end
 
       context "with scheduleManually absent" do
-        it "sets the scheduling mode to false (default)" do
-          expect(work_package.schedule_manually).to be false
+        it "sets the scheduling mode to manual (schedule_manually: true, the default)" do
+          expect(work_package.schedule_manually).to be true
         end
       end
     end

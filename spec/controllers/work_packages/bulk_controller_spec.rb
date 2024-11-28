@@ -565,7 +565,7 @@ RSpec.describe WorkPackages::BulkController, with_settings: { journal_aggregatio
       end
 
       let(:new_parent) do
-        create(:work_package, project: project1)
+        create(:work_package, schedule_manually: false, project: project1)
       end
 
       before do

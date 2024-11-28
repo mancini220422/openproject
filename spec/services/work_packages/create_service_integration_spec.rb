@@ -50,6 +50,7 @@ RSpec.describe WorkPackages::CreateService, "integration", type: :model do
   let(:parent) do
     create(:work_package,
            subject: "parent",
+           schedule_manually: false,
            project:,
            type:)
   end
@@ -100,6 +101,7 @@ RSpec.describe WorkPackages::CreateService, "integration", type: :model do
       let(:parent) do
         create(:work_package,
                project:,
+               schedule_manually: false,
                start_date: "2024-01-01",
                due_date: "2024-01-10",
                type: create(:type))
@@ -176,7 +178,7 @@ RSpec.describe WorkPackages::CreateService, "integration", type: :model do
       end
 
       it "reports on invalid attachments and sets the new if everything is valid" do
-        result = instance.call(**attributes.merge(attachment_ids: [other_users_attachment.id]))
+        result = instance.call(**attributes, attachment_ids: [other_users_attachment.id])
 
         expect(result)
           .to be_failure
@@ -191,7 +193,7 @@ RSpec.describe WorkPackages::CreateService, "integration", type: :model do
         expect(other_users_attachment.reload.container)
           .to be_nil
 
-        result = instance.call(**attributes.merge(attachment_ids: [users_attachment.id]))
+        result = instance.call(**attributes, attachment_ids: [users_attachment.id])
 
         expect(result)
           .to be_success

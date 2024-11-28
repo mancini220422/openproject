@@ -53,26 +53,31 @@ RSpec.describe WorkPackages::UpdateService, "integration", type: :model do
   end
   let(:work_package) do
     create(:work_package,
-           work_package_attributes)
+           subject: "initial",
+           **work_package_attributes)
   end
   let(:parent_work_package) do
     create(:work_package,
-           work_package_attributes).tap do |w|
+           subject: "parent",
+           schedule_manually: false,
+           **work_package_attributes).tap do |w|
       w.children << work_package
       work_package.reload
     end
   end
   let(:grandparent_work_package) do
     create(:work_package,
-           work_package_attributes).tap do |w|
+           subject: "grandparent",
+           schedule_manually: false,
+           **work_package_attributes).tap do |w|
       w.children << parent_work_package
     end
   end
   let(:sibling1_attributes) do
-    work_package_attributes.merge(parent: parent_work_package)
+    work_package_attributes.merge(subject: "sibling1", parent: parent_work_package)
   end
   let(:sibling2_attributes) do
-    work_package_attributes.merge(parent: parent_work_package)
+    work_package_attributes.merge(subject: "sibling2", parent: parent_work_package)
   end
   let(:sibling1_work_package) do
     create(:work_package,
@@ -83,16 +88,18 @@ RSpec.describe WorkPackages::UpdateService, "integration", type: :model do
            sibling2_attributes)
   end
   let(:child_attributes) do
-    work_package_attributes.merge(parent: work_package)
+    work_package_attributes.merge(subject: "child", parent: work_package)
   end
   let(:child_work_package) do
+    child_attributes[:parent].update_column(:schedule_manually, false)
     create(:work_package,
            child_attributes)
   end
   let(:grandchild_attributes) do
-    work_package_attributes.merge(parent: child_work_package)
+    work_package_attributes.merge(subject: "grandchild", parent: child_work_package)
   end
   let(:grandchild_work_package) do
+    grandchild_attributes[:parent].update_column(:schedule_manually, false)
     create(:work_package,
            grandchild_attributes)
   end
@@ -656,6 +663,7 @@ RSpec.describe WorkPackages::UpdateService, "integration", type: :model do
     let(:following_attributes) do
       work_package_attributes.merge(parent: following_parent_work_package,
                                     subject: "following",
+                                    schedule_manually: false,
                                     start_date: Time.zone.today + 6.days,
                                     due_date: Time.zone.today + 20.days)
     end
@@ -667,6 +675,7 @@ RSpec.describe WorkPackages::UpdateService, "integration", type: :model do
     end
     let(:following_parent_attributes) do
       work_package_attributes.merge(subject: "following_parent",
+                                    schedule_manually: false,
                                     start_date: Time.zone.today + 6.days,
                                     due_date: Time.zone.today + 20.days)
     end
@@ -677,6 +686,7 @@ RSpec.describe WorkPackages::UpdateService, "integration", type: :model do
     let(:following2_attributes) do
       work_package_attributes.merge(parent: following2_parent_work_package,
                                     subject: "following2",
+                                    schedule_manually: false,
                                     start_date: Time.zone.today + 21.days,
                                     due_date: Time.zone.today + 25.days)
     end
@@ -686,6 +696,7 @@ RSpec.describe WorkPackages::UpdateService, "integration", type: :model do
     end
     let(:following2_parent_attributes) do
       work_package_attributes.merge(subject: "following2_parent",
+                                    schedule_manually: false,
                                     start_date: Time.zone.today + 21.days,
                                     due_date: Time.zone.today + 25.days)
     end
@@ -698,6 +709,7 @@ RSpec.describe WorkPackages::UpdateService, "integration", type: :model do
     let(:following3_attributes) do
       work_package_attributes.merge(subject: "following3",
                                     parent: following3_parent_work_package,
+                                    schedule_manually: false,
                                     start_date: Time.zone.today + 26.days,
                                     due_date: Time.zone.today + 30.days)
     end
@@ -709,6 +721,7 @@ RSpec.describe WorkPackages::UpdateService, "integration", type: :model do
     end
     let(:following3_parent_attributes) do
       work_package_attributes.merge(subject: "following3_parent",
+                                    schedule_manually: false,
                                     start_date: Time.zone.today + 26.days,
                                     due_date: Time.zone.today + 36.days)
     end
@@ -719,6 +732,7 @@ RSpec.describe WorkPackages::UpdateService, "integration", type: :model do
     let(:following3_sibling_attributes) do
       work_package_attributes.merge(parent: following3_parent_work_package,
                                     subject: "following3_sibling",
+                                    schedule_manually: false,
                                     start_date: Time.zone.today + 32.days,
                                     due_date: Time.zone.today + 36.days)
     end
@@ -817,7 +831,7 @@ RSpec.describe WorkPackages::UpdateService, "integration", type: :model do
     end
 
     let(:parent_work_package) do
-      create(:work_package, work_package_attributes)
+      create(:work_package, schedule_manually: false, **work_package_attributes)
     end
 
     let(:expected_parent_dates) do
@@ -860,6 +874,7 @@ RSpec.describe WorkPackages::UpdateService, "integration", type: :model do
         author_id: user.id,
         status_id: status.id,
         priority:,
+        schedule_manually: false,
         start_date: Time.zone.today + 3.days,
         due_date: Time.zone.today + 9.days
       }
@@ -896,6 +911,7 @@ RSpec.describe WorkPackages::UpdateService, "integration", type: :model do
       work_package_attributes.merge(
         subject: "new parent",
         parent: nil,
+        schedule_manually: false,
         start_date: Time.zone.today + 10.days,
         due_date: Time.zone.today + 12.days
       )
@@ -956,17 +972,17 @@ RSpec.describe WorkPackages::UpdateService, "integration", type: :model do
     end
   end
 
-  describe "changing the parent with the parent being restricted in moving to an earlier date" do
+  describe "changing the parent with the parent having a predecessor restricting it moving to an earlier date" do
     # there is actually some time between the new parent and its predecessor
     let(:new_parent_attributes) do
       work_package_attributes.merge(
         subject: "new parent",
         parent: nil,
+        schedule_manually: false,
         start_date: Time.zone.today + 8.days,
         due_date: Time.zone.today + 14.days
       )
     end
-    let(:attributes) { { parent: new_parent_work_package } }
     let(:new_parent_work_package) do
       create(:work_package, new_parent_attributes)
     end
@@ -1001,38 +1017,78 @@ RSpec.describe WorkPackages::UpdateService, "integration", type: :model do
       new_parent_predecessor_work_package.reload
     end
 
-    it "reschedules the parent and the work package while adhering to the limitation imposed by the predecessor" do
-      expect(subject)
-        .to be_success
+    context "when the work package is automatically scheduled" do
+      let(:attributes) { { parent: new_parent_work_package, schedule_manually: false } }
 
-      # sets the parent and adapts the dates
-      # The dates are overwritten as the new parent is unable
-      # to move to the dates of its new child because of the follows relation.
-      work_package.reload
-      expect(work_package.parent)
-        .to eql new_parent_work_package
-      expect(work_package.start_date)
-        .to eql new_parent_predecessor_attributes[:due_date] + 1.day
-      expect(work_package.due_date)
-        .to eql new_parent_predecessor_attributes[:due_date] + 4.days
+      it "reschedules the parent and the work package while adhering to the limitation imposed by the predecessor" do
+        expect(subject)
+          .to be_success
 
-      # adapts the parent's dates but adheres to its limitations
-      # due to the follows relationship
-      new_parent_work_package.reload
-      expect(new_parent_work_package.start_date)
-        .to eql new_parent_predecessor_attributes[:due_date] + 1.day
-      expect(new_parent_work_package.due_date)
-        .to eql new_parent_predecessor_attributes[:due_date] + 4.days
+        # sets the parent and adapts the dates
+        # The dates are overwritten as the new parent is unable
+        # to move to the dates of its new child because of the follows relation.
+        work_package.reload
+        expect(work_package.parent)
+          .to eq new_parent_work_package
+        expect(work_package.start_date)
+          .to eq new_parent_predecessor_attributes[:due_date] + 1.day
+        expect(work_package.due_date)
+          .to eq new_parent_predecessor_attributes[:due_date] + 4.days
 
-      # leaves the parent's predecessor unchanged
-      new_parent_work_package.reload
-      expect(new_parent_work_package.start_date)
-        .to eql new_parent_predecessor_attributes[:due_date] + 1.day
-      expect(new_parent_work_package.due_date)
-        .to eql new_parent_predecessor_attributes[:due_date] + 4.days
+        # adapts the parent's dates but adheres to its limitations
+        # due to the follows relationship
+        new_parent_work_package.reload
+        expect(new_parent_work_package.start_date)
+          .to eq new_parent_predecessor_attributes[:due_date] + 1.day
+        expect(new_parent_work_package.due_date)
+          .to eq new_parent_predecessor_attributes[:due_date] + 4.days
 
-      expect(subject.all_results.uniq)
-        .to contain_exactly(work_package, new_parent_work_package)
+        # The parent's predecessor is unchanged
+        new_parent_predecessor_work_package.reload
+        expect(new_parent_predecessor_work_package.start_date)
+          .to eq new_parent_predecessor_work_package[:start_date]
+        expect(new_parent_predecessor_work_package.due_date)
+          .to eq new_parent_predecessor_work_package[:due_date]
+
+        expect(subject.all_results.uniq)
+          .to contain_exactly(work_package, new_parent_work_package)
+      end
+    end
+
+    context "when the work package is manually scheduled" do
+      let(:attributes) { { parent: new_parent_work_package, schedule_manually: true } }
+
+      it "sets parent's dates to be the same as the work package despite the predecessor constraints" do
+        expect(subject)
+          .to be_success
+
+        # sets the parent and do not change the dates as it is manually scheduled
+        work_package.reload
+        expect(work_package.parent)
+          .to eq new_parent_work_package
+        expect(work_package.start_date)
+          .to eq work_package_attributes[:start_date]
+        expect(work_package.due_date)
+          .to eq work_package_attributes[:due_date]
+
+        # The parent dates are the same as its child. The follows relation is
+        # ignored as children dates always take precedence over relations.
+        new_parent_work_package.reload
+        expect(new_parent_work_package.start_date)
+          .to eq work_package_attributes[:start_date]
+        expect(new_parent_work_package.due_date)
+          .to eq work_package_attributes[:due_date]
+
+        # The parent's predecessor is unchanged
+        new_parent_predecessor_work_package.reload
+        expect(new_parent_predecessor_work_package.start_date)
+          .to eq new_parent_predecessor_work_package[:start_date]
+        expect(new_parent_predecessor_work_package.due_date)
+          .to eq new_parent_predecessor_work_package[:due_date]
+
+        expect(subject.all_results.uniq)
+          .to contain_exactly(work_package, new_parent_work_package)
+      end
     end
   end
 
@@ -1056,6 +1112,7 @@ RSpec.describe WorkPackages::UpdateService, "integration", type: :model do
         author_id: user.id,
         status_id: status.id,
         priority:,
+        schedule_manually: false,
         start_date: Time.zone.today,
         due_date: Time.zone.today + 10.days }
     end
@@ -1097,6 +1154,7 @@ RSpec.describe WorkPackages::UpdateService, "integration", type: :model do
       expect(work_package.due_date)
         .to eql work_package_attributes[:due_date]
 
+      # parent is rescheduled to the sibling's dates
       parent_work_package.reload
       expect(parent_work_package.start_date)
         .to eql sibling_attributes[:start_date]
@@ -1222,12 +1280,13 @@ RSpec.describe WorkPackages::UpdateService, "integration", type: :model do
   end
 
   describe "removing an invalid parent" do
-    # The parent does not have a required custom field set but will need to be touched since.
-    # the dates, inherited from its children (and then the only remaining child) will have to be updated.
+    # The parent does not have a required custom field set but will need to be touched since
+    # the dates, inherited from its children (and then the only remaining child), will have to be updated.
     let!(:parent) do
       create(:work_package,
              type: project.types.first,
              project:,
+             schedule_manually: false,
              start_date: Time.zone.today - 1.day,
              due_date: Time.zone.today + 5.days)
     end

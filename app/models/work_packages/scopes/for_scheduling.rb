@@ -51,6 +51,11 @@ module WorkPackages::Scopes
       # statement works, is that a work package is considered to be scheduled
       # manually if *all* of its descendants are scheduled manually.
       #
+      # One notable exception is if one of the manually scheduled children is
+      # the origin work package of the rescheduling. In this case, the parent is
+      # also subject to reschedule as the origin work package dates may have
+      # changed.
+      #
       # For example in case of the hierarchy:
       #   A and B <- hierarchy (C is parent of both A and B) - C <- hierarchy - D
       # * A and B are work packages
@@ -157,21 +162,25 @@ module WorkPackages::Scopes
       def scheduling_paths_sql(work_packages)
         values = work_packages.map do |wp|
           ::OpenProject::SqlSanitization
-            .sanitize "(:id, false, false)",
+            .sanitize "(:id, false, false, true)",
                       id: wp.id
         end.join(", ")
 
         <<~SQL.squish
-          to_schedule (id, manually) AS (
+          to_schedule (id, manually, hierarchy_up, origin) AS (
 
-            SELECT * FROM (VALUES#{values}) AS t(id, manually, hierarchy_up)
+            SELECT * FROM (VALUES#{values}) AS t(id, manually, hierarchy_up, origin)
 
             UNION
 
             SELECT
               relations.from_id id,
-              (related_work_packages.schedule_manually OR COALESCE(descendants.manually, false)) manually,
-              relations.hierarchy_up
+              (related_work_packages.schedule_manually
+                OR (COALESCE(descendants.manually, false)
+                    AND NOT (to_schedule.origin AND relations.hierarchy_up))
+              ) manually,
+              relations.hierarchy_up,
+              false origin
             FROM
               to_schedule
             JOIN LATERAL
@@ -196,7 +205,7 @@ module WorkPackages::Scopes
                 FROM
                   work_package_hierarchies
                 WHERE
-                  NOT to_schedule.manually
+                  (NOT to_schedule.manually OR to_schedule.origin)
                   AND ((work_package_hierarchies.ancestor_id = to_schedule.id AND NOT to_schedule.hierarchy_up AND work_package_hierarchies.generations = 1)
                        OR (work_package_hierarchies.descendant_id = to_schedule.id AND work_package_hierarchies.generations > 0))
               ) relations ON relations.to_id = to_schedule.id

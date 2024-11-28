@@ -62,7 +62,7 @@ RSpec.describe "Datepicker logic on parents", :js, with_settings: { date_format:
     datepicker.expect_visible
   end
 
-  context "with the child having set dates" do
+  context "with the child having set dates and the parent being scheduled automatically" do
     let(:child_attributes) do
       {
         start_date: "2021-02-01",
@@ -71,17 +71,46 @@ RSpec.describe "Datepicker logic on parents", :js, with_settings: { date_format:
       }
     end
 
-    it "disables the non working days options" do
-      datepicker.expect_ignore_non_working_days_disabled
-      datepicker.expect_scheduling_mode false
+    context "when the parent is scheduled automatically" do
+      let(:parent_attributes) do
+        {
+          schedule_manually: false
+        }
+      end
 
-      first_monday = Time.zone.today.beginning_of_month.next_occurring(:monday)
-      datepicker.expect_disabled(first_monday)
+      it "disables the non-working days options" do
+        datepicker.expect_ignore_non_working_days_disabled
+        datepicker.expect_automatic_scheduling_mode
 
-      datepicker.toggle_scheduling_mode
-      datepicker.expect_scheduling_mode true
+        first_monday = Time.zone.today.beginning_of_month.next_occurring(:monday)
+        datepicker.expect_disabled(first_monday)
 
-      datepicker.expect_not_disabled(first_monday)
+        datepicker.toggle_scheduling_mode
+        datepicker.expect_manual_scheduling_mode
+
+        datepicker.expect_not_disabled(first_monday)
+      end
+    end
+
+    context "when the parent is scheduled manually" do
+      let(:parent_attributes) do
+        {
+          schedule_manually: true
+        }
+      end
+
+      it "enables the non-working days options" do
+        datepicker.expect_ignore_non_working_days_enabled
+        datepicker.expect_manual_scheduling_mode
+
+        first_monday = Time.zone.today.beginning_of_month.next_occurring(:monday)
+        datepicker.expect_not_disabled(first_monday)
+
+        datepicker.toggle_scheduling_mode
+        datepicker.expect_automatic_scheduling_mode
+
+        datepicker.expect_disabled(first_monday)
+      end
     end
   end
 end

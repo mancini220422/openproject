@@ -79,7 +79,7 @@ RSpec.describe "Datepicker logic on follow relationships", :js, with_settings: {
   end
 
   context "if the follower is a task" do
-    let!(:follower) { create(:work_package, type:, project:) }
+    let!(:follower) { create(:work_package, type:, project:, schedule_manually: false) }
     let!(:relation) { create(:follows_relation, from: follower, to: predecessor) }
     let(:date_field) { work_packages_page.edit_field(:combinedDate) }
 
@@ -87,7 +87,7 @@ RSpec.describe "Datepicker logic on follow relationships", :js, with_settings: {
   end
 
   context "if the follower is a milestone" do
-    let!(:follower) { create(:work_package, type: milestone_type, project:) }
+    let!(:follower) { create(:work_package, type: milestone_type, project:, schedule_manually: false) }
     let!(:relation) { create(:follows_relation, from: follower, to: predecessor) }
     let(:date_field) { work_packages_page.edit_field(:date) }
 

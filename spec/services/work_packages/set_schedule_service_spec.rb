@@ -89,6 +89,7 @@ RSpec.describe WorkPackages::SetScheduleService do
   def create_follower(start_date, due_date, predecessors, parent: nil)
     work_package = create(:work_package,
                           subject: "follower of #{predecessors.keys.map(&:subject).to_sentence}",
+                          schedule_manually: false,
                           start_date:,
                           due_date:,
                           parent:)
@@ -106,6 +107,7 @@ RSpec.describe WorkPackages::SetScheduleService do
   def create_parent(child, start_date: child.start_date, due_date: child.due_date)
     create(:work_package,
            subject: "parent of #{child.subject}",
+           schedule_manually: false,
            start_date:,
            due_date:).tap do |parent|
              child.parent = parent
@@ -113,12 +115,13 @@ RSpec.describe WorkPackages::SetScheduleService do
            end
   end
 
-  def create_child(parent, start_date, due_date)
+  def create_child(parent, start_date, due_date, **attributes)
     create(:work_package,
            subject: "child of #{parent.subject}",
            start_date:,
            due_date:,
-           parent:)
+           parent:,
+           **attributes)
   end
 
   subject { instance.call(attributes) }
@@ -453,9 +456,9 @@ RSpec.describe WorkPackages::SetScheduleService do
     end
   end
 
-  context "with only a parent" do
+  context "with only a parent scheduled automatically" do
     let!(:parent_work_package) do
-      create(:work_package).tap do |parent|
+      create(:work_package, subject: "parent", schedule_manually: false).tap do |parent|
         work_package.parent = parent
         work_package.save
       end
@@ -475,6 +478,7 @@ RSpec.describe WorkPackages::SetScheduleService do
     let!(:parent_work_package) do
       create(:work_package,
              subject: "parent of #{work_package.subject}",
+             schedule_manually: false,
              start_date: Time.zone.today,
              due_date: Time.zone.today + 1.day).tap do |parent|
         work_package.parent = parent
@@ -591,11 +595,37 @@ RSpec.describe WorkPackages::SetScheduleService do
     end
   end
 
-  context "with a single successor having a child" do
+  context "with a single successor having a child scheduled manually" do
     let(:child_start_date) { follower1_start_date }
     let(:child_due_date) { follower1_due_date }
 
     let(:child_work_package) { create_child(following_work_package1, child_start_date, child_due_date) }
+
+    let!(:following) do
+      [following_work_package1,
+       child_work_package]
+    end
+
+    context "when moving forward" do
+      before do
+        work_package.due_date = Time.zone.today + 5.days
+      end
+
+      # does not reschedules the child, so the follower keeps its dates
+      it_behaves_like "does not reschedule"
+    end
+  end
+
+  context "with a single successor having a child scheduled automatically" do
+    let(:child_start_date) { follower1_start_date }
+    let(:child_due_date) { follower1_due_date }
+
+    let(:child_work_package) do
+      create_child(following_work_package1,
+                   child_start_date,
+                   child_due_date,
+                   schedule_manually: false)
+    end
 
     let!(:following) do
       [following_work_package1,
@@ -616,7 +646,7 @@ RSpec.describe WorkPackages::SetScheduleService do
     end
   end
 
-  context "with a single successor having two children" do
+  context "with a single successor having two children scheduled automatically" do
     let(:follower1_start_date) { work_package_due_date + 1.day }
     let(:follower1_due_date) { work_package_due_date + 10.days }
     let(:child1_start_date) { follower1_start_date }
@@ -624,8 +654,18 @@ RSpec.describe WorkPackages::SetScheduleService do
     let(:child2_start_date) { follower1_start_date + 8.days }
     let(:child2_due_date) { follower1_due_date }
 
-    let(:child1_work_package) { create_child(following_work_package1, child1_start_date, child1_due_date) }
-    let(:child2_work_package) { create_child(following_work_package1, child2_start_date, child2_due_date) }
+    let(:child1_work_package) do
+      create_child(following_work_package1,
+                   child1_start_date,
+                   child1_due_date,
+                   schedule_manually: false)
+    end
+    let(:child2_work_package) do
+      create_child(following_work_package1,
+                   child2_start_date,
+                   child2_due_date,
+                   schedule_manually: false)
+    end
 
     let!(:following) do
       [following_work_package1,
@@ -865,6 +905,7 @@ RSpec.describe WorkPackages::SetScheduleService do
     def create_hierarchy(parent, nb_children_by_levels)
       nb_children, *remaining_levels = nb_children_by_levels
       children = create_list(:work_package, nb_children, parent:)
+      parent.update(schedule_manually: false)
       if remaining_levels.any?
         children.each do |child|
           create_hierarchy(child, remaining_levels)

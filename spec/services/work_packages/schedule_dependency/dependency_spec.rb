@@ -34,7 +34,7 @@ require "rails_helper"
 # +Dependency+ instance per work package that may need to change due to the
 # move. These dependencies are the subjects under test.
 RSpec.describe WorkPackages::ScheduleDependency::Dependency do
-  subject(:dependency) { dependency_for(work_package_used_in_dependency) }
+  subject(:dependency) { checked_dependency_for(work_package_used_in_dependency) }
 
   create_shared_association_defaults_for_work_package_factory
 
@@ -43,36 +43,54 @@ RSpec.describe WorkPackages::ScheduleDependency::Dependency do
   let(:schedule_dependency) { WorkPackages::ScheduleDependency.new(work_package) }
 
   def dependency_for(work_package)
-    dependency = schedule_dependency.dependencies[work_package]
-    if dependency.nil?
-      available = schedule_dependency.dependencies.keys.map(&:subject).map(&:inspect).to_sentence
-      raise ArgumentError, "Unable to find dependency for work package #{work_package.subject.inspect}; " \
-                           "ScheduleDependency instance has dependencies for work packages #{available}"
-    end
+    schedule_dependency.dependencies[work_package]
+  end
 
-    dependency
+  def checked_dependency_for(work_package)
+    dependency_for(work_package).tap do |dependency|
+      if dependency.nil?
+        available = schedule_dependency.dependencies.keys.map { _1.subject.inspect }.to_sentence
+        raise ArgumentError, "Unable to find dependency for work package #{work_package.subject.inspect}; " \
+                             "ScheduleDependency instance has dependencies for work packages #{available}"
+      end
+    end
   end
 
   def create_predecessor_of(work_package, **attributes)
-    create(:work_package, subject: "predecessor of #{work_package.subject}", **attributes).tap do |predecessor|
+    work_package.update_column(:schedule_manually, false)
+    create(:work_package,
+           subject: "predecessor of #{work_package.subject}",
+           schedule_manually: true,
+           **attributes).tap do |predecessor|
       create(:follows_relation, from: work_package, to: predecessor)
     end
   end
 
   def create_follower_of(work_package, **attributes)
-    create(:work_package, subject: "follower of #{work_package.subject}", **attributes).tap do |follower|
+    create(:work_package,
+           subject: "follower of #{work_package.subject}",
+           schedule_manually: false,
+           **attributes).tap do |follower|
       create(:follows_relation, from: follower, to: work_package)
     end
   end
 
   def create_parent_of(work_package)
-    create(:work_package, subject: "parent of #{work_package.subject}").tap do |parent|
+    create(:work_package,
+           subject: "parent of #{work_package.subject}",
+           schedule_manually: false).tap do |parent|
       work_package.update(parent:)
     end
   end
 
-  def create_child_of(work_package)
-    create(:work_package, subject: "child of #{work_package.subject}", parent: work_package)
+  def create_child_of(work_package, **attributes)
+    work_package.update_column(:schedule_manually, false)
+    child_attributes = attributes.reverse_merge(
+      subject: "child of #{work_package.subject}",
+      parent: work_package,
+      schedule_manually: true
+    )
+    create(:work_package, **child_attributes)
   end
 
   describe "#dependent_ids" do
@@ -100,9 +118,9 @@ RSpec.describe WorkPackages::ScheduleDependency::Dependency do
       end
     end
 
-    context "when the work_package has a follower which has a child" do
+    context "when the work_package has a follower which has a child automatically scheduled" do
       let!(:follower) { create_follower_of(work_package) }
-      let!(:follower_child) { create_child_of(follower) }
+      let!(:follower_child) { create_child_of(follower, schedule_manually: false) }
 
       context "for dependency of the child" do
         let(:work_package_used_in_dependency) { follower_child }
@@ -117,6 +135,25 @@ RSpec.describe WorkPackages::ScheduleDependency::Dependency do
 
         it "returns an array with the work_package id and the follower child id" do
           expect(subject.dependent_ids).to contain_exactly(work_package.id, follower_child.id)
+        end
+      end
+    end
+
+    context "when the work_package has a follower which has a child manually scheduled" do
+      let!(:follower) { create_follower_of(work_package) }
+      let!(:follower_child) { create_child_of(follower, schedule_manually: true) }
+
+      context "for dependency of the child" do
+        it "has no dependency as its date do not depend on any other work package" do
+          expect(dependency_for(follower_child)).to be_nil
+        end
+      end
+
+      context "for dependency of the follower" do
+        let(:work_package_used_in_dependency) { follower }
+
+        it "has its dates do not depend on the moved work package but on the follower child" do
+          expect(dependency_for(follower)).to be_nil
         end
       end
     end
@@ -187,10 +224,10 @@ RSpec.describe WorkPackages::ScheduleDependency::Dependency do
         end
       end
 
-      context "when has a predecessor which has a parent and a child" do
+      context "when has a follower which has a parent and a child automatically scheduled" do
         let!(:follower) { create_follower_of(work_package) }
         let!(:follower_parent) { create_parent_of(follower) }
-        let!(:follower_child) { create_child_of(follower) }
+        let!(:follower_child) { create_child_of(follower, schedule_manually: false) }
 
         context "for dependency of the follower child" do
           let(:work_package_used_in_dependency) { follower_child }
@@ -208,6 +245,28 @@ RSpec.describe WorkPackages::ScheduleDependency::Dependency do
           end
         end
       end
+
+      context "when has a follower which has a parent and a child manually scheduled" do
+        let!(:follower) { create_follower_of(work_package) }
+        let!(:follower_parent) { create_parent_of(follower) }
+        let!(:follower_child) { create_child_of(follower, schedule_manually: true) }
+
+        context "for dependency of the follower child" do
+          let(:work_package_used_in_dependency) { follower_child }
+
+          it "has no dependency as its dates do not depend on any other work package (it's manually scheduled)" do
+            expect(dependency_for(follower_child)).to be_nil
+          end
+        end
+
+        context "for dependency of the follower parent" do
+          let(:work_package_used_in_dependency) { follower_parent }
+
+          it "has no dependency as its dates depend on the follower child, and this one is manually scheduled" do
+            expect(dependency_for(follower_parent)).to be_nil
+          end
+        end
+      end
     end
   end
 
@@ -215,7 +274,7 @@ RSpec.describe WorkPackages::ScheduleDependency::Dependency do
     let(:work_package_used_in_dependency) { work_package }
 
     before do
-      work_package.update(due_date: Time.zone.today)
+      work_package.update(due_date: Date.current)
     end
 
     context "with a moved predecessor" do
@@ -228,13 +287,13 @@ RSpec.describe WorkPackages::ScheduleDependency::Dependency do
     context "with an unmoved predecessor" do
       it "returns the soonest start date from the predecessors" do
         follower = create_follower_of(work_package)
-        unmoved_follower_predecessor = create_predecessor_of(follower, due_date: Time.zone.today + 4.days)
+        unmoved_follower_predecessor = create_predecessor_of(follower, due_date: Date.current + 4.days)
         expect(dependency_for(follower).soonest_start_date).to eq(unmoved_follower_predecessor.due_date + 1.day)
       end
     end
 
     context "with non working days" do
-      let!(:tomorrow_we_do_not_work!) { create(:non_working_day, date: Time.zone.tomorrow) }
+      let!(:tomorrow_we_do_not_work!) { create(:non_working_day, date: Date.tomorrow) }
 
       it "returns the soonest start date being a working day" do
         follower = create_follower_of(work_package)

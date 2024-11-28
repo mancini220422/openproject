@@ -34,12 +34,12 @@ RSpec.describe "Working Days", :js do
   shared_let(:week_days) { week_with_saturday_and_sunday_as_weekend }
   shared_let(:admin) { create(:admin) }
 
-  let_schedule(<<~CHART)
-    days                  | MTWTFSSmtwtfss |
-    earliest_work_package | XXXXX          |
-    second_work_package   |    XX..XX      |
-    follower              |          XXX   | follows earliest_work_package, follows second_work_package
-  CHART
+  let_work_packages(<<~TABLE)
+    subject               | MTWTFSSmtwtfss | scheduling mode | properties
+    earliest_work_package | XXXXX          | manual          |
+    second_work_package   |    XX..XX      | manual          |
+    follower              |          XXX   | automatic       | follows earliest_work_package, follows second_work_package
+  TABLE
 
   let(:dialog) { Components::ConfirmationDialog.new }
   let(:datepicker) { Components::DatepickerModal.new }
@@ -83,12 +83,12 @@ RSpec.describe "Working Days", :js do
 
       expect(working_days_setting).to eq([1, 2, 3, 4, 5])
 
-      expect_schedule(WorkPackage.all, <<~CHART)
-        days                  | MTWTFSSmtwtfss |
+      expect_work_packages(WorkPackage.all, <<~TABLE)
+        subject               | MTWTFSSmtwtfss |
         earliest_work_package | XXXXX          |
         second_work_package   |    XX..XX      |
         follower              |          XXX   |
-      CHART
+      TABLE
     end
 
     it "updates the values and saves the settings" do
@@ -114,12 +114,12 @@ RSpec.describe "Working Days", :js do
 
       expect(working_days_setting).to eq([2, 3, 4])
 
-      expect_schedule(WorkPackage.all, <<~CHART)
-        days                  | MTWTFSSmtwtfssmtwt  |
+      expect_work_packages(WorkPackage.all, <<~TABLE)
+        subject               | MTWTFSSmtwtfssmtwt  |
         earliest_work_package |  XXX....XX          |
         second_work_package   |    X....XXX         |
         follower              |                XXX  |
-      CHART
+      TABLE
 
       # The updated work packages will have a journal entry informing about the change
       wp_page = Pages::FullWorkPackage.new(earliest_work_package)
@@ -154,12 +154,12 @@ RSpec.describe "Working Days", :js do
       expect(page).to have_unchecked_field "Sunday"
       expect(working_days_setting).to eq([1, 2, 3, 4, 5])
 
-      expect_schedule(WorkPackage.all, <<~CHART)
-        days                  | MTWTFSSmtwtfss |
+      expect_work_packages(WorkPackage.all, <<~TABLE)
+        subject               | MTWTFSSmtwtfss |
         earliest_work_package | XXXXX          |
         second_work_package   |    XX..XX      |
         follower              |          XXX   |
-      CHART
+      TABLE
     end
 
     it "shows an error when a previous change to the working days configuration isn't processed yet" do

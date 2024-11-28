@@ -209,9 +209,7 @@ class WorkPackages::UpdateAncestorsService
   end
 
   def ignore_non_working_days_of_descendants(ancestor, loader)
-    children = loader
-                 .children_of(ancestor)
-                 .reject(&:schedule_manually)
+    children = loader.children_of(ancestor)
 
     if children.any?
       children.any?(&:ignore_non_working_days)

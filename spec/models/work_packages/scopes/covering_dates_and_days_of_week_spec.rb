@@ -50,9 +50,9 @@ RSpec.describe WorkPackages::Scopes::CoveringDatesAndDaysOfWeek do
     end
 
     it "returns work packages having start date or due date being in the given days of week" do
-      schedule =
-        create_schedule(<<~CHART)
-          days         | MTWTFSS |
+      table =
+        create_table(<<~TABLE)
+          subject      | MTWTFSS |
           covered1     | XX      |
           covered2     |  XX     |
           covered3     |  X      |
@@ -62,41 +62,41 @@ RSpec.describe WorkPackages::Scopes::CoveringDatesAndDaysOfWeek do
           not_covered2 |   X     |
           not_covered3 |    XX   |
           not_covered4 |         |
-        CHART
+        TABLE
 
       expect(WorkPackage.covering_dates_and_days_of_week(**day_args[:tuesday]))
         .to contain_exactly(
-          schedule.work_package("covered1"),
-          schedule.work_package("covered2"),
-          schedule.work_package("covered3"),
-          schedule.work_package("covered4"),
-          schedule.work_package("covered5")
+          table.work_package("covered1"),
+          table.work_package("covered2"),
+          table.work_package("covered3"),
+          table.work_package("covered4"),
+          table.work_package("covered5")
         )
     end
 
     it "returns work packages having days between start date and due date being in the given days of week" do
-      schedule =
-        create_schedule(<<~CHART)
-          days         | MTWTFSS |
+      table =
+        create_table(<<~TABLE)
+          subject      | MTWTFSS |
           covered1     | XXXX    |
           covered2     |  XXX    |
           not_covered1 |    XX   |
           not_covered2 | X       |
-        CHART
+        TABLE
 
       expect(WorkPackage.covering_dates_and_days_of_week(**day_args[:tuesday, :wednesday]))
         .to contain_exactly(
-          schedule.work_package("covered1"),
-          schedule.work_package("covered2")
+          table.work_package("covered1"),
+          table.work_package("covered2")
         )
     end
 
     context "if work package ignores non working days" do
       it "does not returns it" do
-        create_schedule(<<~CHART)
-          days         | MTWTFSS |
-          not_covered  | XXXXXXX | working days include weekends
-        CHART
+        create_table(<<~TABLE)
+          subject      | MTWTFSS | days counting
+          not_covered  | XXXXXXX | all days
+        TABLE
 
         expect(WorkPackage.covering_dates_and_days_of_week(**day_args[:wednesday]))
           .to eq([])
@@ -104,47 +104,47 @@ RSpec.describe WorkPackages::Scopes::CoveringDatesAndDaysOfWeek do
     end
 
     it "does not return work packages having follows relation covering the given days of week" do
-      create_schedule(<<~CHART)
-        days         | MTWTFSS |
+      create_table(<<~TABLE)
+        subject      | MTWTFSS | properties
         not_covered1 | X       |
         follower1    |     X   | follows not_covered1
         not_covered2 | X       |
         follower2    |   X     | follows not_covered2
-      CHART
+      TABLE
 
       expect(WorkPackage.covering_dates_and_days_of_week(**day_args[:tuesday, :thursday]))
         .to eq([])
     end
 
     it "does not return work packages having follows relation with lag covering the given days of week" do
-      create_schedule(<<~CHART)
-        days         | MTWTFSS |
+      create_table(<<~TABLE)
+        subject      | MTWTFSS | properties
         not_covered1 | X       |
         follower1    |     X   | follows not_covered1 with lag 3
         not_covered2 | X       |
         follower2    |   X     | follows not_covered2 with lag 1
-      CHART
+      TABLE
 
       expect(WorkPackage.covering_dates_and_days_of_week(**day_args[:tuesday, :thursday]))
         .to eq([])
     end
 
     it "accepts a single day of week or an array of days" do
-      schedule =
-        create_schedule(<<~CHART)
-          days          | MTWTFSS |
+      table =
+        create_table(<<~TABLE)
+          subject       | MTWTFSS |
           covered       |  X      |
           not_covered   | X       |
-        CHART
+        TABLE
 
       single_value = day_args[:tuesday].transform_values { |v| Array(v).first }
 
       expect(WorkPackage.covering_dates_and_days_of_week(**single_value))
-        .to eq([schedule.work_package("covered")])
+        .to eq([table.work_package("covered")])
       expect(WorkPackage.covering_dates_and_days_of_week(**day_args[:tuesday]))
-        .to eq([schedule.work_package("covered")])
+        .to eq([table.work_package("covered")])
       expect(WorkPackage.covering_dates_and_days_of_week(**day_args[:tuesday, :wednesday]))
-        .to eq([schedule.work_package("covered")])
+        .to eq([table.work_package("covered")])
     end
   end
 

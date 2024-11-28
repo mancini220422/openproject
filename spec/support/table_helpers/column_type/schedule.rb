@@ -52,7 +52,8 @@ module TableHelpers
     #   | due date only             |     ]     |
     #   | no dates                  |           |
     #
-    # Adapted from original implementation in `spec/support/schedule_helpers/chart_builder.rb`.
+    # Adapted from (now deleted) original implementation
+    # in `spec/support/schedule_helpers/chart_builder.rb`.
     class Schedule < Generic
       def attributes_for_work_package(_attribute, work_package)
         {

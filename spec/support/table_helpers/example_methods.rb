@@ -49,6 +49,42 @@ module TableHelpers
       table_data.create_work_packages
     end
 
+    # Change the given work packages according to the given table representation.
+    # Work packages are changed without being saved.
+    #
+    # The first column gives the identifier of the work package to update, so it
+    # cannot be used to update the subject or the hierarchy.
+    #
+    # For instance:
+    #
+    #   before do
+    #     update_work_packages([main], <<~TABLE)
+    #       subject | MTWTFSS | scheduling mode |
+    #       main    | XX      | manual          |
+    #     TABLE
+    #   end
+    #
+    # is equivalent to:
+    #
+    #   before do
+    #     main.start_date = monday
+    #     main.due_date = tuesday
+    #     main.schedule_manually = true
+    #   end
+    def change_work_packages(work_packages, table_representation)
+      TableData.for(table_representation).work_packages_data.pluck(:attributes).each do |attributes|
+        work_package = work_packages.find { |wp| wp.subject == attributes[:subject] }
+        unless work_package
+          raise ArgumentError, "no work package with subject #{attributes[:subject]} given; " \
+                               "available work packages are #{work_packages.pluck(:subject).to_sentence}"
+        end
+
+        attributes.without(:subject).each do |attribute, value|
+          work_package.send(:"#{attribute}=", value)
+        end
+      end
+    end
+
     # Expect the given work packages to match a visual table representation.
     #
     # It uses +match_table+ internally. It does not reload the work packages

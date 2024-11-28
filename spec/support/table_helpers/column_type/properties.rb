@@ -43,7 +43,8 @@ module TableHelpers
     #   | follower  | follows main with lag 2 |
     #   | follower2 | follows follower        |
     #
-    # Adapted from original implementation in `spec/support/schedule_helpers/chart_builder.rb`.
+    # Adapted from (now deleted) original implementation
+    # in `spec/support/schedule_helpers/chart_builder.rb`.
     class Properties < Generic
       def attributes_for_work_package(_attribute, _work_package)
         {}

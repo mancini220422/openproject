@@ -31,6 +31,7 @@
 require_relative "identifier"
 require_relative "column_type/generic"
 require_relative "column_type/with_identifier_metadata"
+require_relative "column_type/days_counting"
 require_relative "column_type/duration"
 require_relative "column_type/hierarchy"
 require_relative "column_type/percentage"
@@ -52,6 +53,7 @@ module TableHelpers
       done_ratio: ColumnType::Percentage,
       derived_done_ratio: ColumnType::Percentage,
       hierarchy: ColumnType::Hierarchy,
+      ignore_non_working_days: ColumnType::DaysCounting,
       properties: ColumnType::Properties,
       schedule: ColumnType::Schedule,
       schedule_manually: ColumnType::SchedulingMode,
@@ -90,6 +92,8 @@ module TableHelpers
         :due_date
       when /.*MTWTFSS.*/
         :schedule
+      when /\s*days counting\s*/
+        :ignore_non_working_days
       when /\s*scheduling mode\s*/
         :schedule_manually
       when /\s*properties\s*/

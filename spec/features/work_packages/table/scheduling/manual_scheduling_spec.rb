@@ -10,7 +10,8 @@ RSpec.describe "Manual scheduling", :js do
     create(:work_package,
            project:,
            type:,
-           subject: "Parent")
+           subject: "Parent",
+           schedule_manually: false)
   end
 
   let!(:child) do
@@ -116,9 +117,5 @@ RSpec.describe "Manual scheduling", :js do
       expect(parent.start_date.iso8601).to eq("2020-07-20")
       expect(parent.due_date.iso8601).to eq("2020-07-25")
     end
-  end
-
-  context "with a user allowed to view only" do
-    let(:role) { create(:project_role, permissions: %i[view_work_packages]) }
   end
 end

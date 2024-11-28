@@ -61,22 +61,22 @@ RSpec.describe WorkPackage do
 
       it "notes the changes to subject" do
         expect(work_package.last_journal.details[:subject])
-          .to contain_exactly(nil, work_package.subject)
+          .to eq([nil, work_package.subject])
       end
 
       it "notes the changes to project" do
         expect(work_package.last_journal.details[:project_id])
-          .to contain_exactly(nil, work_package.project_id)
+          .to eq([nil, work_package.project_id])
       end
 
       it "notes the description" do
         expect(work_package.last_journal.details[:description])
-          .to contain_exactly(nil, work_package.description)
+          .to eq([nil, work_package.description])
       end
 
       it "notes the scheduling mode" do
         expect(work_package.last_journal.details[:schedule_manually])
-          .to contain_exactly(nil, false)
+          .to eq([nil, true])
       end
 
       it "has the timestamp of the work package update time for created_at" do
@@ -174,7 +174,7 @@ RSpec.describe WorkPackage do
         work_package.assigned_to = User.current
         work_package.responsible = User.current
         work_package.parent = parent_work_package
-        work_package.schedule_manually = true
+        work_package.schedule_manually = false
 
         work_package.save!
       end
@@ -191,67 +191,25 @@ RSpec.describe WorkPackage do
         end
       end
 
-      shared_examples_for "old value" do
-        subject { work_package.last_journal.old_value_for(property) }
-
-        it { is_expected.to eq(expected_value) }
-      end
-
-      shared_examples_for "new value" do
-        subject { work_package.last_journal.new_value_for(property) }
-
-        it { is_expected.to eq(expected_value) }
-      end
-
-      describe "journaled value for" do
-        describe "description" do
-          let(:property) { "description" }
-
-          context "for old value" do
-            let(:expected_value) { "Description" }
-
-            it_behaves_like "old value"
-          end
-
-          context "for new value" do
-            let(:expected_value) { "changed" }
-
-            it_behaves_like "new value"
-          end
-        end
-
-        describe "schedule_manually" do
-          let(:property) { "schedule_manually" }
-
-          context "for old value" do
-            let(:expected_value) { false }
-
-            it_behaves_like "old value"
-          end
-
-          context "for new value" do
-            let(:expected_value) { true }
-
-            it_behaves_like "new value"
-          end
-        end
-
-        describe "duration" do
-          let(:property) { "duration" }
-
-          context "for old value" do
-            let(:expected_value) { 1 }
-
-            it_behaves_like "old value"
-          end
-
-          context "for new value" do
-            let(:expected_value) { 8 }
-
-            it_behaves_like "new value"
+      shared_examples_for "journaled value for" do |property:, expected_old_value:, expected_new_value:|
+        context "for #{property}", :aggregate_failures do
+          it "tracks the change from old value #{expected_old_value.inspect} to new value #{expected_new_value.inspect}" do
+            journal = work_package.last_journal
+            expect(journal.old_value_for(property)).to eq(expected_old_value)
+            expect(journal.new_value_for(property)).to eq(expected_new_value)
           end
         end
       end
+
+      include_examples "journaled value for", property: "description",
+                                              expected_old_value: "Description",
+                                              expected_new_value: "changed"
+      include_examples "journaled value for", property: "schedule_manually",
+                                              expected_old_value: true,
+                                              expected_new_value: false
+      include_examples "journaled value for", property: "duration",
+                                              expected_old_value: 1,
+                                              expected_new_value: 8
 
       describe "adding journal with a missing journal and an existing journal" do
         before do
