@@ -688,6 +688,25 @@ en:
       no_results_title_text: There are currently no workflows.
 
   work_packages:
+    datepicker_modal:
+      banner:
+        description:
+          click_on_show_relations_to_open_gantt: 'Click on "%{button_name}" for Gantt overview.'
+          manual_gap_between_predecessors: "There is a gap between this and all predecessors."
+          manual_overlap_with_predecessors: "Overlaps with at least one predecessor."
+          manual_with_children: "This has child work package but their start dates are ignored."
+        title:
+          automatic_with_children: "The dates are determined by child work packages."
+          automatic_with_predecessor: "The start date is set by a predecessor."
+          manually_scheduled: "Manually scheduled. Dates not affected by relations."
+      ignore_non_working_days:
+        title: "Working days only"
+      mode:
+        title: "Scheduling mode"
+        automatic: "Automatic"
+        manual: "Manual"
+      show_relations: "Show relations"
+
     x_descendants:
       one: "One descendant work package"
       other: "%{count} work package descendants"

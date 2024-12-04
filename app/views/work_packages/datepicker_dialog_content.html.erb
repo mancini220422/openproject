@@ -1,0 +1,5 @@
+<%=
+  content_tag("turbo-frame", id: "wp-datepicker-dialog--content") do
+    render(WorkPackages::DatePicker::DialogContentComponent.new(work_package:, manually_scheduled:))
+  end
+%>

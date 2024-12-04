@@ -38,12 +38,13 @@ class WorkPackagesController < ApplicationController
 
   before_action :authorize_on_work_package,
                 :project, only: %i[show generate_pdf_dialog generate_pdf]
+  before_action :authorize_on_work_package, only: %i[datepicker_dialog_content]
   before_action :load_and_authorize_in_optional_project,
                 :check_allowed_export,
                 :protect_from_unauthorized_export, only: %i[index export_dialog]
 
   before_action :authorize, only: :show_conflict_flash_message
-  authorization_checked! :index, :show, :export_dialog, :generate_pdf_dialog, :generate_pdf
+  authorization_checked! :index, :show, :export_dialog, :generate_pdf_dialog, :generate_pdf, :datepicker_dialog_content
 
   before_action :load_and_validate_query, only: :index, unless: -> { request.format.html? }
   before_action :load_work_packages, only: :index, if: -> { request.format.atom? }
@@ -104,6 +105,29 @@ class WorkPackagesController < ApplicationController
   rescue ::Exports::ExportError => e
     flash[:error] = e.message
     redirect_back(fallback_location: work_package_path(work_package))
+  end
+
+  def datepicker_dialog_content
+    manually_scheduled = if params[:manually_scheduled].present?
+                           params.delete(:manually_scheduled)
+                         else
+                           work_package.schedule_manually
+                         end
+
+    respond_to do |format|
+      format.html do
+        render :datepicker_dialog_content,
+               locals: { work_package:, manually_scheduled:, params: },
+               layout: false
+      end
+
+      format.turbo_stream do
+        replace_via_turbo_stream(
+          component: WorkPackages::DatePicker::DialogContentComponent.new(work_package:, manually_scheduled:)
+        )
+        render turbo_stream: turbo_streams
+      end
+    end
   end
 
   def show_conflict_flash_message
@@ -174,7 +198,7 @@ class WorkPackagesController < ApplicationController
   end
 
   def project
-    @project ||= work_package ? work_package.project : nil
+    @project ||= work_package&.project
   end
 
   def work_package

@@ -82,6 +82,7 @@ import { WorkPackageChangeset } from 'core-app/features/work-packages/components
 import { UntilDestroyedMixin } from 'core-app/shared/helpers/angular/until-destroyed.mixin';
 import isNewResource from 'core-app/features/hal/helpers/is-new-resource';
 import { DateModalSchedulingService } from '../services/date-modal-scheduling.service';
+import { PathHelperService } from 'core-app/core/path-helper/path-helper.service';
 
 export type DateKeys = 'start'|'end';
 export type DateFields = DateKeys|'duration';
@@ -131,6 +132,8 @@ export class OpWpMultiDateFormComponent extends UntilDestroyedMixin implements A
   @Output() cancel = new EventEmitter();
 
   @Output() save = new EventEmitter();
+
+  public turboFrameSrc:string;
 
   text = {
     save: this.I18n.t('js.button_save'),
@@ -243,6 +246,7 @@ export class OpWpMultiDateFormComponent extends UntilDestroyedMixin implements A
     readonly deviceService:DeviceService,
     readonly weekdayService:WeekdayService,
     readonly focusHelper:FocusHelperService,
+    readonly pathHelper:PathHelperService,
   ) {
     super();
 
@@ -289,6 +293,8 @@ export class OpWpMultiDateFormComponent extends UntilDestroyedMixin implements A
     this.dates.start = this.changeset.value('startDate');
     this.dates.end = this.changeset.value('dueDate');
     this.setCurrentActivatedField(this.initialActivatedField);
+
+    this.turboFrameSrc = this.pathHelper.workPackageDatepickerDialogContentPath(this.changeset.id);
   }
 
   ngAfterViewInit():void {

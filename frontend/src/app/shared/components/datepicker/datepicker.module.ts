@@ -17,6 +17,7 @@ import { OpBasicDatePickerModule } from './basic-datepicker.module';
 import { OpSpotModule } from 'core-app/spot/spot.module';
 import { OpenprojectModalModule } from '../modal/modal.module';
 import { OpDatePickerSheetComponent } from 'core-app/shared/components/datepicker/sheet/date-picker-sheet.component';
+import { OpenprojectContentLoaderModule } from 'core-app/shared/components/op-content-loader/openproject-content-loader.module';
 
 @NgModule({
   imports: [
@@ -27,6 +28,7 @@ import { OpDatePickerSheetComponent } from 'core-app/shared/components/datepicke
     OpSpotModule,
     OpBasicDatePickerModule,
     OpenprojectModalModule,
+    OpenprojectContentLoaderModule,
   ],
 
   providers: [

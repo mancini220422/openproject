@@ -7,13 +7,22 @@
   tabindex="0"
   (submit)="doSave($event)"
 >
-  <op-datepicker-banner
-    [scheduleManually]="scheduleManually"
-    class="op-datepicker-modal--banner"
-  ></op-datepicker-banner>
+  <turbo-frame *ngIf="turboFrameSrc"
+               [src]="turboFrameSrc"
+               id="wp-datepicker-dialog--content">
+    <op-content-loader viewBox="0 0 100 100">
+      <svg:rect x="0" y="0" width="70" height="5" rx="1"/>
 
-  <div class="spot-container op-datepicker-modal--stretch-content">
-    <div class="op-datepicker-modal--toggle-actions-container">
+      <svg:rect x="75" y="0" width="25" height="5" rx="1"/>
+
+      <svg:rect x="0" y="10" width="100" height="8" rx="1"/>
+
+      <svg:rect x="0" y="25" width="100" height="12" rx="1"/>
+    </op-content-loader>
+  </turbo-frame>
+
+  <!--<div class="spot-container op-datepicker-modal&#45;&#45;stretch-content">
+    <div class="op-datepicker-modal&#45;&#45;toggle-actions-container">
       <op-datepicker-scheduling-toggle
         name="scheduleManually"
         [(ngModel)]="scheduleManually"
@@ -27,7 +36,7 @@
       ></op-datepicker-working-days-toggle>
     </div>
 
-    <div class="op-datepicker-modal--dates-container">
+    <div class="op-datepicker-modal&#45;&#45;dates-container">
       <spot-form-field
         [label]="text.startDate"
         data-test-selector="datepicker-start-date"
@@ -35,10 +44,10 @@
         <spot-text-field
           slot="input"
           name="startDate"
-          data-test-selector="op-datepicker-modal--start-date-field"
-          class="op-datepicker-modal--date-field"
+          data-test-selector="op-datepicker-modal&#45;&#45;start-date-field"
+          class="op-datepicker-modal&#45;&#45;date-field"
           [attr.data-qa-highlighted]="showFieldAsActive('start') || undefined"
-          [ngClass]="{'op-datepicker-modal--date-field_current' : showFieldAsActive('start')}"
+          [ngClass]="{'op-datepicker-modal&#45;&#45;date-field_current' : showFieldAsActive('start')}"
           [ngModel]="dates.start"
           (ngModelChange)="startDateChanged$.next($event)"
           [disabled]="!isSchedulable"
@@ -49,7 +58,7 @@
           slot="action"
           type="button"
           class="spot-link"
-          [ngClass]="{ 'op-datepicker-modal--hidden-link': !showTodayLink() }"
+          [ngClass]="{ 'op-datepicker-modal&#45;&#45;hidden-link': !showTodayLink() }"
           (click)="setToday('start')"
           [textContent]="text.today">
         </button>
@@ -61,10 +70,10 @@
         <spot-text-field
           slot="input"
           name="endDate"
-          data-test-selector="op-datepicker-modal--end-date-field"
-          class="op-datepicker-modal--date-field"
+          data-test-selector="op-datepicker-modal&#45;&#45;end-date-field"
+          class="op-datepicker-modal&#45;&#45;date-field"
           [attr.data-qa-highlighted]="showFieldAsActive('end') || undefined"
-          [ngClass]="{'op-datepicker-modal--date-field_current' : showFieldAsActive('end')}"
+          [ngClass]="{'op-datepicker-modal&#45;&#45;date-field_current' : showFieldAsActive('end')}"
           [ngModel]="dates.end"
           (ngModelChange)="endDateChanged$.next($event)"
           [disabled]="!isSchedulable"
@@ -75,7 +84,7 @@
           slot="action"
           type="button"
           class="spot-link"
-          [ngClass]="{ 'op-datepicker-modal--hidden-link': !showTodayLink() }"
+          [ngClass]="{ 'op-datepicker-modal&#45;&#45;hidden-link': !showTodayLink() }"
           (click)="setToday('end')"
           [textContent]="text.today">
         </button>
@@ -88,10 +97,10 @@
           #durationField
           slot="input"
           name="duration"
-          data-test-selector="op-datepicker-modal--duration-field"
-          class="op-datepicker-modal--date-field"
+          data-test-selector="op-datepicker-modal&#45;&#45;duration-field"
+          class="op-datepicker-modal&#45;&#45;date-field"
           [attr.data-qa-highlighted]=" showFieldAsActive('duration') || undefined"
-          [ngClass]="{'op-datepicker-modal--date-field_current' : showFieldAsActive('duration')}"
+          [ngClass]="{'op-datepicker-modal&#45;&#45;date-field_current' : showFieldAsActive('duration')}"
           [ngModel]="durationFocused ? duration : displayedDuration"
           [showClearButton]="currentlyActivatedDateField === 'duration'"
           pattern="\d*"
@@ -109,7 +118,7 @@
       id="flatpickr-input"
       hidden
     />
-  </div>
+  </div>-->
 
   <div class="spot-action-bar">
     <div class="spot-action-bar--right">
