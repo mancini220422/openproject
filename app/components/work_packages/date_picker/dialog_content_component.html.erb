@@ -37,26 +37,6 @@
               end
             end
           end
-
-          body.with_row(mb: 3) do
-            flex_layout(justify_content: :space_between, gap: 3) do |second_row|
-              second_row.with_column do
-                render(Primer::Alpha::TextField.new(name: :start_date,
-                                                    label: I18n.t("attributes.start_date"),
-                                                    value: work_package.start_date))
-              end
-              second_row.with_column do
-                render(Primer::Alpha::TextField.new(name: :due_date,
-                                                    label: I18n.t("attributes.due_date"),
-                                                    value: work_package.due_date))
-              end
-              second_row.with_column do
-                render(Primer::Alpha::TextField.new(name: :duration,
-                                                    label: I18n.t("activerecord.attributes.work_package.duration"),
-                                                    value: work_package.duration))
-              end
-            end
-          end
         end
       end
     end
