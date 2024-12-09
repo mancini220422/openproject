@@ -43,7 +43,7 @@ module Primer
 
           def derive_datepicker_options(options)
             options.reverse_merge(
-              component: "opce-single-date-picker"
+              component: "opce-basic-single-date-picker"
             )
           end
 

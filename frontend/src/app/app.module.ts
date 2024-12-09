@@ -418,7 +418,7 @@ export class OpenProjectModule implements DoBootstrap {
   private registerCustomElements(injector:Injector) {
     registerCustomElement('opce-macro-embedded-table', EmbeddedTablesMacroComponent, { injector });
     registerCustomElement('opce-principal', OpPrincipalComponent, { injector });
-    registerCustomElement('opce-single-date-picker', OpBasicSingleDatePickerComponent, { injector });
+    registerCustomElement('opce-basic-single-date-picker', OpBasicSingleDatePickerComponent, { injector });
     registerCustomElement('opce-range-date-picker', OpBasicRangeDatePickerComponent, { injector });
     registerCustomElement('opce-global-search', GlobalSearchInputComponent, { injector });
     registerCustomElement('opce-autocompleter', OpAutocompleterComponent, { injector });
@@ -450,7 +450,6 @@ export class OpenProjectModule implements DoBootstrap {
     registerCustomElement('opce-timer-account-menu', TimerAccountMenuComponent, { injector });
     registerCustomElement('opce-remote-field-updater', RemoteFieldUpdaterComponent, { injector });
     registerCustomElement('opce-modal-single-date-picker', OpModalSingleDatePickerComponent, { injector });
-    registerCustomElement('opce-basic-single-date-picker', OpBasicSingleDatePickerComponent, { injector });
     registerCustomElement('opce-spot-drop-modal-portal', SpotDropModalPortalComponent, { injector });
     registerCustomElement('opce-spot-switch', SpotSwitchComponent, { injector });
     registerCustomElement('opce-modal-overlay', OpModalOverlayComponent, { injector });

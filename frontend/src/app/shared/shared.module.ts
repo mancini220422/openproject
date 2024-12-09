@@ -67,12 +67,6 @@ import { CopyToClipboardService } from './components/copy-to-clipboard/copy-to-c
 import { CopyToClipboardComponent } from './components/copy-to-clipboard/copy-to-clipboard.component';
 import { OpDateTimeComponent } from './components/date/op-date-time.component';
 import { ToastComponent } from './components/toaster/toast.component';
-
-// Old datepickers
-import {
-  OpMultiDatePickerComponent,
-} from 'core-app/shared/components/datepicker/multi-date-picker/multi-date-picker.component';
-
 import { ToastsContainerComponent } from './components/toaster/toasts-container.component';
 import { UploadProgressComponent } from './components/toaster/upload-progress.component';
 import { ResizerComponent } from './components/resizer/resizer.component';
@@ -197,9 +191,6 @@ export function bootstrapModule(injector:Injector):void {
     OpProjectIncludeListComponent,
     OpLoadingProjectListComponent,
 
-    // Old datepickers
-    OpMultiDatePickerComponent,
-
     OpNonWorkingDaysListComponent,
   ],
   providers: [
@@ -250,9 +241,6 @@ export function bootstrapModule(injector:Injector):void {
     OpLoadingProjectListComponent,
 
     OpNonWorkingDaysListComponent,
-
-    // Old datepickers
-    OpMultiDatePickerComponent,
 
     ShareUpsaleComponent,
   ],
