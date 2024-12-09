@@ -40,8 +40,10 @@ module Storages
             AuthenticationStrategies::Noop.new
           when :basic_auth
             AuthenticationStrategies::BasicAuth.new
-          when :oauth_user_token
+          when :mutual_oauth_user_token
             AuthenticationStrategies::OAuthUserToken.new(strategy.user)
+          when :central_oauth_user_token
+            # TODO: implement (also naming: oauth vs oidc sounds wrong) -> central vs. mutual/peer
           when :oauth_client_credentials
             AuthenticationStrategies::OAuthClientCredentials.new(strategy.use_cache)
           else

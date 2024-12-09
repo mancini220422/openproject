@@ -40,6 +40,7 @@ module Storages
     store_attribute :provider_fields, :password, :string
     store_attribute :provider_fields, :group, :string
     store_attribute :provider_fields, :group_folder, :string
+    store_attribute :provider_fields, :authenticate_via_idp, :boolean, default: false
 
     def oauth_configuration
       Peripherals::OAuthConfigurations::NextcloudConfiguration.new(self)

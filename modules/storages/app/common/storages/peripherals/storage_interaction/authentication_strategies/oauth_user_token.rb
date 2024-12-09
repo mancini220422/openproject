@@ -40,7 +40,7 @@ module Storages
           end
 
           def self.strategy
-            Strategy.new(:oauth_user_token)
+            Strategy.new(:mutual_oauth_user_token)
           end
 
           def initialize(user)

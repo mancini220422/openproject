@@ -38,6 +38,7 @@ module Storages
           end
 
           UserBound = ->(user:) do
+            # TODO: Pass storage to UserBound and decide between mutual and central OAuth here
             ::Storages::Peripherals::StorageInteraction::AuthenticationStrategies::OAuthUserToken
               .strategy
               .with_user(user)

@@ -70,7 +70,7 @@ module Storages
               case auth_strategy.key
               when :basic_auth
                 ServiceResult.success(result: storage.username)
-              when :oauth_user_token
+              when :mutual_oauth_user_token
                 origin_user_id = RemoteIdentity.where(user_id: auth_strategy.user, oauth_client: storage.oauth_client)
                                                .pick(:origin_user_id)
                 if origin_user_id.present?
@@ -81,6 +81,9 @@ module Storages
                           log_message:
                             "No origin user ID or user token found. Cannot execute query without user context.")
                 end
+              when :central_oauth_user_token
+                # TODO: Figure out the remote ID of the user belonging to our access token
+                # possibly by calling out to <nextcloud>/ocs/v1.php/cloud/user
               else
                 failure(code: :error,
                         data: StorageErrorData.new(source: caller),
