@@ -242,14 +242,11 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
           TABLE
         end
 
-        it "does not move follower" do
+        it "moves follower to the soonest working day after its predecessor due date" do
           expect_work_packages(subject.all_results, <<~TABLE)
             subject       | MTWTFSS       |
             work_package  | XXXXX..X      |
-          TABLE
-          expect_work_packages([follower], <<~TABLE)
-            subject       | MTWTFSS       |
-            follower      |          XXX  |
+            follower      |         XXX   |
           TABLE
         end
       end
@@ -311,15 +308,16 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
 
         before do
           change_work_packages([work_package], <<~TABLE)
-            subject       |    MTWTFSS |
-            work_package  | X          |
+            subject       |      MTWTFSS |
+            work_package  | X            |
           TABLE
         end
 
-        it "does not move the follower" do
+        it "moves follower to the soonest working day after its predecessor due date" do
           expect_work_packages(subject.all_results, <<~TABLE)
-            subject       |    MTWTFSS |
-            work_package  | X          |
+            subject       |      MTWTFSS |
+            work_package  | X            |
+            follower      |  XX          |
           TABLE
         end
       end
@@ -340,8 +338,9 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
 
         it "does not move the follower" do
           expect_work_packages(subject.all_results, <<~TABLE)
-            subject       |    MTWTFSS   |
-            work_package  | X            |
+            subject       |    MTWTFSS |
+            work_package  | X          |
+            follower      |    X       |
           TABLE
         end
       end
@@ -362,9 +361,11 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
         end
 
         it "does not move the follower" do
-          expect_work_packages(subject.all_results, <<~TABLE)
+          expect_work_packages(subject.all_results + [annoyer], <<~TABLE)
             subject       | mtwtfssmtwtfssMTWTFSS |
             work_package  |  X                    |
+            follower      |            X..X       |
+            annoyer       |    XX..XX             |
           TABLE
         end
       end
@@ -521,7 +522,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
           follower.update_column(:schedule_manually, false)
         end
 
-        it "reschedules follower to start right after its predecessor and end the same day" do
+        it "reschedules follower to start right after its predecessor and end at the already defined due date" do
           expect_work_packages(subject.all_results, <<~TABLE)
             subject       | MTWTFSS |
             work_package  | XX      |
@@ -591,10 +592,11 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
           TABLE
         end
 
-        it "does not move the follower" do
+        it "rescheduled follower to start as soon as possible without influence from the other predecessor" do
           expect_work_packages(subject.all_results, <<~TABLE)
             subject       | mtwtfssMTWTFSS |
             work_package  |   ]            |
+            follower      |    XX..X       |
           TABLE
         end
       end
@@ -745,10 +747,12 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
         TABLE
       end
 
-      it "does not reschedule the followers" do
+      it "reschedules follower and follower parent to start right after the moved predecessor" do
         expect_work_packages(subject.all_results, <<~TABLE)
           subject         | mtwtfssMTWTFSS |
           work_package    |    ]           |
+          follower_parent |     X..X       |
+          follower        |     X..X       |
         TABLE
       end
     end
@@ -769,10 +773,13 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
         TABLE
       end
 
-      it "does not rechedule the followers or the other child" do
-        expect_work_packages(subject.all_results, <<~TABLE)
+      it "reschedules follower to start right after the moved predecessor, and follower parent spans on its two children" do
+        expect_work_packages(subject.all_results + [follower_sibling], <<~TABLE)
           subject         | mtwtfssMTWTFSS |
           work_package    |  ]             |
+          follower_parent |   XXX..XXXXX   |
+          follower        |   XX           |
+          follower_sibling|          XXX   |
         TABLE
       end
     end
@@ -831,13 +838,13 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
   end
 
   context "with a single successor having two children automatically scheduled" do
-    context "when creating the follows relation while follower starts 1 day after moved due date" do
+    context "when creating the follows relation while successor starts right after moved work package due date" do
       let_work_packages(<<~TABLE)
         hierarchy         | MTWTFSS          | scheduling mode | properties
         work_package      | ]                | manual          |
         follower          |  XXXX..XXXXX..XX | automatic       |
           follower_child1 |  XXX             | automatic       |
-          follower_child2 |            X..XX | automatic       |
+          follower_child2 |     X..XXXXX..XX | automatic       | follows follower_child1
       TABLE
 
       before do
@@ -854,21 +861,24 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
 
     context "when creating the follows relation while follower starts 3 days after moved due date" do
       let_work_packages(<<~TABLE)
-        hierarchy         | MTWTFSS            | scheduling mode |
+        hierarchy         | MTWTFSS            | scheduling mode | properties
         work_package      | ]                  | manual          |
         follower          |    XX..XXXXX..XXXX | automatic       |
           follower_child1 |    XX..X           | automatic       |
-          follower_child2 |                XXX | automatic       |
+          follower_child2 |         XXXX..XXXX | automatic       | follows follower_child1
       TABLE
 
       before do
         create(:follows_relation, from: follower, to: work_package)
       end
 
-      it "does not need to reschedule anything" do
+      it "reschedules followers to start right after the predecessor (moving backward)" do
         expect_work_packages(subject.all_results, <<~TABLE)
-          subject      | MTWTFSS |
-          work_package | ]       |
+          subject         | MTWTFSS          |
+          work_package    | ]                |
+          follower        |  XXXX..XXXXX..XX |
+          follower_child1 |  XXX             |
+          follower_child2 |     X..XXXXX..XX |
         TABLE
       end
     end
@@ -879,7 +889,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
         work_package      |    ]           | manual          |
         follower          | X..XXXXX..XXXX | automatic       |
           follower_child1 | X..XXXX        | automatic       |
-          follower_child2 |        X..XXXX | automatic       |
+          follower_child2 |        X..XXXX | manual          |
       TABLE
 
       before do
@@ -887,14 +897,11 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
       end
 
       it "reschedules first child and reduces follower parent duration as the children can be executed at the same time" do
-        expect_work_packages(subject.all_results, <<~TABLE)
+        expect_work_packages(subject.all_results + [follower_child2], <<~TABLE)
           subject         | MTWTFSS     |
           work_package    | ]           |
           follower        |  XXXX..XXXX |
           follower_child1 |  XXXX..X    |
-        TABLE
-        expect_work_packages([follower_child2], <<~TABLE)
-          subject         | MTWTFSS     |
           follower_child2 |     X..XXXX |
         TABLE
       end
@@ -972,12 +979,14 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
         TABLE
       end
 
-      it "reschedules only the first followers as the others don't need to move" do
+      it "reschedules all followers to start as soon as possible" do
         expect_work_packages(subject.all_results, <<~TABLE)
-          subject      | MTWTFSSm     sm |
-          work_package |    ]            |
-          follower1    |     X..XX       |
-          follower2    |          XXX..X |
+          subject      | MTWTFSSm     sm     sm   |
+          work_package |    ]                     |
+          follower1    |     X..XX                |
+          follower2    |          XXX..X          |
+          follower3    |                XXXX..X   |
+          follower4    |                       XX |
         TABLE
       end
     end
@@ -1092,10 +1101,14 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
         TABLE
       end
 
-      it "does not reschedule any followers" do
+      it "reschedules followers to start as soon as possible" do
         expect_work_packages(subject.all_results, <<~TABLE)
-          subject      | m     sMTWTFSS |
-          work_package |    ]           |
+          subject      | m     sMTWTFSSm     sm   |
+          work_package |    ]                     |
+          follower1    |     X..XX                |
+          follower2    |          XXX..X          |
+          follower3    |                XXXX..X   |
+          follower4    |                       XX |
         TABLE
       end
     end
@@ -1148,10 +1161,14 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
         TABLE
       end
 
-      it "does not reschedule any followers" do
+      it "reschedules followers to start as soon as possible while satisfying all constraints" do
         expect_work_packages(subject.all_results, <<~TABLE)
-          subject      | m     sMTWTFSS |
-          work_package |   ]            |
+          subject      | m     sMTWTFSS     |
+          work_package |   ]                |
+          follower1    |    XX..X           |
+          follower2    |         XXXX..X    |
+          follower3    |    XX..X           |
+          follower4    |                XXX |
         TABLE
       end
     end

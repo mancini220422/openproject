@@ -117,7 +117,7 @@ RSpec.describe WorkPackages::SetScheduleService do
 
   def create_child(parent, start_date, due_date, **attributes)
     create(:work_package,
-           subject: "child of #{parent.subject}",
+           subject: "child #{parent.children.count + 1} of #{parent.subject}",
            start_date:,
            due_date:,
            parent:,
@@ -127,16 +127,13 @@ RSpec.describe WorkPackages::SetScheduleService do
   subject { instance.call(attributes) }
 
   shared_examples_for "reschedules" do
-    before do
-      subject
-    end
+    it "successfully updates the following work packages", :aggregate_failures do # rubocop:disable RSpec/ExampleLength
+      expect(subject).to be_success
 
-    it "is success" do
-      expect(subject)
-        .to be_success
-    end
+      # returns only the original and the changed work packages
+      expect(subject.all_results)
+        .to contain_exactly(work_package, *expected.keys)
 
-    it "updates the following work packages" do
       expected.each do |wp, (start_date, due_date)|
         expected_cause_type = "work_package_related_changed_times"
         result = subject.all_results.find { |result_wp| result_wp.id == wp.id }
@@ -170,29 +167,15 @@ RSpec.describe WorkPackages::SetScheduleService do
               "to have duration #{duration.inspect}, got #{result.duration.inspect}"
       end
     end
-
-    it "returns only the original and the changed work packages" do
-      expect(subject.all_results)
-        .to match_array expected.keys + [work_package]
-    end
   end
 
   shared_examples_for "does not reschedule" do
-    before do
-      subject
-    end
+    it "is successful and does not change any other work packages nor assign any journal cause" do
+      expect(subject).to be_success
 
-    it "is success" do
-      expect(subject)
-        .to be_success
-    end
-
-    it "does not change any other work packages" do
       expect(subject.all_results)
         .to contain_exactly(work_package)
-    end
 
-    it "does not assign a journal cause" do
       subject.all_results.each do |work_package|
         expect(work_package.journal_cause).to be_blank
       end
@@ -266,7 +249,7 @@ RSpec.describe WorkPackages::SetScheduleService do
       end
     end
 
-    context "when moving forward with the follower having enough space left to not be moved at all" do
+    context "when moving forward with the follower having enough space left to start earlier" do
       let(:follower1_start_date) { Time.zone.today + 10.days }
       let(:follower1_due_date) { Time.zone.today + 12.days }
 
@@ -274,7 +257,11 @@ RSpec.describe WorkPackages::SetScheduleService do
         work_package.due_date = Time.zone.today + 5.days
       end
 
-      it_behaves_like "does not reschedule"
+      it_behaves_like "reschedules" do
+        let(:expected) do
+          { following_work_package1 => [Time.zone.today + 6.days, Time.zone.today + 8.days] }
+        end
+      end
     end
 
     context "when moving forward with the follower having some space left and a lag" do
@@ -301,6 +288,7 @@ RSpec.describe WorkPackages::SetScheduleService do
         work_package.due_date = Time.zone.today + 5.days
       end
 
+      # no need to reschedule: the successor is already right after its predecessor
       it_behaves_like "does not reschedule"
     end
 
@@ -309,7 +297,11 @@ RSpec.describe WorkPackages::SetScheduleService do
         work_package.due_date = Time.zone.today - 5.days
       end
 
-      it_behaves_like "does not reschedule"
+      it_behaves_like "reschedules" do
+        let(:expected) do
+          { following_work_package1 => [Time.zone.today - 4.days, Time.zone.today - 2.days] }
+        end
+      end
     end
 
     context "when moving backwards with space between" do
@@ -320,7 +312,11 @@ RSpec.describe WorkPackages::SetScheduleService do
         work_package.due_date = Time.zone.today - 5.days
       end
 
-      it_behaves_like "does not reschedule"
+      it_behaves_like "reschedules" do
+        let(:expected) do
+          { following_work_package1 => [Time.zone.today - 4.days, Time.zone.today - 2.days] }
+        end
+      end
     end
 
     context 'when moving backwards with the follower having no start date (which should not happen) \
@@ -426,9 +422,9 @@ RSpec.describe WorkPackages::SetScheduleService do
         create_follower(follower1_start_date,
                         follower1_due_date,
                         { work_package => follower1_lag,
-                          another_successor => 0 })
+                          another_predecessor => 0 })
       end
-      let(:another_successor) do
+      let(:another_predecessor) do
         create(:work_package,
                start_date: nil,
                due_date: nil)
@@ -451,7 +447,11 @@ RSpec.describe WorkPackages::SetScheduleService do
           work_package.due_date = Time.zone.today - 5.days
         end
 
-        it_behaves_like "does not reschedule"
+        it_behaves_like "reschedules" do
+          let(:expected) do
+            { following_work_package1 => [Time.zone.today - 4.days, Time.zone.today - 2.days] }
+          end
+        end
       end
     end
   end
@@ -591,7 +591,12 @@ RSpec.describe WorkPackages::SetScheduleService do
         work_package.due_date = Time.zone.today - 5.days
       end
 
-      it_behaves_like "does not reschedule"
+      it_behaves_like "reschedules" do
+        let(:expected) do
+          { following_work_package1 => [Time.zone.today - 4.days, Time.zone.today - 2.days],
+            parent_following_work_package1 => [Time.zone.today - 4.days, Time.zone.today - 2.days] }
+        end
+      end
     end
   end
 
@@ -651,7 +656,7 @@ RSpec.describe WorkPackages::SetScheduleService do
     let(:follower1_due_date) { work_package_due_date + 10.days }
     let(:child1_start_date) { follower1_start_date }
     let(:child1_due_date) { follower1_start_date + 3.days }
-    let(:child2_start_date) { follower1_start_date + 8.days }
+    let(:child2_start_date) { follower1_due_date - 1.day }
     let(:child2_due_date) { follower1_due_date }
 
     let(:child1_work_package) do
@@ -674,7 +679,17 @@ RSpec.describe WorkPackages::SetScheduleService do
     end
 
     context "with unchanged dates (e.g. when creating a follows relation) and successor starting 1 day after scheduled" do
-      it_behaves_like "does not reschedule"
+      it_behaves_like "reschedules" do
+        let(:expected) do
+          {
+            # child1 is not rescheduled as it is already starting right after the moved work package
+            # child2 is rescheduled right after the moved work package
+            child2_work_package => [work_package_due_date + 1.day, work_package_due_date + 2.days],
+            # following is rescheduled to match its 2 children's dates
+            following_work_package1 => [work_package_due_date + 1.day, work_package_due_date + 4.days]
+          }
+        end
+      end
     end
 
     context "with unchanged dates (e.g. when creating a follows relation) and successor starting 3 days after scheduled" do
@@ -682,10 +697,20 @@ RSpec.describe WorkPackages::SetScheduleService do
       let(:follower1_due_date) { follower1_start_date + 10.days }
       let(:child1_start_date) { follower1_start_date }
       let(:child1_due_date) { follower1_start_date + 6.days }
-      let(:child2_start_date) { follower1_start_date + 8.days }
+      let(:child2_start_date) { follower1_due_date - 1.day }
       let(:child2_due_date) { follower1_due_date }
 
-      it_behaves_like "does not reschedule"
+      it_behaves_like "reschedules" do
+        let(:expected) do
+          {
+            # child1 and child2 rescheduled right after the moved work package
+            child1_work_package => [work_package_due_date + 1.day, work_package_due_date + 7.days],
+            child2_work_package => [work_package_due_date + 1.day, work_package_due_date + 2.days],
+            # following is rescheduled to match its 2 children's dates
+            following_work_package1 => [work_package_due_date + 1.day, work_package_due_date + 7.days]
+          }
+        end
+      end
     end
 
     context "with unchanged dates (e.g. when creating a follows relation) and successor's first child needs to be rescheduled" do
@@ -693,19 +718,23 @@ RSpec.describe WorkPackages::SetScheduleService do
       let(:follower1_due_date) { work_package_due_date + 10.days }
       let(:child1_start_date) { follower1_start_date }
       let(:child1_due_date) { follower1_start_date + 6.days }
-      let(:child2_start_date) { follower1_start_date + 8.days }
+      let(:child2_start_date) { follower1_due_date - 5.days }
       let(:child2_due_date) { follower1_due_date }
 
       # following parent is reduced in length as the children allow to be executed at the same time
       it_behaves_like "reschedules" do
         let(:expected) do
-          { following_work_package1 => [work_package_due_date + 1.day, follower1_due_date],
-            child1_work_package => [work_package_due_date + 1.day, follower1_start_date + 10.days] }
+          { # child1 and child2 rescheduled right after the moved work package
+            child1_work_package => [work_package_due_date + 1.day, work_package_due_date + 7.days],
+            child2_work_package => [work_package_due_date + 1.day, work_package_due_date + 6.days],
+            # following is rescheduled to match its 2 children's dates
+            following_work_package1 => [work_package_due_date + 1.day, work_package_due_date + 7.days]
+          }
         end
       end
     end
 
-    context 'with unchanged dates (e.g. when creating a follows relation) and successor\s children need to be rescheduled' do
+    context "with unchanged dates (e.g. when creating a follows relation) and successor's children need to be rescheduled" do
       let(:follower1_start_date) { work_package_due_date - 8.days }
       let(:follower1_due_date) { work_package_due_date + 10.days }
       let(:child1_start_date) { follower1_start_date }
@@ -767,7 +796,8 @@ RSpec.describe WorkPackages::SetScheduleService do
       it_behaves_like "reschedules" do
         let(:expected) do
           { following_work_package1 => [Time.zone.today + 6.days, Time.zone.today + 8.days],
-            following_work_package2 => [Time.zone.today + 9.days, Time.zone.today + 12.days] }
+            following_work_package2 => [Time.zone.today + 9.days, Time.zone.today + 12.days],
+            following_work_package3 => [Time.zone.today + 13.days, Time.zone.today + 14.days] }
         end
       end
     end
@@ -777,7 +807,13 @@ RSpec.describe WorkPackages::SetScheduleService do
         work_package.due_date = Time.zone.today - 5.days
       end
 
-      it_behaves_like "does not reschedule"
+      it_behaves_like "reschedules" do
+        let(:expected) do
+          { following_work_package1 => [work_package.due_date + 1.day, work_package.due_date + 3.days],
+            following_work_package2 => [work_package.due_date + 4.days, work_package.due_date + 8.days],
+            following_work_package3 => [work_package.due_date + 9.days, work_package.due_date + 10.days] }
+        end
+      end
     end
   end
 
@@ -826,7 +862,14 @@ RSpec.describe WorkPackages::SetScheduleService do
         work_package.due_date = Time.zone.today - 5.days
       end
 
-      it_behaves_like "does not reschedule"
+      it_behaves_like "reschedules" do
+        let(:expected) do
+          { following_work_package1 => [work_package.due_date + 1.day, work_package.due_date + 3.days],
+            following_work_package2 => [work_package.due_date + 4.days, work_package.due_date + 8.days],
+            following_work_package3 => [work_package.due_date + 1.day, work_package.due_date + 4.days],
+            following_work_package4 => [work_package.due_date + 9.days, work_package.due_date + 10.days] }
+        end
+      end
     end
   end
 
