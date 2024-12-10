@@ -131,6 +131,53 @@ module TableHelpers
         TABLE
       end
 
+      context "when non working days are defined" do
+        let(:table) do
+          <<~TABLE
+            | subject | MTWTFSS | days counting
+            | wp1     | XXXXXXX | working days only
+            | wp2     | XXXXXXX | all days
+          TABLE
+        end
+
+        before do
+          set_non_working_week_days("wednesday", "thursday")
+        end
+
+        it "renders the non working days as dots `.` for work packages taking non-working days into account" do
+          expect(representer.render(table_data)).to eq <<~TABLE
+            | MTWTFSS |
+            | XX..XXX |
+            | XXXXXXX |
+          TABLE
+        end
+
+        context "when using a second table which does not have the ignore_non_working_days attribute knowledge" do
+          let(:twin_table) do
+            <<~TABLE
+              | subject | MTWTFSS |
+              | wp1     | XXXXXXX |
+              | wp2     | XXXXXXX |
+            TABLE
+          end
+          let(:twin_table_data) { TableData.for(twin_table) }
+          let(:tables_data) { [table_data, twin_table_data] }
+
+          it "renders the non working days as dots `.` for both tables" do
+            expect(representer.render(table_data)).to eq <<~TABLE
+              | MTWTFSS |
+              | XX..XXX |
+              | XXXXXXX |
+            TABLE
+            expect(representer.render(twin_table_data)).to eq <<~TABLE
+              | MTWTFSS |
+              | XX..XXX |
+              | XXXXXXX |
+            TABLE
+          end
+        end
+      end
+
       context "when using a second table for the size" do
         let(:twin_table) do
           <<~TABLE

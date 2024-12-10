@@ -58,7 +58,8 @@ module TableHelpers
       def attributes_for_work_package(_attribute, work_package)
         {
           start_date: work_package.start_date,
-          due_date: work_package.due_date
+          due_date: work_package.due_date,
+          ignore_non_working_days: work_package.ignore_non_working_days
         }
       end
 
