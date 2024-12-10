@@ -654,7 +654,8 @@ Rails.application.routes.draw do
 
     get "/export_dialog" => "work_packages#export_dialog", on: :collection, as: "export_dialog"
     get :show_conflict_flash_message, on: :collection # we don't need a specific work package for this
-    get "/datepicker_dialog_content" => "work_packages#datepicker_dialog_content", on: :member, as: "datepicker_dialog_content"
+
+    resource :datepicker_dialog_content, controller: "work_packages/date_picker", on: :member, as: "datepicker_dialog_content"
 
     get "/split_view/update_counter" => "work_packages/split_view#update_counter",
         on: :member

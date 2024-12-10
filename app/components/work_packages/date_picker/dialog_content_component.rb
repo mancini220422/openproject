@@ -33,13 +33,17 @@ module WorkPackages
       include OpPrimer::ComponentHelpers
       include OpTurbo::Streamable
 
-      attr_accessor :work_package, :manually_scheduled
+      DIALOG_FORM_ID = "datepicker-form"
 
-      def initialize(work_package:, manually_scheduled: true)
+      attr_accessor :work_package, :manually_scheduled, :focused_field, :touched_field_map
+
+      def initialize(work_package:, manually_scheduled: true, focused_field: :start_date, touched_field_map: {})
         super
 
         @work_package = work_package
         @manually_scheduled = ActiveModel::Type::Boolean.new.cast(manually_scheduled)
+        @focused_field = focused_field
+        @touched_field_map = touched_field_map
       end
 
       private

@@ -20,13 +20,18 @@
       (save)="save()"
       (cancel)="cancel()"
     ></op-wp-single-date-form>
-    <op-wp-multi-date-form
+    <op-wp-multi-date-dialog-content
+      *ngIf="opened && isMultiDate"
+      [changeset]="change"
+    ></op-wp-multi-date-dialog-content>
+
+    <!--<op-wp-multi-date-form
       *ngIf="opened && isMultiDate"
       [value]="dates"
       [changeset]="change"
       [fieldName]="name"
       (save)="save()"
       (cancel)="cancel()"
-    ></op-wp-multi-date-form>
+    ></op-wp-multi-date-form>-->
   </ng-container>
 </spot-drop-modal>
