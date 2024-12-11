@@ -34,59 +34,60 @@ class WorkPackages::ApplyWorkingDaysChangeJob < ApplicationJob
     total_limit: 1
   )
 
+  attr_accessor :previous_working_days, :previous_non_working_days
+
   def perform(user_id:, previous_working_days:, previous_non_working_days:)
+    self.previous_working_days = previous_working_days
+    self.previous_non_working_days = previous_non_working_days
+
     user = User.find(user_id)
 
     User.execute_as user do
-      wd_update = Journal::CausedByWorkingDayChanges.new(
-        working_days: changed_days(previous_working_days),
-        non_working_days: changed_non_working_dates(previous_non_working_days)
-      )
-
-      updated_work_package_ids = collect_id_for_each(applicable_work_package(previous_working_days,
-                                                                             previous_non_working_days)) do |work_package|
-        apply_change_to_work_package(user, work_package, wd_update)
+      for_each_work_package(applicable_work_packages) do |work_package|
+        apply_change_to_work_package(work_package)
       end
 
-      applicable_predecessor(updated_work_package_ids).each do |predecessor|
-        apply_change_to_predecessor(user, predecessor, wd_update)
+      applicable_predecessors.find_each do |predecessor|
+        apply_change_to_predecessor(predecessor)
       end
     end
   end
 
   private
 
-  def apply_change_to_work_package(user, work_package, cause)
+  def journal_cause
+    @journal_cause ||= Journal::CausedByWorkingDayChanges.new(
+      working_days: changed_days,
+      non_working_days: changed_non_working_dates
+    )
+  end
+
+  def apply_change_to_work_package(work_package)
     WorkPackages::UpdateService
-      .new(user:, model: work_package, contract_class: EmptyContract, cause_of_rescheduling: cause)
-      .call(duration: work_package.duration, journal_cause: cause) # trigger a recomputation of start and due date
+      .new(user: User.current, model: work_package, contract_class: EmptyContract, cause_of_rescheduling: journal_cause)
+      .call(duration: work_package.duration, journal_cause:) # trigger a recomputation of start and due date
       .all_results
   end
 
-  def apply_change_to_predecessor(user, predecessor, initiated_by)
+  def apply_change_to_predecessor(predecessor)
     schedule_result = WorkPackages::SetScheduleService
-                        .new(user:, work_package: predecessor, initiated_by:)
+                        .new(user: User.current, work_package: predecessor, initiated_by: journal_cause)
                         .call
 
     # The SetScheduleService does not save. It has to be done by the caller.
-    schedule_result.dependent_results.map do |dependent_result|
-      work_package = dependent_result.result
-      work_package.save
-
-      work_package
-    end
+    schedule_result.dependent_results.map(&:result).each(&:save)
   end
 
-  def applicable_work_package(previous_working_days, previous_non_working_days)
-    days_of_week = changed_days(previous_working_days).keys
-    dates = changed_non_working_dates(previous_non_working_days).keys
+  def applicable_work_packages
+    days_of_week = changed_days.keys
+    dates = changed_non_working_dates.keys
     WorkPackage
       .covering_dates_and_days_of_week(days_of_week:, dates:)
       .order(WorkPackage.arel_table[:start_date].asc.nulls_first,
              WorkPackage.arel_table[:due_date].asc)
   end
 
-  def changed_days(previous_working_days)
+  def changed_days
     previous = Set.new(previous_working_days)
     current = Set.new(Setting.working_days)
 
@@ -95,7 +96,7 @@ class WorkPackages::ApplyWorkingDaysChangeJob < ApplicationJob
     (previous ^ current).index_with { |day| current.include?(day) }
   end
 
-  def changed_non_working_dates(previous_non_working_days)
+  def changed_non_working_dates
     previous = Set.new(previous_non_working_days)
     current = Set.new(NonWorkingDay.pluck(:date))
 
@@ -104,15 +105,22 @@ class WorkPackages::ApplyWorkingDaysChangeJob < ApplicationJob
     (previous ^ current).index_with { |day| current.exclude?(day) }
   end
 
-  def applicable_predecessor(excluded)
+  def applicable_predecessors
     WorkPackage
       .where(id: Relation.follows_with_lag.select(:to_id))
-      .where.not(id: excluded)
+      .where.not(id: already_processed_work_package_ids)
   end
 
-  def collect_id_for_each(scope)
-    scope.pluck(:id).map do |id|
-      yield(WorkPackage.find(id)).pluck(:id)
-    end.flatten
+  def for_each_work_package(scope)
+    scope.pluck(:id).each do |id|
+      next if already_processed_work_package_ids.include?(id)
+
+      processed_work_packages = yield(WorkPackage.find(id))
+      already_processed_work_package_ids.merge(processed_work_packages.pluck(:id))
+    end
+  end
+
+  def already_processed_work_package_ids
+    @already_processed_work_package_ids ||= Set.new
   end
 end
