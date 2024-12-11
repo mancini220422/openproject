@@ -43,6 +43,10 @@ module Pages
       is_a?(AbstractWorkPackageCreate)
     end
 
+    def visit_query(query)
+      visit("#{path}?query_id=#{query.id}")
+    end
+
     def visit_tab!(tab)
       visit path(tab)
     end
