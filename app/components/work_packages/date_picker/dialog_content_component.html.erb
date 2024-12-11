@@ -65,6 +65,7 @@
                 end
                 second_row.with_column do
                   render(Primer::Alpha::TextField.new(name: :duration,
+                                                      type: "number",
                                                       label: I18n.t("activerecord.attributes.work_package.duration"),
                                                       value: work_package.duration))
                 end

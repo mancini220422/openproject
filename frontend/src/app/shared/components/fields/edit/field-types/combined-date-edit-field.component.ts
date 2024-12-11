@@ -26,17 +26,37 @@
 // See COPYRIGHT and LICENSE files for more details.
 //++
 
-import { Component } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  Inject,
+  Injector,
+  OnInit,
+} from '@angular/core';
 import { DatePickerEditFieldComponent } from 'core-app/shared/components/fields/edit/field-types/date-picker-edit-field.component';
 import { WorkPackageResource } from 'core-app/features/hal/resources/work-package-resource';
+import { PathHelperService } from 'core-app/core/path-helper/path-helper.service';
+import { I18nService } from 'core-app/core/i18n/i18n.service';
+import { ResourceChangeset } from 'core-app/shared/components/fields/changeset/resource-changeset';
+import { HalResource } from 'core-app/features/hal/resources/hal-resource';
+import { IFieldSchema } from 'core-app/shared/components/fields/field.base';
+import { EditFieldHandler } from 'core-app/shared/components/fields/edit/editing-portal/edit-field-handler';
+import {
+  OpEditingPortalChangesetToken,
+  OpEditingPortalHandlerToken,
+  OpEditingPortalSchemaToken,
+} from 'core-app/shared/components/fields/edit/edit-field.component';
 
 @Component({
   templateUrl: './combined-date-edit-field.component.html',
 })
-export class CombinedDateEditFieldComponent extends DatePickerEditFieldComponent {
+export class CombinedDateEditFieldComponent extends DatePickerEditFieldComponent implements OnInit {
   dates = '';
 
   opened = false;
+
+  turboFrameSrc:string;
 
   text = {
     placeholder: {
@@ -45,6 +65,24 @@ export class CombinedDateEditFieldComponent extends DatePickerEditFieldComponent
       date: this.I18n.t('js.label_no_date'),
     },
   };
+
+  constructor(
+    readonly I18n:I18nService,
+    readonly elementRef:ElementRef,
+    @Inject(OpEditingPortalChangesetToken) protected change:ResourceChangeset<HalResource>,
+    @Inject(OpEditingPortalSchemaToken) public schema:IFieldSchema,
+    @Inject(OpEditingPortalHandlerToken) readonly handler:EditFieldHandler,
+    readonly cdRef:ChangeDetectorRef,
+    readonly injector:Injector,
+    readonly pathHelper:PathHelperService,
+  ) {
+    super(I18n, elementRef, change, schema, handler, cdRef, injector);
+  }
+
+  ngOnInit() {
+    super.ngOnInit();
+    this.turboFrameSrc = `${this.pathHelper.workPackageDatepickerDialogContentPath(this.change.id)}?field=${this.name}`;
+  }
 
   get isMultiDate():boolean {
     return !this.change.schema.isMilestone;
@@ -67,13 +105,22 @@ export class CombinedDateEditFieldComponent extends DatePickerEditFieldComponent
     this.resetDates();
   }
 
-  public save():void {
-    this.handler.handleUserSubmit();
+  public handleSuccessfulCreate(JSONResponse:{ duration:number, startDate:Date, dueDate:Date, includeNonWorkingDays:boolean, scheduleManually:boolean }):void {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
+    this.resource.duration = JSONResponse.duration;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
+    this.resource.dueDate = JSONResponse.dueDate;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
+    this.resource.startDate = JSONResponse.startDate;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
+    this.resource.includeNonWorkingDays = JSONResponse.includeNonWorkingDays;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
+    this.resource.scheduleManually = JSONResponse.scheduleManually;
+
     this.onModalClosed();
   }
 
-  public cancel():void {
-    this.handler.reset();
+  public handleSuccessfulUpdate():void {
     this.onModalClosed();
   }
 

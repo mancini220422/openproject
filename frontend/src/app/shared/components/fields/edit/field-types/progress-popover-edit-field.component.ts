@@ -29,22 +29,17 @@
  */
 
 import {
-  AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
   ElementRef,
   Inject,
   Injector,
-  OnDestroy,
   OnInit,
-  ViewChild,
 } from '@angular/core';
 import { I18nService } from 'core-app/core/i18n/i18n.service';
 import { PathHelperService } from 'core-app/core/path-helper/path-helper.service';
-import {
-  ProgressEditFieldComponent,
-} from 'core-app/shared/components/fields/edit/field-types/progress-edit-field.component';
+import { ProgressEditFieldComponent } from 'core-app/shared/components/fields/edit/field-types/progress-edit-field.component';
 import { ResourceChangeset } from 'core-app/shared/components/fields/changeset/resource-changeset';
 import { HalResource } from 'core-app/features/hal/resources/hal-resource';
 import { IFieldSchema } from 'core-app/shared/components/fields/field.base';
@@ -55,7 +50,6 @@ import {
   OpEditingPortalSchemaToken,
 } from 'core-app/shared/components/fields/edit/edit-field.component';
 import { HalEventsService } from 'core-app/features/hal/services/hal-events.service';
-import { WorkPackageResource } from 'core-app/features/hal/resources/work-package-resource';
 import { ToastService } from 'core-app/shared/components/toaster/toast.service';
 import { ApiV3Service } from 'core-app/core/apiv3/api-v3.service';
 import { TimezoneService } from 'core-app/core/datetime/timezone.service';
@@ -65,9 +59,7 @@ import { TimezoneService } from 'core-app/core/datetime/timezone.service';
   styleUrls: ['./progress-popover-edit-field.component.sass'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ProgressPopoverEditFieldComponent extends ProgressEditFieldComponent implements OnInit, AfterViewInit, OnDestroy {
-  @ViewChild('frameElement') frameElement:ElementRef<HTMLIFrameElement>;
-
+export class ProgressPopoverEditFieldComponent extends ProgressEditFieldComponent implements OnInit {
   text = {
     title: this.I18n.t('js.work_packages.progress.title'),
     button_close: this.I18n.t('js.button_close'),
@@ -107,22 +99,6 @@ export class ProgressPopoverEditFieldComponent extends ProgressEditFieldComponen
     this.frameId = 'work_package_progress_modal';
   }
 
-  ngAfterViewInit() {
-    this
-      .frameElement
-      .nativeElement
-      .addEventListener('turbo:submit-end', this.contextBasedListener.bind(this));
-  }
-
-  ngOnDestroy() {
-    super.ngOnDestroy();
-
-    this
-      .frameElement
-      .nativeElement
-      .removeEventListener('turbo:submit-end', this.contextBasedListener.bind(this));
-  }
-
   public get asHoursOrPercent():string {
     return this.name === 'percentageDone' ? this.asPercent : this.asHours;
   }
@@ -156,62 +132,19 @@ export class ProgressPopoverEditFieldComponent extends ProgressEditFieldComponen
     return value;
   }
 
-  private contextBasedListener(event:CustomEvent) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    if (this.resource.id === 'new') {
-      void this.propagateSuccessfulCreate(event);
-    } else {
-      this.propagateSuccessfulUpdate(event);
-    }
+  public handleSuccessfulCreate(JSONResponse:{ estimatedTime:string, remainingTime:string, percentageDone:string }):void {
+// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
+    this.resource.estimatedTime = JSONResponse.estimatedTime;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
+    this.resource.remainingTime = JSONResponse.remainingTime;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
+    this.resource.percentageDone = JSONResponse.percentageDone;
+
+    this.onModalClosed();
   }
 
-  private async propagateSuccessfulCreate(event:CustomEvent) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const { fetchResponse } = event.detail;
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    if (fetchResponse.succeeded) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
-      const JSONresponse = await this.extractJSONFromResponse(fetchResponse.response.body);
-
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
-      this.resource.estimatedTime = JSONresponse.estimatedTime;
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
-      this.resource.remainingTime = JSONresponse.remainingTime;
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
-      this.resource.percentageDone = JSONresponse.percentageDone;
-
-      this.onModalClosed();
-
-      this.change.push();
-      this.cdRef.detectChanges();
-    }
-  }
-
-  private propagateSuccessfulUpdate(event:CustomEvent) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const { fetchResponse } = event.detail;
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    if (fetchResponse.succeeded) {
-      this.halEvents.push(
-        this.resource as WorkPackageResource,
-        { eventType: 'updated' },
-      );
-
-      void this.apiV3Service.work_packages.id(this.resource as WorkPackageResource).refresh();
-
-      this.onModalClosed();
-
-      this.toastService.addSuccess(this.I18n.t('js.notice_successful_update'));
-    }
-  }
-
-  private async extractJSONFromResponse(response:ReadableStream) {
-    const readStream = await response.getReader().read();
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return JSON.parse(new TextDecoder('utf-8').decode(new Uint8Array(readStream.value as ArrayBufferLike)));
+  public handleSuccessfulUpdate():void {
+    this.onModalClosed();
   }
 
   private updateFrameSrc():void {

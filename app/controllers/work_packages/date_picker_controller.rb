@@ -60,6 +60,8 @@ class WorkPackages::DatePickerController < ApplicationController
   end
 
   def update
+    # Todo
+    params[:duration] = params[:duration].to_i
     service_call = WorkPackages::UpdateService
                      .new(user: current_user,
                           model: @work_package)
@@ -79,7 +81,7 @@ class WorkPackages::DatePickerController < ApplicationController
           # the request in order to fetch the new set of Work Package
           # attributes in the ancestry solely on success.
           render turbo_stream: [
-            turbo_stream.morph("work_package_datepicker_modal", datepicker_modal_component)
+            turbo_stream.morph("wp-datepicker-dialog--content", datepicker_modal_component)
           ], status: :unprocessable_entity
         end
       end
@@ -88,7 +90,7 @@ class WorkPackages::DatePickerController < ApplicationController
 
   private
 
-  def progress_modal_component
+  def datepicker_modal_component
     WorkPackages::DatePicker::DialogContentComponent.new(work_package: @work_package, manually_scheduled:, focused_field:,
                                                          touched_field_map:)
   end
@@ -102,8 +104,7 @@ class WorkPackages::DatePickerController < ApplicationController
   end
 
   def touched_field_map
-    params.require(:work_package)
-          .slice("schedule_manually_touched",
+    params.slice("schedule_manually_touched",
                  "ignore_non_working_days_touched",
                  "start_date_touched",
                  "due_date_touched",
@@ -121,20 +122,19 @@ class WorkPackages::DatePickerController < ApplicationController
   end
 
   def work_package_datepicker_params
-    params.require(:work_package)
-          .slice(*allowed_touched_params)
+    params.slice(*allowed_params)
           .permit!
   end
 
-  def allowed_touched_params
-    allowed_params.filter { touched?(_1) }
-  end
+  # def allowed_touched_params
+  #   allowed_params.filter { touched?(_1) }
+  # end
 
   def allowed_params
     %i[schedule_manually ignore_non_working_days start_date due_date duration]
   end
 
-  def touched?(field)
-    touched_field_map[:"#{field}_touched"]
-  end
+  # def touched?(field)
+  #   touched_field_map[:"#{field}_touched"]
+  # end
 end

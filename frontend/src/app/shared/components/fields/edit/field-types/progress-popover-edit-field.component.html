@@ -37,9 +37,14 @@
 
     <div class="spot-drop-modal--content">
       <turbo-frame
-        #frameElement
         id="work_package_progress_modal"
-        [attr.src]="this.frameSrc">
+        [attr.src]="this.frameSrc"
+        opModalWithTurboContent
+        [change]="change"
+        [resource]="resource"
+        (successfulCreate)="handleSuccessfulCreate($event)"
+        (successfulUpdate)="handleSuccessfulUpdate()"
+      >
         <op-content-loader
           viewBox="0 0 180 80"
         >
