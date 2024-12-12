@@ -643,6 +643,18 @@ Rails.application.routes.draw do
                controller: "work_packages/progress",
                as: :work_package_progress
     end
+    resource :datepicker_dialog_content,
+             only: %i[show new edit update],
+             controller: "work_packages/date_picker",
+             on: :member,
+             as: "datepicker_dialog_content"
+    collection do
+      resource :progress,
+               only: :create,
+               controller: "work_packages/date_picker",
+               as: :work_package_progress
+    end
+
     resources :relations_tab, only: %i[index], controller: "work_package_relations_tab"
     resources :relations, only: %i[new create edit update destroy], controller: "work_package_relations"
 
@@ -654,8 +666,6 @@ Rails.application.routes.draw do
 
     get "/export_dialog" => "work_packages#export_dialog", on: :collection, as: "export_dialog"
     get :show_conflict_flash_message, on: :collection # we don't need a specific work package for this
-
-    resource :datepicker_dialog_content, controller: "work_packages/date_picker", on: :member, as: "datepicker_dialog_content"
 
     get "/split_view/update_counter" => "work_packages/split_view#update_counter",
         on: :member

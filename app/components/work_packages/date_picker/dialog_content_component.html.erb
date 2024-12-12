@@ -1,98 +1,83 @@
 <%=
-  component_wrapper do
-    component_collection do |collection|
-      if show_banner?
-        collection.with_component(WorkPackages::DatePicker::BannerComponent.new(work_package:, manually_scheduled:))
-      end
+  content_tag("turbo-frame", id: "wp-datepicker-dialog--content") do
+    component_wrapper do
+      component_collection do |collection|
+        if show_banner?
+          collection.with_component(WorkPackages::DatePicker::BannerComponent.new(work_package:, manually_scheduled:))
+        end
 
-      collection.with_component(Primer::Alpha::Dialog::Body.new) do
-        primer_form_with(
-        model: work_package,
-        url: work_package_datepicker_dialog_content_path,
-        method: :put,
-        id: DIALOG_FORM_ID,
-        html: { autocomplete: "off" },
-        ) do |f|
-          flex_layout do |body|
-            body.with_row(mb: 3) do
-              flex_layout(align_items: :flex_end, justify_content: :space_between) do |first_row|
-                first_row.with_column do
-                  render(Primer::Alpha::FormControl.new(label: I18n.t("work_packages.datepicker_modal.mode.title"))) do |component|
-                    component.with_input do
-                      render(Primer::Alpha::SegmentedControl.new("aria-label": I18n.t("work_packages.datepicker_modal.mode.title"))) do |control|
-                        control.with_item(tag: :a,
-                                          href: work_package_datepicker_dialog_content_path(manually_scheduled: true),
-                                          data: { turbo_stream: true },
-                                          label: I18n.t("work_packages.datepicker_modal.mode.manual"),
-                                          title: I18n.t("work_packages.datepicker_modal.mode.manual"),
-                                          selected: manually_scheduled)
-                        control.with_item(tag: :a,
-                                          href: work_package_datepicker_dialog_content_path(manually_scheduled: false),
-                                          data: { turbo_stream: true },
-                                          label: I18n.t("work_packages.datepicker_modal.mode.automatic"),
-                                          title: I18n.t("work_packages.datepicker_modal.mode.automatic"),
-                                          selected: !manually_scheduled)
+        collection.with_component(Primer::Alpha::Dialog::Body.new) do
+          primer_form_with(
+          model: work_package,
+          url: work_package_datepicker_dialog_content_path,
+          method: :put,
+          id: DIALOG_FORM_ID,
+          data: { "application-target": "dynamic",
+                  "work-packages--date-picker--preview-target": "form",
+                  controller: "work-packages--date-picker--preview" },
+          html: { autocomplete: "off" },
+          ) do |f|
+            flex_layout do |body|
+              body.with_row(mb: 3) do
+                flex_layout(align_items: :flex_end, justify_content: :space_between) do |first_row|
+                  first_row.with_column do
+                    render(Primer::Alpha::FormControl.new(label: I18n.t("work_packages.datepicker_modal.mode.title"))) do |component|
+                      component.with_input do
+                        render(Primer::Alpha::SegmentedControl.new("aria-label": I18n.t("work_packages.datepicker_modal.mode.title"))) do |control|
+                          control.with_item(tag: :a,
+                                            href: work_package_datepicker_dialog_content_path(manually_scheduled: true),
+                                            data: { turbo_stream: true },
+                                            label: I18n.t("work_packages.datepicker_modal.mode.manual"),
+                                            title: I18n.t("work_packages.datepicker_modal.mode.manual"),
+                                            selected: manually_scheduled)
+                          control.with_item(tag: :a,
+                                            href: work_package_datepicker_dialog_content_path(manually_scheduled: false),
+                                            data: { turbo_stream: true },
+                                            label: I18n.t("work_packages.datepicker_modal.mode.automatic"),
+                                            title: I18n.t("work_packages.datepicker_modal.mode.automatic"),
+                                            selected: !manually_scheduled)
+                        end
                       end
                     end
                   end
-                end
 
-                first_row.with_column(mb: 1) do
-                  render(Primer::Alpha::CheckBox.new(name: "ignore_non_working_days",
-                                                     label: I18n.t("work_packages.datepicker_modal.ignore_non_working_days.title"),
-                                                     checked: work_package.ignore_non_working_days))
+                  first_row.with_column(mb: 1) do
+                    render(Primer::Alpha::CheckBox.new(name: "ignore_non_working_days",
+                                                       label: I18n.t("work_packages.datepicker_modal.ignore_non_working_days.title"),
+                                                       checked: work_package.ignore_non_working_days))
+                  end
                 end
               end
-            end
 
-            body.with_row(mb: 3) do
-              flex_layout(justify_content: :space_between) do |second_row|
-                second_row.with_column(mr: 3) do
-                  render(Primer::Alpha::TextField.new(name: :start_date,
-                                                      label: I18n.t("attributes.start_date"),
-                                                      data: {
-                                                        focus: focused_field == :start_date,
-                                                      },
-                                                      value: work_package.start_date))
-                end
-                second_row.with_column(mr: 3) do
-                  render(Primer::Alpha::TextField.new(name: :due_date,
-                                                      label: I18n.t("attributes.due_date"),
-                                                      data: {
-                                                        focus: focused_field == :start_date,
-                                                      },
-                                                      value: work_package.due_date))
-                end
-                second_row.with_column do
-                  render(Primer::Alpha::TextField.new(name: :duration,
-                                                      type: "number",
-                                                      label: I18n.t("activerecord.attributes.work_package.duration"),
-                                                      value: work_package.duration))
-                end
+              body.with_row(mb: 3) do
+                render(WorkPackages::DatePicker::Form.new(f,
+                                                          work_package:,
+                                                          focused_field:,
+                                                          touched_field_map:))
               end
-            end
 
-            body.with_row(mb: 3) do
-              helpers.angular_component_tag "opce-wp-modal-date-picker",
-                                            inputs: {
-                                              start_date: work_package.start_date,
-                                              due_date: work_package.due_date,
-                                              ignore_non_working_days: work_package.ignore_non_working_days,
-                                              schedule_manually: manually_scheduled
-                                            }
+              body.with_row(mb: 3) do
+                helpers.angular_component_tag "opce-wp-modal-date-picker",
+                                              inputs: {
+                                                start_date: work_package.start_date,
+                                                due_date: work_package.due_date,
+                                                ignore_non_working_days: work_package.ignore_non_working_days,
+                                                schedule_manually: manually_scheduled
+                                              }
+              end
             end
           end
         end
-      end
 
-      collection.with_component(Primer::Alpha::Dialog::Footer.new) do
-        component_collection do |footer|
-          footer.with_component(Primer::ButtonComponent.new) do
-            I18n.t("button_cancel")
-          end
+        collection.with_component(Primer::Alpha::Dialog::Footer.new) do
+          component_collection do |footer|
+            footer.with_component(Primer::ButtonComponent.new) do
+              I18n.t("button_cancel")
+            end
 
-          footer.with_component(Primer::ButtonComponent.new(scheme: :primary, type: :submit, form: DIALOG_FORM_ID)) do
-            I18n.t("button_submit")
+            footer.with_component(Primer::ButtonComponent.new(scheme: :primary, type: :submit, form: DIALOG_FORM_ID)) do
+              I18n.t("button_submit")
+            end
           end
         end
       end

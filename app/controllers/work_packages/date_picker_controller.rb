@@ -38,7 +38,7 @@ class WorkPackages::DatePickerController < ApplicationController
   layout false
 
   before_action :find_work_package
-  authorization_checked! :show, :update
+  authorization_checked! :show, :update, :edit
 
   attr_accessor :work_package
 
@@ -57,6 +57,12 @@ class WorkPackages::DatePickerController < ApplicationController
         render turbo_stream: turbo_streams
       end
     end
+  end
+
+  def edit
+    set_date_attributes_to_work_package
+
+    render datepicker_modal_component
   end
 
   def update
@@ -91,7 +97,9 @@ class WorkPackages::DatePickerController < ApplicationController
   private
 
   def datepicker_modal_component
-    WorkPackages::DatePicker::DialogContentComponent.new(work_package: @work_package, manually_scheduled:, focused_field:,
+    WorkPackages::DatePicker::DialogContentComponent.new(work_package: @work_package,
+                                                         manually_scheduled:,
+                                                         focused_field:,
                                                          touched_field_map:)
   end
 
@@ -104,7 +112,8 @@ class WorkPackages::DatePickerController < ApplicationController
   end
 
   def touched_field_map
-    params.slice("schedule_manually_touched",
+    params.require(:work_package)
+          .slice("schedule_manually_touched",
                  "ignore_non_working_days_touched",
                  "start_date_touched",
                  "due_date_touched",
@@ -122,19 +131,28 @@ class WorkPackages::DatePickerController < ApplicationController
   end
 
   def work_package_datepicker_params
-    params.slice(*allowed_params)
+    params.require(:work_package)
+          .slice(*allowed_touched_params)
           .permit!
   end
 
-  # def allowed_touched_params
-  #   allowed_params.filter { touched?(_1) }
-  # end
+  def allowed_touched_params
+    allowed_params.filter { touched?(_1) }
+  end
 
   def allowed_params
     %i[schedule_manually ignore_non_working_days start_date due_date duration]
   end
 
-  # def touched?(field)
-  #   touched_field_map[:"#{field}_touched"]
-  # end
+  def touched?(field)
+    touched_field_map[:"#{field}_touched"]
+  end
+
+  def set_date_attributes_to_work_package
+    WorkPackages::SetAttributesService
+      .new(user: current_user,
+           model: @work_package,
+           contract_class: WorkPackages::CreateContract)
+      .call(work_package_datepicker_params)
+  end
 end
