@@ -35,7 +35,7 @@ RSpec.describe "Working Days", :js do
   shared_let(:admin) { create(:admin) }
 
   let_work_packages(<<~TABLE)
-    subject               | MTWTFSSmtwtfss | scheduling mode | properties
+    subject               | MTWTFSSmtwtfss | scheduling mode | predecessors
     earliest_work_package | XXXXX          | manual          |
     second_work_package   |    XX..XX      | manual          |
     follower              |          XXX   | automatic       | follows earliest_work_package, follows second_work_package

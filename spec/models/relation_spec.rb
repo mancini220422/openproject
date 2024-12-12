@@ -139,7 +139,7 @@ RSpec.describe Relation do
 
     context "with a follows relation" do
       let_work_packages(<<~TABLE)
-        subject  | MTWTFSS | properties
+        subject  | MTWTFSS | predecessors
         main     | ]       |
         follower |         | follows main
       TABLE
@@ -152,7 +152,7 @@ RSpec.describe Relation do
 
     context "with a follows relation with predecessor having only start date" do
       let_work_packages(<<~TABLE)
-        subject  | MTWTFSS | properties
+        subject  | MTWTFSS | predecessors
         main     | [       |
         follower |         | follows main
       TABLE
@@ -178,7 +178,7 @@ RSpec.describe Relation do
 
     context "with a follows relation with a lag" do
       let_work_packages(<<~TABLE)
-        subject    | MTWTFSS | properties
+        subject    | MTWTFSS | predecessors
         main       | X       |
         follower_a |         | follows main with lag 0
         follower_b |         | follows main with lag 1
@@ -199,7 +199,7 @@ RSpec.describe Relation do
 
     context "with a follows relation with a lag and with non-working days in the lag period" do
       let_work_packages(<<~TABLE)
-        subject       | MTWTFSSmtw | properties
+        subject       | MTWTFSSmtw | predecessors
         main          | X░ ░ ░░ ░  |
         follower_lag0 |  ░ ░ ░░ ░  | follows main with lag 0
         follower_lag1 |  ░ ░ ░░ ░  | follows main with lag 1
@@ -226,7 +226,7 @@ RSpec.describe Relation do
 
     context "with a follows relation with a lag, non-working days, and followers ignoring non-working days" do
       let_work_packages(<<~TABLE)
-        subject       | MTWTFSSmtw | days counting     | properties
+        subject       | MTWTFSSmtw | days counting     | predecessors
         main          | X░ ░ ░░ ░  | working days only |
         follower_lag0 |  ░ ░ ░░ ░  | all days          | follows main with lag 0
         follower_lag1 |  ░ ░ ░░ ░  | all days          | follows main with lag 1

@@ -30,35 +30,38 @@
 
 module TableHelpers
   module ColumnType
-    # Column to add properties to work packages like "follows wp1 with lag 2".
+    # Column to add predecessors to work packages like "wp1, wp2 with lag 2, wp3".
     #
-    # Supported properties:
+    # Supported texts:
+    #   - :wp
+    #   - :wp with lag :int
     #   - follows :wp
     #   - follows :wp with lag :int
+    # They can be combined by separated them with commas: "follows wp1, wp2 with lag 2, wp3".
     #
     # Example:
     #
-    #   | subject   | properties              |
+    #   | subject   | predecessors            |
     #   | main      |                         |
     #   | follower  | follows main with lag 2 |
-    #   | follower2 | follows follower        |
+    #   | follower2 | follows follower, main  |
     #
     # Adapted from (now deleted) original implementation
     # in `spec/support/schedule_helpers/chart_builder.rb`.
-    class Properties < Generic
+    class Predecessors < Generic
       def attributes_for_work_package(_attribute, _work_package)
         {}
       end
 
       def extract_data(_attribute, raw_header, work_package_data, _work_packages_data)
-        properties = work_package_data.dig(:row, raw_header)
-        properties = properties.split(",").map(&:strip).compact_blank
-        parse_properties(properties)
+        predecessors = work_package_data.dig(:row, raw_header)
+        predecessors = predecessors.split(",").map(&:strip).compact_blank
+        parse_predecessors(predecessors)
       end
 
-      def parse_properties(properties)
-        properties.reduce({}) do |data, property|
-          case parse_property(property)
+      def parse_predecessors(predecessors)
+        predecessors.reduce({}) do |data, predecessor|
+          case parse_predecessor(predecessor)
           in {relations: relation}
             data[:relations] ||= []
             data[:relations] << relation
@@ -72,12 +75,12 @@ module TableHelpers
         {}
       end
 
-      def parse_property(property)
-        case property
-        when /^follows (.+?)(?: with lag (\d+))?\s*$/
+      def parse_predecessor(predecessor)
+        case predecessor
+        when /^(?:follows)?\s*(.+?)(?: with lag (\d+))?\s*$/
           {
             relations: {
-              raw: property,
+              raw: predecessor,
               type: :follows,
               predecessor: $1,
               lag: $2.to_i
@@ -86,13 +89,15 @@ module TableHelpers
         else
           spell_checker = DidYouMean::SpellChecker.new(
             dictionary: [
+              ":wp",
+              ":wp with lag :int",
               "follows :wp",
               "follows :wp with lag :int"
             ]
           )
-          suggestions = spell_checker.correct(property).map(&:inspect).join(" ")
+          suggestions = spell_checker.correct(predecessor).map(&:inspect).join(" ")
           did_you_mean = " Did you mean #{suggestions} instead?" if suggestions.present?
-          raise "unable to parse property #{property.inspect}.#{did_you_mean}"
+          raise "unable to parse predecessor #{predecessor.inspect}.#{did_you_mean}"
         end
       end
     end

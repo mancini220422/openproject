@@ -175,7 +175,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
 
       context "when a follower has a predecessor with dates covering a day that is now a non-working day" do
         let_work_packages(<<~TABLE)
-          subject     | MTWTFSS | days counting     | scheduling mode | properties
+          subject     | MTWTFSS | days counting     | scheduling mode | predecessors
           predecessor |  XX  ░░ | working days only | manual          |
           follower    |    XXX░ | all days          | automatic       | follows predecessor
         TABLE
@@ -209,7 +209,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
 
       context "when a follower has a predecessor with lag covering a day that is now a non-working day" do
         let_work_packages(<<~TABLE)
-          subject     | MTWTFSS | scheduling mode | properties
+          subject     | MTWTFSS | scheduling mode | predecessors
           predecessor | XX   ░░ | manual          |
           follower    |    X ░░ | automatic       | follows predecessor with lag 1
         TABLE
@@ -245,7 +245,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
 
       context "with work packages without dates following each other with lag" do
         let_work_packages(<<~TABLE)
-          subject     | MTWTFSS | scheduling mode | properties
+          subject     | MTWTFSS | scheduling mode | predecessors
           predecessor |      ░░ | manual          |
           follower    |      ░░ | automatic       | follows predecessor with lag 5
         TABLE
@@ -272,7 +272,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
 
       context "when a follower has a predecessor with lag covering multiple days with different working changes" do
         let_work_packages(<<~TABLE)
-          subject     | MTWTFSS | scheduling mode | properties
+          subject     | MTWTFSS | scheduling mode | predecessors
           predecessor | X ░  ░░ | manual          |
           follower    |   ░ X░░ | automatic       | follows predecessor with lag 2
         TABLE
@@ -301,7 +301,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
 
       context "when a follower has a predecessor with dates covering a day that is now a working day" do
         let_work_packages(<<~TABLE)
-          subject     | MTWTFSS | days counting     | scheduling mode | properties
+          subject     | MTWTFSS | days counting     | scheduling mode | predecessors
           predecessor |  X▓X ░░ | working days only | manual          |
           follower    |   ░ XXX | all days          | automatic       | follows predecessor
         TABLE
@@ -337,7 +337,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
       context "when a follower has a predecessor with a non-working day between them that is now a working day",
               skip: "TODO!!!" do
         let_work_packages(<<~TABLE)
-          subject     | MTWTFSS  | scheduling mode | properties
+          subject     | MTWTFSS  | scheduling mode | predecessors
           predecessor | XX░  ░░  | manual          |
           follower    |   ░XX░░  | automatic       | follows predecessor
         TABLE
@@ -415,7 +415,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
 
       context "when having multiple work packages following each other, and having days becoming non working days" do
         let_work_packages(<<~TABLE)
-          subject | MTWTFSS   | scheduling mode | properties
+          subject | MTWTFSS   | scheduling mode | predecessors
           wp1     |     X▓▓XX | automatic       | follows wp2
           wp2     |    X ░░   | automatic       | follows wp3
           wp3     | XXX  ░░   | manual          |
@@ -466,7 +466,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
         # * wp2 will move from Wednesday-Thursday to Thursday-nextMonday too and its followers will be rescheduled too
         #   * follower wp3 gets rescheduled *again* and moves to next Thursday
         let_work_packages(<<~TABLE)
-          subject | MTWTFSS | scheduling mode | properties
+          subject | MTWTFSS | scheduling mode | predecessors
           wp1     |  X   ░░ | manual          |
           wp2     |   XX ░░ | manual          |
           wp3     |     X░░ | automatic       | follows wp1, follows wp2
@@ -504,7 +504,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
 
       context "when having multiple work packages following each other, and having days becoming working days" do
         let_work_packages(<<~TABLE)
-          subject | MTWTFSSmtwtfssmtwtfss  | scheduling mode | properties
+          subject | MTWTFSSmtwtfssmtwtfss  | scheduling mode | predecessors
           wp1     |  ░░ ░░░ ░░ ░░░X▓▓X▓▓▓X | automatic       | follows wp2
           wp2     |  ░░ ░░░ ░░X░░░ ░░ ░░░  | automatic       | follows wp3
           wp3     | X▓▓X▓▓▓X░░ ░░░ ░░ ░░░  | manual          |
@@ -519,7 +519,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
         it "reschedules them to start as soon as possible and updates them only once" do
           subject
           expect(WorkPackage.all).to match_table(<<~TABLE)
-            subject | MTWTFSSmtwtfssmtwtfss | properties
+            subject | MTWTFSSmtwtfssmtwtfss | predecessors
             wp1     |     X░░XX   ░░     ░░ | follows wp2
             wp2     |    X ░░     ░░     ░░ | follows wp3
             wp3     | XXX  ░░     ░░     ░░ |
@@ -542,7 +542,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
 
       context "when having multiple work packages following each other and first one only has a due date" do
         let_work_packages(<<~TABLE)
-          subject | MTWTFSS   | scheduling mode | properties
+          subject | MTWTFSS   | scheduling mode | predecessors
           wp1     |     X▓▓XX | automatic       | follows wp2
           wp2     |   XX ░░   | automatic       | follows wp3
           wp3     |  ]   ░░   | manual          |
@@ -719,7 +719,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
 
       context "when a follower has a predecessor with dates covering a day that is now a non-working day" do
         let_work_packages(<<~TABLE)
-          subject     | MTWTFSS | days counting     | scheduling mode | properties
+          subject     | MTWTFSS | days counting     | scheduling mode | predecessors
           predecessor |  XX  ░░ | working days only | manual          |
           follower    |    XXX░ | all days          | automatic       | follows predecessor
         TABLE
@@ -753,7 +753,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
 
       context "when a follower has a predecessor with lag covering a day that is now a non-working day" do
         let_work_packages(<<~TABLE)
-          subject     | MTWTFSS | scheduling mode | properties
+          subject     | MTWTFSS | scheduling mode | predecessors
           predecessor | XX   ░░ | manual          |
           follower    |    X ░░ | automatic       | follows predecessor with lag 1
         TABLE
@@ -789,7 +789,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
 
       context "with work packages without dates following each other with lag" do
         let_work_packages(<<~TABLE)
-          subject     | MTWTFSS | scheduling mode | properties
+          subject     | MTWTFSS | scheduling mode | predecessors
           predecessor |      ░░ | manual          |
           follower    |      ░░ | automatic       | follows predecessor with lag 5
         TABLE
@@ -816,7 +816,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
 
       context "when a follower has a predecessor with lag covering multiple days with different working changes" do
         let_work_packages(<<~TABLE)
-          subject     | MTWTFSS | scheduling mode | properties
+          subject     | MTWTFSS | scheduling mode | predecessors
           predecessor | X ░  ░░ | manual          |
           follower    |   ░ X░░ | automatic       | follows predecessor with lag 2
         TABLE
@@ -850,7 +850,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
 
       context "when a follower has a predecessor with dates covering a day that is now a working day" do
         let_work_packages(<<~TABLE)
-          subject     | MTWTFSS | days counting     | scheduling mode | properties
+          subject     | MTWTFSS | days counting     | scheduling mode | predecessors
           predecessor |  X▓X ░░ | working days only | manual          |
           follower    |   ░ XXX | all days          | automatic       | follows predecessor
         TABLE
@@ -890,7 +890,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
       context "when a follower has a predecessor with a non-working day between them that is now a working day",
               skip: "TODO!!!" do
         let_work_packages(<<~TABLE)
-          subject     | MTWTFSS  | scheduling mode | properties
+          subject     | MTWTFSS  | scheduling mode | predecessors
           predecessor | XX░  ░░  | manual          |
           follower    |   ░XX░░  | automatic       | follows predecessor
         TABLE
@@ -972,7 +972,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
 
       context "when having multiple work packages following each other, and having days becoming non working days" do
         let_work_packages(<<~TABLE)
-          subject | MTWTFSS   | scheduling mode | properties
+          subject | MTWTFSS   | scheduling mode | predecessors
           wp1     |     X▓▓XX | automatic       | follows wp2
           wp2     |    X ░░   | automatic       | follows wp3
           wp3     | XXX  ░░   | manual          |
@@ -1029,7 +1029,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
         # * wp2 will move from Wednesday-Thursday to Thursday-nextMonday too and its followers will be rescheduled too
         #   * follower wp3 gets rescheduled *again* and moves to next Thursday
         let_work_packages(<<~TABLE)
-          subject | MTWTFSS | scheduling mode | properties
+          subject | MTWTFSS | scheduling mode | predecessors
           wp1     |  X   ░░ | manual          |
           wp2     |   XX ░░ | manual          |
           wp3     |     X░░ | automatic       | follows wp1, follows wp2
@@ -1075,7 +1075,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
 
       context "when having multiple work packages following each other, and having days becoming working days" do
         let_work_packages(<<~TABLE)
-          subject | MTWTFSSmtwtfssmtwtfss  | scheduling mode | properties
+          subject | MTWTFSSmtwtfssmtwtfss  | scheduling mode | predecessors
           wp1     |  ░░ ░░░ ░░ ░░░X▓▓X▓▓▓X | automatic       | follows wp2
           wp2     |  ░░ ░░░ ░░X░░░ ░░ ░░░  | automatic       | follows wp3
           wp3     | X▓▓X▓▓▓X░░ ░░░ ░░ ░░░  | manual          |
@@ -1102,7 +1102,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
         it "reschedules them to start as soon as possible and updates them only once" do
           subject
           expect(WorkPackage.all).to match_table(<<~TABLE)
-            subject | MTWTFSSmtwtfssmtwtfss | properties
+            subject | MTWTFSSmtwtfssmtwtfss | predecessors
             wp1     |     X░░XX   ░░     ░░ | follows wp2
             wp2     |    X ░░     ░░     ░░ | follows wp3
             wp3     | XXX  ░░     ░░     ░░ |
@@ -1125,7 +1125,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
 
       context "when having multiple work packages following each other and first one only has a due date" do
         let_work_packages(<<~TABLE)
-          subject | MTWTFSS   | scheduling mode | properties
+          subject | MTWTFSS   | scheduling mode | predecessors
           wp1     |     X▓▓XX | automatic       | follows wp2
           wp2     |   XX ░░   | automatic       | follows wp3
           wp3     |  ]   ░░   | manual          |
@@ -1319,7 +1319,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
 
       context "when a follower has a predecessor with dates covering a day that is now a non-working day" do
         let_work_packages(<<~TABLE)
-          subject     | MTWTFSS | days counting     | scheduling mode | properties
+          subject     | MTWTFSS | days counting     | scheduling mode | predecessors
           predecessor |  XX  ░░ | working days only | manual          |
           follower    |    XXX░ | all days          | automatic       | follows predecessor
         TABLE
@@ -1353,7 +1353,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
 
       context "when a follower has a predecessor with lag covering a day that is now a non-working day" do
         let_work_packages(<<~TABLE)
-          subject     | MTWTFSS | scheduling mode | properties
+          subject     | MTWTFSS | scheduling mode | predecessors
           predecessor | XX   ░░ | manual          |
           follower    |    X ░░ | automatic       | follows predecessor with lag 1
         TABLE
@@ -1389,7 +1389,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
 
       context "with work packages without dates following each other with lag" do
         let_work_packages(<<~TABLE)
-          subject     | MTWTFSS | scheduling mode | properties
+          subject     | MTWTFSS | scheduling mode | predecessors
           predecessor |      ░░ | manual          |
           follower    |      ░░ | automatic       | follows predecessor with lag 5
         TABLE
@@ -1416,7 +1416,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
 
       context "when a follower has a predecessor with lag covering multiple days with different working changes" do
         let_work_packages(<<~TABLE)
-          subject     | MTWTFSS | scheduling mode | properties
+          subject     | MTWTFSS | scheduling mode | predecessors
           predecessor | X ░  ░░ | manual          |
           follower    |   ░ X░░ | automatic       | follows predecessor with lag 2
         TABLE
@@ -1450,7 +1450,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
 
       context "when a follower has a predecessor with dates covering a day that is now a working day" do
         let_work_packages(<<~TABLE)
-          subject     | MTWTFSS | days counting     | scheduling mode | properties
+          subject     | MTWTFSS | days counting     | scheduling mode | predecessors
           predecessor |  X▓X ░░ | working days only | manual          |
           follower    |   ░ XXX | all days          | automatic       | follows predecessor
         TABLE
@@ -1489,7 +1489,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
 
       context "when a follower has a predecessor with a non-working day between them that is now a working day" do
         let_work_packages(<<~TABLE)
-          subject     | MTWTFSS  | scheduling mode | properties
+          subject     | MTWTFSS  | scheduling mode | predecessors
           predecessor | XX░  ░░  | manual          |
           follower    |   ░XX░░  | automatic       | follows predecessor
         TABLE
@@ -1568,7 +1568,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
 
       context "when having multiple work packages following each other, and having days becoming non working days" do
         let_work_packages(<<~TABLE)
-          subject | MTWTFSS   | scheduling mode | properties
+          subject | MTWTFSS   | scheduling mode | predecessors
           wp1     |     X▓▓XX | automatic       | follows wp2
           wp2     |    X ░░   | automatic       | follows wp3
           wp3     | XXX  ░░   | manual          |
@@ -1625,7 +1625,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
         # * wp2 will move from Wednesday-Thursday to Thursday-nextMonday too and its followers will be rescheduled too
         #   * follower wp3 gets rescheduled *again* and moves to next Thursday
         let_work_packages(<<~TABLE)
-          subject | MTWTFSS | scheduling mode | properties
+          subject | MTWTFSS | scheduling mode | predecessors
           wp1     |  X   ░░ | manual          |
           wp2     |   XX ░░ | manual          |
           wp3     |     X░░ | automatic       | follows wp1, follows wp2
@@ -1671,7 +1671,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
 
       context "when having multiple work packages following each other, and having days becoming working days" do
         let_work_packages(<<~TABLE)
-          subject | MTWTFSSmtwtfssmtwtfss  | scheduling mode | properties
+          subject | MTWTFSSmtwtfssmtwtfss  | scheduling mode | predecessors
           wp1     |  ░░ ░░░ ░░ ░░░X▓▓X▓▓▓X | automatic       | follows wp2
           wp2     |  ░░ ░░░ ░░X░░░ ░░ ░░░  | automatic       | follows wp3
           wp3     | X▓▓X▓▓▓X░░ ░░░ ░░ ░░░  | manual          |
@@ -1698,7 +1698,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
         it "reschedules them to start as soon as possible and updates them only once" do
           subject
           expect(WorkPackage.all).to match_table(<<~TABLE)
-            subject | MTWTFSSmtwtfssmtwtfss  | properties
+            subject | MTWTFSSmtwtfssmtwtfss  | predecessors
             wp1     |     X░░XX   ░░     ░░  | follows wp2
             wp2     |    X ░░     ░░     ░░  | follows wp3
             wp3     | XXX  ░░     ░░     ░░  |
@@ -1721,7 +1721,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
 
       context "when having multiple work packages following each other and first one only has a due date" do
         let_work_packages(<<~TABLE)
-          subject | MTWTFSS   | scheduling mode | properties
+          subject | MTWTFSS   | scheduling mode | predecessors
           wp1     |     X▓▓XX | automatic       | follows wp2
           wp2     |   XX ░░   | automatic       | follows wp3
           wp3     |  ]   ░░   | manual          |

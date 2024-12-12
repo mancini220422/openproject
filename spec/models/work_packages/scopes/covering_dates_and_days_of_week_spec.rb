@@ -105,7 +105,7 @@ RSpec.describe WorkPackages::Scopes::CoveringDatesAndDaysOfWeek do
 
     it "does not return work packages having follows relation covering the given days of week" do
       create_table(<<~TABLE)
-        subject      | MTWTFSS | properties
+        subject      | MTWTFSS | predecessors
         not_covered1 | X       |
         follower1    |     X   | follows not_covered1
         not_covered2 | X       |
@@ -118,7 +118,7 @@ RSpec.describe WorkPackages::Scopes::CoveringDatesAndDaysOfWeek do
 
     it "does not return work packages having follows relation with lag covering the given days of week" do
       create_table(<<~TABLE)
-        subject      | MTWTFSS | properties
+        subject      | MTWTFSS | predecessors
         not_covered1 | X       |
         follower1    |     X   | follows not_covered1 with lag 3
         not_covered2 | X       |

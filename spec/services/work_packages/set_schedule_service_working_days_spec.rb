@@ -43,7 +43,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
   context "with a single successor" do
     context "when moving successor will cover non-working days" do
       let_work_packages(<<~TABLE)
-        subject       | MTWTFSS | scheduling mode | properties
+        subject       | MTWTFSS | scheduling mode | predecessors
         work_package  | XX      | manual          |
         follower      |   XXX   | automatic       | follows work_package
       TABLE
@@ -67,7 +67,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
 
     context "when moved predecessor covers non-working days" do
       let_work_packages(<<~TABLE)
-        subject       | MTWTFSS      | scheduling mode | properties
+        subject       | MTWTFSS      | scheduling mode | predecessors
         work_package  |    XX        | manual          |
         follower      |        XXX   | automatic       | follows work_package
       TABLE
@@ -92,7 +92,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
     context "when predecessor moved forward" do
       context "on a day in the middle on working days with the follower having only start date" do
         let_work_packages(<<~TABLE)
-          subject       | MTWTFSS   | scheduling mode | properties
+          subject       | MTWTFSS   | scheduling mode | predecessors
           work_package  | X         | manual          |
           follower      |  [        | automatic       | follows work_package
         TABLE
@@ -115,7 +115,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
 
       context "on a day just before non working days with the follower having only start date" do
         let_work_packages(<<~TABLE)
-          subject       | MTWTFSS   | scheduling mode | properties
+          subject       | MTWTFSS   | scheduling mode | predecessors
           work_package  | X         | manual          |
           follower      |  [        | automatic       | follows work_package
         TABLE
@@ -138,7 +138,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
 
       context "on a day in the middle of working days with the follower having only due date and no space in between" do
         let_work_packages(<<~TABLE)
-          subject       | MTWTFSS | scheduling mode | properties
+          subject       | MTWTFSS | scheduling mode | predecessors
           work_package  | ]       | manual          |
           follower      |  ]      | automatic       | follows work_package
         TABLE
@@ -161,7 +161,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
 
       context "on a day in the middle of working days with the follower having only due date and much space in between" do
         let_work_packages(<<~TABLE)
-          subject       | MTWTFSSmt | scheduling mode | properties
+          subject       | MTWTFSSmt | scheduling mode | predecessors
           work_package  | ]         | manual          |
           follower      |         ] | automatic       | follows work_package
         TABLE
@@ -184,7 +184,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
 
       context "on a day just before non-working day with the follower having only due date" do
         let_work_packages(<<~TABLE)
-          subject       | MTWTFSS | scheduling mode | properties
+          subject       | MTWTFSS | scheduling mode | predecessors
           work_package  | ]       | manual          |
           follower      |  ]      | automatic       | follows work_package
         TABLE
@@ -207,7 +207,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
 
       context "with the follower having some space left" do
         let_work_packages(<<~TABLE)
-          subject       | MTWTFSS   | scheduling mode | properties
+          subject       | MTWTFSS   | scheduling mode | predecessors
           work_package  | X         | manual          |
           follower      |     X..XX | automatic       | follows work_package
         TABLE
@@ -230,7 +230,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
 
       context "with the follower having enough space left to not be moved at all" do
         let_work_packages(<<~TABLE)
-          subject       | MTWTFSS       | scheduling mode | properties
+          subject       | MTWTFSS       | scheduling mode | predecessors
           work_package  | X             | manual          |
           follower      |          XXX  | automatic       | follows work_package
         TABLE
@@ -253,7 +253,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
 
       context "with the follower having some space left and a lag" do
         let_work_packages(<<~TABLE)
-          subject       | MTWTFSSmtwtfss  | scheduling mode | properties
+          subject       | MTWTFSSmtwtfss  | scheduling mode | predecessors
           work_package  | X               | manual          |
           follower      |        XXX      | automatic       | follows work_package with lag 3
         TABLE
@@ -276,7 +276,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
 
       context "with the follower having a lag overlapping non-working days" do
         let_work_packages(<<~TABLE)
-          subject       | MTWTFSS | scheduling mode | properties
+          subject       | MTWTFSS | scheduling mode | predecessors
           work_package  | X       | manual          |
           follower      |    XX   | automatic       | follows work_package with lag 2
         TABLE
@@ -301,7 +301,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
     context "when predecessor moved backwards" do
       context "on a day right before some non-working days" do
         let_work_packages(<<~TABLE)
-          subject       | MTWTFSS | scheduling mode | properties
+          subject       | MTWTFSS | scheduling mode | predecessors
           work_package  | X       | manual          |
           follower      |  XX     | automatic       | follows work_package
         TABLE
@@ -324,7 +324,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
 
       context "on a day before non-working days the follower having space between" do
         let_work_packages(<<~TABLE)
-          subject       | MTWTFSS   | scheduling mode | properties
+          subject       | MTWTFSS   | scheduling mode | predecessors
           work_package  | X         | manual          |
           follower      |     X     | automatic       | follows work_package
         TABLE
@@ -347,7 +347,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
 
       context "with the follower having another relation limiting movement" do
         let_work_packages(<<~TABLE)
-          subject       | mtwtfssmtwtfssMTWTFSS | scheduling mode | properties
+          subject       | mtwtfssmtwtfssMTWTFSS | scheduling mode | predecessors
           work_package  |               X       | manual          |
           follower      |                XX     | automatic       | follows work_package, follows annoyer with lag 2
           annoyer       |    XX..XX             | manual          |
@@ -374,7 +374,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
     context "when removing the dates on the moved predecessor" do
       context "with the follower having start and due dates" do
         let_work_packages(<<~TABLE)
-          subject       | MTWTFSS | scheduling mode | properties
+          subject       | MTWTFSS | scheduling mode | predecessors
           work_package  | XX      | manual          |
           follower      |   XXX   | automatic       | follows work_package
         TABLE
@@ -400,7 +400,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
 
       context "with the follower having only a due date" do
         let_work_packages(<<~TABLE)
-          subject       | MTWTFSS | scheduling mode | properties
+          subject       | MTWTFSS | scheduling mode | predecessors
           work_package  | XX      | manual          |
           follower      |     ]   | automatic       | follows work_package
         TABLE
@@ -555,7 +555,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
     context "with the successor having another predecessor which has no dates" do
       context "when moved forward" do
         let_work_packages(<<~TABLE)
-          subject           | MTWTFSS | scheduling mode | properties
+          subject           | MTWTFSS | scheduling mode | predecessors
           work_package      | ]       | manual          |
           follower          |  XXX    | automatic       | follows work_package, follows other_predecessor
           other_predecessor |         | manual          |
@@ -579,7 +579,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
 
       context "when moved backwards" do
         let_work_packages(<<~TABLE)
-          subject           | MTWTFSS | scheduling mode | properties
+          subject           | MTWTFSS | scheduling mode | predecessors
           work_package      | ]       | manual          |
           follower          |  XXX    | automatic       | follows work_package, follows other_predecessor
           other_predecessor |         | manual          |
@@ -605,7 +605,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
     context "with successor having only duration" do
       context "when setting dates on predecessor" do
         let_work_packages(<<~TABLE)
-          subject           | MTWTFSS | duration | scheduling mode | properties
+          subject           | MTWTFSS | duration | scheduling mode | predecessors
           work_package      |         |          | manual          |
           follower          |         |        3 | automatic       | follows work_package
         TABLE
@@ -653,7 +653,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
 
   context "with a parent having a follower" do
     let_work_packages(<<~TABLE)
-      hierarchy       | MTWTFSS   | scheduling mode | properties
+      hierarchy       | MTWTFSS   | scheduling mode | predecessors
       parent          | XX        | automatic       |
         work_package  | ]         | manual          |
       parent_follower |     X..XX | automatic       | follows parent
@@ -679,7 +679,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
   context "with a single successor having a parent" do
     context "when moving forward" do
       let_work_packages(<<~TABLE)
-        hierarchy       | MTWTFSS | scheduling mode | properties
+        hierarchy       | MTWTFSS | scheduling mode | predecessors
         work_package    | ]       | manual          |
         follower_parent |  XX     | automatic       |
           follower      |  XX     | automatic       | follows work_package
@@ -704,7 +704,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
 
     context "when moving forward with the parent having another child not being moved" do
       let_work_packages(<<~TABLE)
-        hierarchy          | MTWTFSS | scheduling mode | properties
+        hierarchy          | MTWTFSS | scheduling mode | predecessors
         work_package       | ]       | manual          |
         follower_parent    |  XXXX   | automatic       |
           follower         |  XX     | automatic       | follows work_package
@@ -734,7 +734,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
 
     context "when moving backwards" do
       let_work_packages(<<~TABLE)
-        hierarchy       | MTWTFSS | scheduling mode | properties
+        hierarchy       | MTWTFSS | scheduling mode | predecessors
         work_package    | ]       | manual          |
         follower_parent |  XX     | automatic       |
           follower      |  XX     | automatic       | follows work_package
@@ -759,7 +759,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
 
     context "when moving backwards with the parent having another child not being moved" do
       let_work_packages(<<~TABLE)
-        hierarchy          | mtwtfssMTWTFSS | scheduling mode | properties
+        hierarchy          | mtwtfssMTWTFSS | scheduling mode | predecessors
         work_package       |        ]       | manual          |
         follower_parent    |         XXXX   | automatic       |
           follower         |         XX     | automatic       | follows work_package
@@ -788,7 +788,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
   context "with a single successor having a child in automatic scheduling mode" do
     context "when moving forward" do
       let_work_packages(<<~TABLE)
-        hierarchy        | MTWTFSS | scheduling mode | properties
+        hierarchy        | MTWTFSS | scheduling mode | predecessors
         work_package     | ]       | manual          |
         follower         |  XX     | automatic       | follows work_package
           follower_child |  XX     | automatic       |
@@ -815,7 +815,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
   context "with a single successor having a child in manual scheduling mode" do
     context "when moving forward" do
       let_work_packages(<<~TABLE)
-        hierarchy        | MTWTFSS | scheduling mode | properties
+        hierarchy        | MTWTFSS | scheduling mode | predecessors
         work_package     | ]       | manual          |
         follower         |  XX     | automatic       | follows work_package
           follower_child |  XX     | manual          |
@@ -840,7 +840,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
   context "with a single successor having two children automatically scheduled" do
     context "when creating the follows relation while successor starts right after moved work package due date" do
       let_work_packages(<<~TABLE)
-        hierarchy         | MTWTFSS          | scheduling mode | properties
+        hierarchy         | MTWTFSS          | scheduling mode | predecessors
         work_package      | ]                | manual          |
         follower          |  XXXX..XXXXX..XX | automatic       |
           follower_child1 |  XXX             | automatic       |
@@ -861,7 +861,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
 
     context "when creating the follows relation while follower starts 3 days after moved due date" do
       let_work_packages(<<~TABLE)
-        hierarchy         | MTWTFSS            | scheduling mode | properties
+        hierarchy         | MTWTFSS            | scheduling mode | predecessors
         work_package      | ]                  | manual          |
         follower          |    XX..XXXXX..XXXX | automatic       |
           follower_child1 |    XX..X           | automatic       |
@@ -935,7 +935,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
   context "with a chain of followers" do
     context "when moving forward" do
       let_work_packages(<<~TABLE)
-        subject      | MTWTFSSm     sm     sm | scheduling mode | properties
+        subject      | MTWTFSSm     sm     sm | scheduling mode | predecessors
         work_package | ]                      | manual          |
         follower1    |  XXX                   | automatic       | follows work_package
         follower2    |     X..XXXX            | automatic       | follows follower1
@@ -964,7 +964,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
 
     context "when moving forward with some space between the followers" do
       let_work_packages(<<~TABLE)
-        subject      | MTWTFSSm     sm     sm     | scheduling mode | properties
+        subject      | MTWTFSSm     sm     sm     | scheduling mode | predecessors
         work_package | ]                          | manual          |
         follower1    |  XXX                       | automatic       | follows work_package
         follower2    |        XXXX                | automatic       | follows follower1
@@ -993,7 +993,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
 
     context "when moving forward with some lag and spaces between the followers" do
       let_work_packages(<<~TABLE)
-        subject      | MTWTFSSm     sm     sm     | scheduling mode | properties
+        subject      | MTWTFSSm     sm     sm     | scheduling mode | predecessors
         work_package | ]                          | manual          |
         follower1    |  XXX                       | automatic       | follows work_package
         follower2    |        XXXX                | automatic       | follows follower1 with lag 3
@@ -1022,7 +1022,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
 
     context "when moving forward due to days and predecessor due date now being non-working days" do
       let_work_packages(<<~TABLE)
-        subject      | MTWTFSS | scheduling mode | properties
+        subject      | MTWTFSS | scheduling mode | predecessors
         work_package | XX      | manual          |
         follower1    |   X     | automatic       | follows work_package
         follower2    |    XX   | automatic       | follows follower1
@@ -1054,7 +1054,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
 
     context "when moving forward due to days and predecessor start date now being non-working days" do
       let_work_packages(<<~TABLE)
-        subject      | MTWTFSS | scheduling mode | properties
+        subject      | MTWTFSS | scheduling mode | predecessors
         work_package | XX      | manual          |
         follower1    |   X     | automatic       | follows work_package
         follower2    |    XX   | automatic       | follows follower1
@@ -1086,7 +1086,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
 
     context "when moving backwards" do
       let_work_packages(<<~TABLE)
-        subject      | MTWTFSSm     sm     sm     | scheduling mode | properties
+        subject      | MTWTFSSm     sm     sm     | scheduling mode | predecessors
         work_package | ]                          | manual          |
         follower1    |  XXX                       | automatic       | follows work_package
         follower2    |     X..XXX                 | automatic       | follows follower1
@@ -1117,7 +1117,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
   context "with a chain of followers with two paths leading to the same follower in the end" do
     context "when moving forward" do
       let_work_packages(<<~TABLE)
-        subject      | MTWTFSSm     sm  | scheduling mode | properties
+        subject      | MTWTFSSm     sm  | scheduling mode | predecessors
         work_package | ]                | manual          |
         follower1    |  XXX             | automatic       | follows work_package
         follower2    |     X..XXXX      | automatic       | follows follower1
@@ -1146,7 +1146,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
 
     context "when moving backwards" do
       let_work_packages(<<~TABLE)
-        subject      | MTWTFSSm     sm  | scheduling mode | properties
+        subject      | MTWTFSSm     sm  | scheduling mode | predecessors
         work_package | ]                | manual          |
         follower1    |  XXX             | automatic       | follows work_package
         follower2    |     X..XXXX      | automatic       | follows follower1
@@ -1179,7 +1179,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
 
     context "without dates and with the parent being restricted in its ability to be moved" do
       let_work_packages(<<~TABLE)
-        subject                | MTWTFSS | scheduling mode | properties
+        subject                | MTWTFSS | scheduling mode | predecessors
         work_package           |         | manual          |
         new_parent_predecessor |   X     | manual          |
         new_parent             |         | automatic       |follows new_parent_predecessor with lag 3
@@ -1201,7 +1201,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
 
     context "without dates, with a duration and with the parent being restricted in its ability to be moved" do
       let_work_packages(<<~TABLE)
-        subject                | MTWTFSS | duration | scheduling mode | properties
+        subject                | MTWTFSS | duration | scheduling mode | predecessors
         work_package           |         |        4 | manual          |
         new_parent_predecessor |   X     |          | manual          |
         new_parent             |         |          | automatic       | follows new_parent_predecessor with lag 3
@@ -1224,7 +1224,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
 
     context "with the parent being restricted in its ability to be moved and with a due date before parent constraint" do
       let_work_packages(<<~TABLE)
-        subject                | MTWTFSS   | scheduling mode | properties
+        subject                | MTWTFSS   | scheduling mode | predecessors
         work_package           | ]         | manual          |
         new_parent_predecessor | X         | manual          |
         new_parent             |           | automatic       | follows new_parent_predecessor with lag 3
@@ -1246,7 +1246,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
 
     context "with the parent being restricted in its ability to be moved and with a due date after parent constraint" do
       let_work_packages(<<~TABLE)
-        subject                | MTWTFSS   | scheduling mode | properties
+        subject                | MTWTFSS   | scheduling mode | predecessors
         work_package           |         ] | manual          |
         new_parent_predecessor | X         | manual          |
         new_parent             |           | automatic       | follows new_parent_predecessor with lag 3
@@ -1268,7 +1268,7 @@ RSpec.describe WorkPackages::SetScheduleService, "working days" do
 
     context "with the parent being restricted but work package already has both dates set" do
       let_work_packages(<<~TABLE)
-        subject                | MTWTFSS   | scheduling mode | properties
+        subject                | MTWTFSS   | scheduling mode | predecessors
         work_package           |        XX | manual          |
         new_parent_predecessor | X         | manual          |
         new_parent             |           | automatic       | follows new_parent_predecessor with lag 3

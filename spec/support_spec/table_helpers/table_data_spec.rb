@@ -161,7 +161,7 @@ module TableHelpers
 
       it "creates relations between work packages out of the table data" do
         table_representation = <<~TABLE
-          subject  | properties
+          subject  | predecessors
           main     |
           follower | follows main with lag 2
         TABLE

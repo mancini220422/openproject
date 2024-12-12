@@ -31,7 +31,7 @@
 require "spec_helper"
 
 module TableHelpers::ColumnType
-  RSpec.describe Properties do
+  RSpec.describe Predecessors do
     subject(:column_type) { described_class.new }
 
     def parsed_data(table)
@@ -41,14 +41,14 @@ module TableHelpers::ColumnType
     describe "empty" do
       it "stores nothing when empty" do
         work_package_data = parsed_data(<<~TABLE).first
-          | properties |
-          |            |
+          | predecessors |
+          |              |
         TABLE
         expect(work_package_data[:relations]).to be_nil
         expect(work_package_data[:attributes]).to be_empty
 
         work_package_data = parsed_data(<<~TABLE).first
-          | properties
+          | predecessors
           |
         TABLE
         expect(work_package_data[:relations]).to be_nil
@@ -56,34 +56,50 @@ module TableHelpers::ColumnType
       end
     end
 
-    describe "follows <predecessor> [with lag <nb_days>]" do
+    describe "[follows] <predecessor> [with lag <nb_days>]" do
       it "stores follows relations in work_package_data" do
-        work_package_data = parsed_data(<<~TABLE).first
-          | properties              |
+        work_package_data = parsed_data(<<~TABLE).pluck(:relations)
+          | predecessors            |
           | follows main with lag 3 |
+          | main with lag 3         |
         TABLE
-        expect(work_package_data[:relations])
-          .to eq([{ raw: "follows main with lag 3", type: :follows, predecessor: "main", lag: 3 }])
+        expect(work_package_data)
+          .to eq([
+                   [{ raw: "follows main with lag 3", type: :follows, predecessor: "main", lag: 3 }],
+                   [{ raw: "main with lag 3", type: :follows, predecessor: "main", lag: 3 }]
+                 ])
       end
 
       it "has a default lag of 0 days when not specified" do
-        work_package_data = parsed_data(<<~TABLE).first
-          | properties   |
+        work_package_data = parsed_data(<<~TABLE).pluck(:relations)
+          | predecessors |
           | follows main |
+          | main         |
         TABLE
-        expect(work_package_data[:relations])
-          .to eq([{ raw: "follows main", type: :follows, predecessor: "main", lag: 0 }])
+        expect(work_package_data)
+          .to eq([
+                   [{ raw: "follows main", type: :follows, predecessor: "main", lag: 0 }],
+                   [{ raw: "main", type: :follows, predecessor: "main", lag: 0 }]
+                 ])
       end
 
       it "can store multiple relations" do
-        work_package_data = parsed_data(<<~TABLE).first
-          | properties               |
+        work_package_data = parsed_data(<<~TABLE).pluck(:relations)
+          | predecessors             |
           | follows wp1, follows wp2 |
+          | follows wp1, wp2, wp3    |
         TABLE
-        expect(work_package_data[:relations])
+        expect(work_package_data)
           .to eq([
-                   { raw: "follows wp1", type: :follows, predecessor: "wp1", lag: 0 },
-                   { raw: "follows wp2", type: :follows, predecessor: "wp2", lag: 0 }
+                   [
+                     { raw: "follows wp1", type: :follows, predecessor: "wp1", lag: 0 },
+                     { raw: "follows wp2", type: :follows, predecessor: "wp2", lag: 0 }
+                   ],
+                   [
+                     { raw: "follows wp1", type: :follows, predecessor: "wp1", lag: 0 },
+                     { raw: "wp2", type: :follows, predecessor: "wp2", lag: 0 },
+                     { raw: "wp3", type: :follows, predecessor: "wp3", lag: 0 }
+                   ]
                  ])
       end
     end

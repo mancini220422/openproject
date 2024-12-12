@@ -123,7 +123,7 @@ RSpec.describe UpdateSchedulingModeAndLags, type: :model do
   # > - Manually scheduled work packages remain so.
   context "for manually scheduled work packages following another one" do
     let_work_packages(<<~TABLE)
-      subject        | start date | due date   | scheduling mode | properties
+      subject        | start date | due date   | scheduling mode | predecessors
       main           |            |            | manual          |
       wp 1           | 2024-11-20 | 2024-11-21 | manual          | follows main
       wp 2           |            | 2024-11-21 | manual          | follows main
@@ -145,7 +145,7 @@ RSpec.describe UpdateSchedulingModeAndLags, type: :model do
   # >   - The successor remains in automatic mode
   context "for automatically scheduled work packages following another one having dates" do
     let_work_packages(<<~TABLE)
-      subject            | start date | due date   | scheduling mode | properties
+      subject            | start date | due date   | scheduling mode | predecessors
       pred with dates    | 2024-11-19 | 2024-11-19 | manual          |
       pred without dates |            |            | manual          |
       wp 1               | 2024-11-20 | 2024-11-21 | automatic       | follows pred with dates, follows pred without dates
@@ -170,7 +170,7 @@ RSpec.describe UpdateSchedulingModeAndLags, type: :model do
   # >   - The successor is switched to manual mode to preserve its dates and duration
   context "for automatically scheduled work packages without dates following another one" do
     let_work_packages(<<~TABLE)
-      subject            | start date | due date   | scheduling mode | properties
+      subject            | start date | due date   | scheduling mode | predecessors
       pred without dates |            |            | manual          |
       succ               |            |            | automatic       | follows pred without dates
     TABLE
@@ -189,7 +189,7 @@ RSpec.describe UpdateSchedulingModeAndLags, type: :model do
   # >   - The successor is switched to manual mode to preserve its dates and duration
   context "for automatically scheduled work packages following another one having no dates" do
     let_work_packages(<<~TABLE)
-      subject            | start date | due date   | scheduling mode | properties
+      subject            | start date | due date   | scheduling mode | predecessors
       pred without dates |            |            | manual          |
       succ 1             | 2024-11-20 | 2024-11-21 | automatic       | follows pred without dates
       succ 2             |            | 2024-11-21 | automatic       | follows pred without dates
@@ -227,7 +227,7 @@ RSpec.describe UpdateSchedulingModeAndLags, type: :model do
 
   context "for 2 work packages following each other with distant dates" do
     shared_let_work_packages(<<~TABLE)
-      subject       | MTWTFSS | scheduling mode | properties
+      subject       | MTWTFSS | scheduling mode | predecessors
       predecessor 1 | XX      | manual          |
       follower 1    |      XX | automatic       | follows predecessor 1
 
@@ -270,7 +270,7 @@ RSpec.describe UpdateSchedulingModeAndLags, type: :model do
 
   context "for 2 work packages following each other with missing dates" do
     let_work_packages(<<~TABLE)
-      subject       | MTWTFSS | scheduling mode | properties
+      subject       | MTWTFSS | scheduling mode | predecessors
       # only predecessor has dates
       predecessor 1 | XX      | manual          |
       follower 1    |         | automatic       | follows predecessor 1
@@ -295,7 +295,7 @@ RSpec.describe UpdateSchedulingModeAndLags, type: :model do
 
   context "for a work package following multiple work packages" do
     shared_let_work_packages(<<~TABLE)
-      subject       | MTWTFSS | scheduling mode | properties
+      subject       | MTWTFSS | scheduling mode | predecessors
       predecessor 1 | XX      | manual          |
       predecessor 2 |  XX     | manual          |
       predecessor 3 | X       | manual          |
