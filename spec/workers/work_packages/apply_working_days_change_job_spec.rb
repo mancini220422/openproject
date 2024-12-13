@@ -45,7 +45,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
   shared_examples_for "journal updates with cause" do
     let(:changed_work_packages) { [] }
     let(:unchanged_work_packages) { [] }
-    let(:changed_days) { raise "need to specify note" }
+    let(:changed_days) { raise "need to specify `let(:changed_days)`" }
 
     it "adds journal entries to changed work packages" do
       subject
@@ -334,8 +334,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
         end
       end
 
-      context "when a follower has a predecessor with a non-working day between them that is now a working day",
-              skip: "TODO!!!" do
+      context "when a follower has a predecessor with a non-working day between them that is now a working day" do
         let_work_packages(<<~TABLE)
           subject     | MTWTFSS  | scheduling mode | predecessors
           predecessor | XX░  ░░  | manual          |
@@ -362,6 +361,12 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
           end
           let(:unchanged_work_packages) do
             [predecessor]
+          end
+          let(:changed_days) do
+            {
+              "working_days" => { "3" => true },
+              "non_working_days" => {}
+            }
           end
         end
       end
@@ -887,8 +892,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
         end
       end
 
-      context "when a follower has a predecessor with a non-working day between them that is now a working day",
-              skip: "TODO!!!" do
+      context "when a follower has a predecessor with a non-working day between them that is now a working day" do
         let_work_packages(<<~TABLE)
           subject     | MTWTFSS  | scheduling mode | predecessors
           predecessor | XX░  ░░  | manual          |
@@ -904,7 +908,7 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
           set_working_days(non_working_day.date)
         end
 
-        it "does not move the follower" do
+        it "moves the follower backwards" do
           subject
           expect(WorkPackage.all).to match_table(<<~TABLE)
             subject     | MTWTFSS |
@@ -919,6 +923,12 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
           end
           let(:unchanged_work_packages) do
             [predecessor]
+          end
+          let(:changed_days) do
+            {
+              "working_days" => {},
+              "non_working_days" => { non_working_day.date.iso8601 => true }
+            }
           end
         end
       end
@@ -1503,18 +1513,27 @@ RSpec.describe WorkPackages::ApplyWorkingDaysChangeJob do
           set_working_days(non_working_day.date)
         end
 
-        it "does not move the follower" do
+        it "moves the follower backwards" do
           subject
           expect(WorkPackage.all).to match_table(<<~TABLE)
             subject     | MTWTFSS |
             predecessor | XX      |
-            follower    |    XX░░ |
+            follower    |   XX ░░ |
           TABLE
         end
 
         it_behaves_like "journal updates with cause" do
           let(:unchanged_work_packages) do
-            [predecessor, follower]
+            [predecessor]
+          end
+          let(:changed_work_packages) do
+            [follower]
+          end
+          let(:changed_days) do
+            {
+              "working_days" => {},
+              "non_working_days" => { non_working_day.date.iso8601 => true }
+            }
           end
         end
       end

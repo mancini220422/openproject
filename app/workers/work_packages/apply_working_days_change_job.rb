@@ -106,8 +106,11 @@ class WorkPackages::ApplyWorkingDaysChangeJob < ApplicationJob
   end
 
   def applicable_predecessors
+    days_of_week = changed_days.keys
+    dates = changed_non_working_dates.keys
+
     WorkPackage
-      .where(id: Relation.follows_with_lag.select(:to_id))
+      .predecessors_needing_relations_rescheduling(days_of_week:, dates:)
       .where.not(id: already_processed_work_package_ids)
   end
 

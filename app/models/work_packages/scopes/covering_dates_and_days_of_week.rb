@@ -39,19 +39,61 @@ module WorkPackages::Scopes::CoveringDatesAndDaysOfWeek
     # @param days_of_week number[] An array of the ISO days of the week to
     #   consider. 1 is Monday, 7 is Sunday.
     def covering_dates_and_days_of_week(days_of_week: [], dates: [])
-      days_of_week = Array(days_of_week)
-      dates = Array(dates)
-      return none if days_of_week.empty? && dates.empty?
+      work_packages_periods_cte = work_packages_periods_cte_for_covering_work_packages
+      where_covers_periods(work_packages_periods_cte, days_of_week, dates)
+    end
 
-      where("id IN (#{query(days_of_week, dates)})")
+    def predecessors_needing_relations_rescheduling(days_of_week: [], dates: [])
+      work_packages_periods_cte = work_packages_periods_cte_for_predecessors_needing_relations_rescheduling
+      where_covers_periods(work_packages_periods_cte, days_of_week, dates)
     end
 
     private
 
-    def query(days_of_week, dates)
-      sql = <<~SQL.squish
-        -- select work packages dates with their followers dates
-        WITH work_packages_with_dates AS (
+    def where_covers_periods(work_packages_periods_cte, days_of_week, dates)
+      days_of_week = Array(days_of_week)
+      dates = Array(dates)
+      return none if days_of_week.empty? && dates.empty?
+
+      covering_work_packages_query_sql = <<~SQL.squish
+        -- select work packages dates
+        WITH
+          -- cte returning a table with work package id, period start_date and end_date
+          #{work_packages_periods_cte},
+
+          -- All days between the start date of a work package and its due date
+          covered_dates AS (
+            SELECT
+            id,
+            generate_series(work_packages_periods.start_date,
+                            work_packages_periods.end_date,
+                            '1 day')          AS date
+            FROM work_packages_periods
+          ),
+
+          -- All days between the start date of a work package and its due date including the day of the week for each date
+          covered_dates_and_wday AS (
+            SELECT
+              id,
+              date,
+              EXTRACT(isodow FROM date) dow
+            FROM covered_dates
+          )
+
+        -- select id of work packages covering the given days
+        SELECT id FROM covered_dates_and_wday
+        WHERE dow IN (:days_of_week) OR date IN (:dates)
+      SQL
+
+      covering_work_packages_query_sql = sanitize_sql([covering_work_packages_query_sql, { days_of_week:, dates: }])
+
+      where("id IN (#{covering_work_packages_query_sql})")
+    end
+
+    def work_packages_periods_cte_for_covering_work_packages
+      <<~SQL.squish
+        -- select work packages dates
+        work_packages_with_dates AS (
           SELECT work_packages.id,
             work_packages.start_date AS work_package_start_date,
             work_packages.due_date AS work_package_due_date
@@ -68,30 +110,48 @@ module WorkPackages::Scopes::CoveringDatesAndDaysOfWeek
             LEAST(work_package_start_date, work_package_due_date) AS start_date,
             GREATEST(work_package_start_date, work_package_due_date) AS end_date
           FROM work_packages_with_dates
-        ),
-        -- All days between the start date of a work package and its due date
-        covered_dates AS (
-          SELECT
-           id,
-           generate_series(work_packages_periods.start_date,
-                           work_packages_periods.end_date,
-                           '1 day')          AS date
-          FROM work_packages_periods
-        ),
-        -- All days between the start date of a work package and its due date including the day of the week for each date
-        covered_dates_and_wday AS (
-          SELECT
-            id,
-            date,
-            EXTRACT(isodow FROM date) dow
-          FROM covered_dates
         )
-        -- select id of work packages covering the given days
-        SELECT id FROM covered_dates_and_wday
-        WHERE dow IN (:days_of_week) OR date IN (:dates)
       SQL
+    end
 
-      sanitize_sql([sql, { days_of_week:, dates: }])
+    def work_packages_periods_cte_for_predecessors_needing_relations_rescheduling
+      <<~SQL.squish
+        follows_relations
+          AS (SELECT
+            relations.id as id,
+            relations.to_id as pred_id,
+            relations.from_id as succ_id,
+            COALESCE(wp_pred.due_date, wp_pred.start_date) + INTERVAL '1 DAY' as pred_date,
+            COALESCE(wp_succ.start_date, wp_succ.due_date) - INTERVAL '1 DAY' as succ_date,
+            wp_succ.schedule_manually as succ_schedule_manually
+          FROM relations
+          LEFT JOIN work_packages wp_pred ON relations.to_id = wp_pred.id
+          LEFT JOIN work_packages wp_succ ON relations.from_id = wp_succ.id
+          WHERE relation_type = 'follows'
+        ),
+        -- select automatic follows relations. A relation is automatic if the
+        -- successor is scheduled automatically and both successor and
+        -- predecessor have dates
+        -- also excluded relations that have no duration (predecessor and successor "touch" each other)
+        automatic_follows_relations AS (
+          SELECT *
+          FROM follows_relations
+          WHERE succ_schedule_manually = false
+            AND pred_date IS NOT NULL
+            AND succ_date IS NOT NULL
+            AND pred_date <= succ_date
+        ),
+        -- keep only the longest relation for each successor
+        -- get the predecessor id and the relation period for each relation
+        work_packages_periods AS (
+          SELECT DISTINCT ON (succ_id)
+            pred_id as id,
+            pred_date as start_date,
+            succ_date as end_date
+          FROM automatic_follows_relations
+          ORDER BY succ_id, pred_date ASC
+        )
+      SQL
     end
   end
 end
