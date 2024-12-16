@@ -9,6 +9,10 @@ module Primer
             add_input AutocompleterInput.new(builder:, form:, **, &)
           end
 
+          def pattern_input(**, &)
+            add_input PatternInput.new(builder:, form:, **, &)
+          end
+
           def color_select_list(**, &)
             add_input ColorSelectInput.new(builder:, form:, **, &)
           end

@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-#-- copyright
+# -- copyright
 # OpenProject is an open source project management software.
-# Copyright (C) the OpenProject GmbH
+# Copyright (C) 2024 the OpenProject GmbH
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version 3.
@@ -26,20 +26,18 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 # See COPYRIGHT and LICENSE files for more details.
-#++
+# ++
 
-module Types
-  module Forms
-    class SubjectConfigurationFormModel
-      extend ActiveModel::Naming
+module WorkPackages
+  module Types
+    class PatternInput < Primer::Forms::BaseComponent
+      delegate :name, to: :@input
 
-      attr_reader :subject_configuration, :pattern, :suggestions, :validation_errors
-
-      def initialize(subject_configuration:, pattern:, suggestions:, validation_errors: {})
-        @subject_configuration = subject_configuration
-        @pattern = pattern
+      def initialize(input:, value:, suggestions:)
+        super()
+        @input = input
+        @value = value
         @suggestions = suggestions
-        @validation_errors = validation_errors
       end
     end
   end

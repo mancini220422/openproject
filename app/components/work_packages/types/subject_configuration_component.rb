@@ -57,6 +57,7 @@ module WorkPackages
         ::Types::Forms::SubjectConfigurationFormModel.new(
           subject_configuration: subject_pattern.enabled ? :generated : :manual,
           pattern: subject_pattern.blueprint,
+          suggestions: ::Types::Patterns::TokenPropertyMapper.new.tokens_for_type(model),
           validation_errors: model.errors
         )
       end
