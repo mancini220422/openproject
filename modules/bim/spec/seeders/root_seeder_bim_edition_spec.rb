@@ -36,6 +36,10 @@ RSpec.describe RootSeeder,
                with_config: { edition: "bim" } do
   include RootSeederTestHelpers
 
+  before_all do
+    week_with_saturday_and_sunday_as_weekend
+  end
+
   shared_examples "creates BIM demo data" do
     def group_name(reference)
       root_seeder.seed_data.find_reference(reference)["name"]
@@ -104,6 +108,7 @@ RSpec.describe RootSeeder,
     include_examples "it creates records", model: Status, expected_count: 4
     include_examples "it creates records", model: TimeEntryActivity, expected_count: 3
     include_examples "it creates records", model: Workflow, expected_count: 273
+    include_examples "it is compatible with the automatic scheduling mode"
   end
 
   describe "demo data" do

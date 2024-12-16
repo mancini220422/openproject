@@ -91,6 +91,8 @@ RSpec.describe WorkPackages::Shared::WorkingDays do
     end
   end
 
+  include_examples "lag computation excluding non-working days"
+
   describe "#start_date" do
     it "returns the start date for a due date and a duration" do
       expect(subject.start_date(monday_2022_08_01, 1)).to eq(monday_2022_08_01)

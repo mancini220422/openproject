@@ -134,10 +134,23 @@ class Relation < ApplicationRecord
     TYPES[relation_type] ? TYPES[relation_type][key] : :unknown
   end
 
+  def predecessor = to
+  def predecessor_id = to_id
+  def successor = from
+  def successor_id = from_id
+
+  def predecessor_date
+    predecessor.due_date || predecessor.start_date
+  end
+
+  def successor_date
+    successor.start_date || successor.due_date
+  end
+
   def successor_soonest_start
-    if follows? && (to.start_date || to.due_date)
+    if follows? && predecessor_date
       days = WorkPackages::Shared::Days.for(from)
-      relation_start_date = (to.due_date || to.start_date) + 1.day
+      relation_start_date = predecessor_date + 1.day
       days.soonest_working_day(relation_start_date, lag:)
     end
   end

@@ -199,6 +199,7 @@ module DemoData
           due_date:,
           duration:,
           ignore_non_working_days:,
+          schedule_manually:,
           estimated_hours:
         }
       end
@@ -213,7 +214,7 @@ module DemoData
 
       def start_date
         days_ahead = attributes["start"] || 0
-        Time.zone.today.monday + days_ahead.days
+        Date.current.monday + days_ahead.days
       end
 
       def due_date
@@ -228,6 +229,14 @@ module DemoData
         [start_date, due_date]
           .compact
           .any? { |date| working_days.non_working?(date) }
+      end
+
+      def schedule_manually
+        if attributes["schedule_manually"].nil?
+          WorkPackage.column_defaults["schedule_manually"]
+        else
+          ActiveModel::Type::Boolean.new.cast(attributes["schedule_manually"])
+        end
       end
 
       def estimated_hours

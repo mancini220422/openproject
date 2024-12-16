@@ -36,6 +36,10 @@ RSpec.describe RootSeeder,
                with_config: { edition: "standard" } do
   include RootSeederTestHelpers
 
+  before_all do
+    week_with_saturday_and_sunday_as_weekend
+  end
+
   shared_examples "creates standard demo data" do
     it "creates the system user" do
       expect(SystemUser.where(admin: true).count).to eq 1
@@ -137,6 +141,7 @@ RSpec.describe RootSeeder,
     include_examples "it creates records", model: TimeEntryActivity, expected_count: 6
     include_examples "it creates records", model: Workflow, expected_count: 1758
     include_examples "it creates records", model: Meeting, expected_count: 1
+    include_examples "it is compatible with the automatic scheduling mode"
   end
 
   describe "demo data" do
