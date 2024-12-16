@@ -67,6 +67,7 @@ module WorkPackages
           hidden_touched_field(group, name: :start_date)
           hidden_touched_field(group, name: :due_date)
           hidden_touched_field(group, name: :duration)
+          hidden_touched_field(group, name: :ignore_non_working_days)
 
           group.fields_for(:initial) do |builder|
             WorkPackages::DatePicker::InitialValuesForm.new(builder, work_package:)

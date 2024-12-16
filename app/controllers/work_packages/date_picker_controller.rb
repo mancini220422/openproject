@@ -51,8 +51,13 @@ class WorkPackages::DatePickerController < ApplicationController
       end
 
       format.turbo_stream do
+        set_date_attributes_to_work_package
+
         replace_via_turbo_stream(
-          component: WorkPackages::DatePicker::DialogContentComponent.new(work_package:, manually_scheduled:)
+          component: WorkPackages::DatePicker::DialogContentComponent.new(work_package:,
+                                                                          manually_scheduled:,
+                                                                          focused_field:,
+                                                                          touched_field_map:)
         )
         render turbo_stream: turbo_streams
       end

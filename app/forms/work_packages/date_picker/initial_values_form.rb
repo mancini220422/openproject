@@ -41,6 +41,7 @@ module WorkPackages
         hidden_initial_field(form, name: :start_date)
         hidden_initial_field(form, name: :due_date)
         hidden_initial_field(form, name: :duration)
+        hidden_initial_field(form, name: :ignore_non_working_days)
       end
 
       private

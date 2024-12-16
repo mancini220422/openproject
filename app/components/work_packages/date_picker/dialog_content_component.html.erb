@@ -42,9 +42,13 @@
                   end
 
                   first_row.with_column(mb: 1) do
-                    render(Primer::Alpha::CheckBox.new(name: "ignore_non_working_days",
+                    render(Primer::Alpha::CheckBox.new(name: "work_package[ignore_non_working_days]",
                                                        label: I18n.t("work_packages.datepicker_modal.ignore_non_working_days.title"),
-                                                       checked: work_package.ignore_non_working_days))
+                                                       checked: !work_package.ignore_non_working_days,
+                                                       value: 0,
+                                                       unchecked_value: 1,
+                                                       data: { "work-packages--date-picker--preview-target": "fieldInput",
+                                                               action: "work-packages--date-picker--preview#markFieldAsTouched" }))
                   end
                 end
               end
