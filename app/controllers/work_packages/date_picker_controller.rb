@@ -71,8 +71,6 @@ class WorkPackages::DatePickerController < ApplicationController
   end
 
   def update
-    # Todo
-    params[:duration] = params[:duration].to_i
     service_call = WorkPackages::UpdateService
                      .new(user: current_user,
                           model: @work_package)

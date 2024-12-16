@@ -79,7 +79,15 @@ export abstract class DialogPreviewController extends Controller {
     // assistive technologies. This is why morph cannot be used here.
     this.frameMorphRenderer = (event:CustomEvent<TurboBeforeFrameRenderEventDetail>) => {
       event.detail.render = (currentElement:HTMLElement, newElement:HTMLElement) => {
-        Idiomorph.morph(currentElement, newElement, { ignoreActiveValue: true });
+        Idiomorph.morph(currentElement, newElement, {
+          ignoreActiveValue: true,
+          callbacks: {
+            beforeNodeMorphed: (oldNode:Element, newNode:Element) => {
+              // In case the element is an OpenProject custom dom element, morphing is prevented.
+              return !oldNode.tagName?.startsWith('OPCE-');
+            },
+          },
+        });
       };
     };
 
@@ -151,6 +159,8 @@ export abstract class DialogPreviewController extends Controller {
     if (turboFrame) {
       turboFrame.src = editUrl;
     }
+
+    this.dispatchChangeEvent(field, wpParams);
   }
 
   private focusAndSetCursorPositionToEndOfInput(field:HTMLInputElement) {
@@ -164,6 +174,8 @@ export abstract class DialogPreviewController extends Controller {
   abstract ensureValidPathname(formAction:string):string;
 
   abstract ensureValidWpAction(path:string):string;
+
+  abstract dispatchChangeEvent(field:HTMLInputElement|null, wpParams:[string, string][]):void;
 
   protected isBeingEdited(fieldName:string) {
     return fieldName === this.targetFieldName;
@@ -180,7 +192,7 @@ export abstract class DialogPreviewController extends Controller {
 
   // Finds the value field input based on a field name.
   //
-  // The value field input holds the current value of a progress field.
+  // The value field input holds the current value of a field.
   protected findValueInput(fieldName:string):HTMLInputElement|undefined {
     return this.fieldInputTargets.find((input) =>
       (input.name === fieldName) || (input.name === `work_package[${fieldName}]`));

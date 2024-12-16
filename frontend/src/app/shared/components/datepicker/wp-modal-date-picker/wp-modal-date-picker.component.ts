@@ -105,6 +105,25 @@ export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements
 
   ngAfterViewInit():void {
     this.initializeDatepicker();
+
+    document.addEventListener('date-picker:input-changed', this.changeListener.bind(this));
+  }
+
+  ngOnDestroy():void {
+    super.ngOnDestroy();
+
+    document.removeEventListener('date-picker:input-changed', this.changeListener.bind(this));
+  }
+
+  changeListener(event:CustomEvent) {
+    this.startDate = event.detail?.startDate;
+    this.dueDate = event.detail?.dueDate;
+
+    if (event.detail?.ignoreNonWorkingDays !== undefined) {
+      this.ignoreNonWorkingDays = !event.detail?.ignoreNonWorkingDays;
+    }
+
+    this.initializeDatepicker();
   }
 
   private initializeDatepicker() {

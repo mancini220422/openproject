@@ -56,6 +56,9 @@ export default class PreviewController extends DialogPreviewController {
     return wpPath.endsWith('/work_packages/new/progress') ? 'new' : 'edit';
   }
 
+  // Inheritance compliance
+  dispatchChangeEvent() {}
+
   private isWorkBasedMode() {
     return super.findValueInput('done_ratio') !== undefined;
   }
