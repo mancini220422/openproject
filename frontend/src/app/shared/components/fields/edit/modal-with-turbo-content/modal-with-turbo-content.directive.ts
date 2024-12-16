@@ -53,6 +53,7 @@ export class ModalWithTurboContentDirective implements AfterViewInit, OnDestroy 
 
   @Output() successfulCreate= new EventEmitter<unknown>();
   @Output() successfulUpdate= new EventEmitter();
+  @Output() cancel= new EventEmitter();
 
   constructor(
     readonly elementRef:ElementRef,
@@ -70,6 +71,9 @@ export class ModalWithTurboContentDirective implements AfterViewInit, OnDestroy 
       .elementRef
       .nativeElement
       .addEventListener('turbo:submit-end', this.contextBasedListener.bind(this));
+
+    document
+      .addEventListener('cancelModalWithTurboContent', this.cancelListener.bind(this));
   }
 
   ngOnDestroy() {
@@ -77,6 +81,9 @@ export class ModalWithTurboContentDirective implements AfterViewInit, OnDestroy 
       .elementRef
       .nativeElement
       .removeEventListener('turbo:submit-end', this.contextBasedListener.bind(this));
+
+    document
+      .removeEventListener('cancelModalWithTurboContent', this.cancelListener.bind(this));
   }
 
   private contextBasedListener(event:CustomEvent) {
@@ -86,6 +93,10 @@ export class ModalWithTurboContentDirective implements AfterViewInit, OnDestroy 
     } else {
       this.propagateSuccessfulUpdate(event);
     }
+  }
+
+  private cancelListener():void {
+    this.cancel.emit();
   }
 
   private async propagateSuccessfulCreate(event:CustomEvent) {

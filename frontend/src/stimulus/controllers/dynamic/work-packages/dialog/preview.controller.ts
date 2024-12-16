@@ -116,6 +116,10 @@ export abstract class DialogPreviewController extends Controller {
     }
   }
 
+  protected cancel():void {
+    document.dispatchEvent(new CustomEvent('cancelModalWithTurboContent'));
+  }
+
   markFieldAsTouched(event:{ target:HTMLInputElement }) {
     this.targetFieldName = event.target.name.replace(/^work_package\[([^\]]+)\]$/, '$1');
     this.markTouched(this.targetFieldName);

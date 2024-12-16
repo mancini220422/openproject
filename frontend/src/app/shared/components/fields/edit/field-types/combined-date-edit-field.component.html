@@ -28,6 +28,7 @@
                  [resource]="resource"
                  (successfulCreate)="handleSuccessfulCreate($event)"
                  (successfulUpdate)="handleSuccessfulUpdate()"
+                 (cancel)="onModalClosed()"
                  id="wp-datepicker-dialog--content">
       <op-content-loader viewBox="0 0 100 100">
         <svg:rect x="5" y="5" width="70" height="5" rx="1"/>

@@ -1,6 +1,7 @@
 <%=
   content_tag("turbo-frame", id: "wp-datepicker-dialog--content") do
-    component_wrapper do
+    component_wrapper(data: { "application-target": "dynamic",
+                              controller: "work-packages--date-picker--preview" }) do
       component_collection do |collection|
         if show_banner?
           collection.with_component(WorkPackages::DatePicker::BannerComponent.new(work_package:, manually_scheduled:))
@@ -12,9 +13,7 @@
           url: work_package_datepicker_dialog_content_path,
           method: :put,
           id: DIALOG_FORM_ID,
-          data: { "application-target": "dynamic",
-                  "work-packages--date-picker--preview-target": "form",
-                  controller: "work-packages--date-picker--preview" },
+          data: { "work-packages--date-picker--preview-target": "form" },
           html: { autocomplete: "off" },
           ) do |f|
             flex_layout do |body|
@@ -90,7 +89,7 @@
 
         collection.with_component(Primer::Alpha::Dialog::Footer.new) do
           component_collection do |footer|
-            footer.with_component(Primer::ButtonComponent.new) do
+            footer.with_component(Primer::ButtonComponent.new(data: { action: "work-packages--date-picker--preview#cancel" })) do
               I18n.t("button_cancel")
             end
 
