@@ -21,24 +21,39 @@
               body.with_row(mb: 3) do
                 flex_layout(align_items: :flex_end, justify_content: :space_between) do |first_row|
                   first_row.with_column do
-                    render(Primer::Alpha::FormControl.new(label: I18n.t("work_packages.datepicker_modal.mode.title"))) do |component|
+                    concat(render(Primer::Alpha::FormControl.new(label: I18n.t("work_packages.datepicker_modal.mode.title"))) do |component|
                       component.with_input do
                         render(Primer::Alpha::SegmentedControl.new("aria-label": I18n.t("work_packages.datepicker_modal.mode.title"))) do |control|
                           control.with_item(tag: :a,
-                                            href: work_package_datepicker_dialog_content_path(manually_scheduled: true),
+                                            href: work_package_datepicker_dialog_content_path(params.merge(manually_scheduled: true).permit!),
                                             data: { turbo_stream: true },
                                             label: I18n.t("work_packages.datepicker_modal.mode.manual"),
                                             title: I18n.t("work_packages.datepicker_modal.mode.manual"),
                                             selected: manually_scheduled)
                           control.with_item(tag: :a,
-                                            href: work_package_datepicker_dialog_content_path(manually_scheduled: false),
+                                            href: work_package_datepicker_dialog_content_path(params.merge(manually_scheduled: false).permit!),
                                             data: { turbo_stream: true },
                                             label: I18n.t("work_packages.datepicker_modal.mode.automatic"),
                                             title: I18n.t("work_packages.datepicker_modal.mode.automatic"),
                                             selected: !manually_scheduled)
                         end
                       end
-                    end
+                    end)
+                    concat(
+                        f.hidden_field(:work_package,
+                                       name: "work_package[manually_scheduled]",
+                                       value: manually_scheduled)
+                    )
+                    concat(
+                        f.hidden_field(:work_package,
+                                       name: "work_package[manually_scheduled_touched]",
+                                       value: params[:manually_scheduled].present?)
+                    )
+                    concat(
+                        f.hidden_field(:work_package,
+                                       name: "work_package[manually_scheduled_was]",
+                                       value: work_package.schedule_manually)
+                    )
                   end
 
                   first_row.with_column(mb: 1) do

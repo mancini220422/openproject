@@ -118,7 +118,7 @@ class WorkPackages::DatePickerController < ApplicationController
 
   def touched_field_map
     params.require(:work_package)
-          .slice("schedule_manually_touched",
+          .slice("manually_scheduled_was",
                  "ignore_non_working_days_touched",
                  "start_date_touched",
                  "due_date_touched",
@@ -129,7 +129,9 @@ class WorkPackages::DatePickerController < ApplicationController
 
   def manually_scheduled
     if params[:manually_scheduled].present?
-      params.delete(:manually_scheduled)
+      params[:manually_scheduled]
+    elsif params[:work_package].present? && params[:work_package][:manually_scheduled].present?
+      params[:work_package][:manually_scheduled]
     else
       work_package.schedule_manually
     end
@@ -138,6 +140,7 @@ class WorkPackages::DatePickerController < ApplicationController
   def work_package_datepicker_params
     params.require(:work_package)
           .slice(*allowed_touched_params)
+          .merge(manually_scheduled:)
           .permit!
   end
 
