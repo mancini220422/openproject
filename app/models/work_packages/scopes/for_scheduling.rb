@@ -30,6 +30,7 @@
 module WorkPackages::Scopes
   module ForScheduling
     extend ActiveSupport::Concern
+    using CoreExtensions::SquishSql
 
     class_methods do
       # Fetches all work packages that need to be evaluated for eventual
@@ -108,13 +109,13 @@ module WorkPackages::Scopes
       # @param work_packages WorkPackage[] A set of work packages for which the
       #   set of related work packages that might be subject to reschedule is
       #   fetched.
-      def for_scheduling(work_packages)
+      def for_scheduling(work_packages, switching_to_automatic_mode: [])
         return none if work_packages.empty?
 
         sql = <<~SQL.squish
           WITH
             RECURSIVE
-            #{scheduling_paths_sql(work_packages)}
+            #{scheduling_paths_sql(work_packages, switching_to_automatic_mode:)}
 
             SELECT id
             FROM to_schedule
@@ -159,7 +160,11 @@ module WorkPackages::Scopes
       #
       # Paths whose ending work package is marked to be manually scheduled are
       # not joined with any more.
-      def scheduling_paths_sql(work_packages)
+      def scheduling_paths_sql(work_packages, switching_to_automatic_mode: [])
+        automatic_ids = switching_to_automatic_mode.map do |wp|
+          ::OpenProject::SqlSanitization.sanitize("(:id)", id: wp.id)
+        end.join(", ")
+
         values = work_packages.map do |wp|
           ::OpenProject::SqlSanitization
             .sanitize "(:id, false, false, true)",
@@ -167,6 +172,13 @@ module WorkPackages::Scopes
         end.join(", ")
 
         <<~SQL.squish
+          -- All work packages that are switching to automatic scheduling mode
+          -- but are still seen as manually scheduled from the database's perspective.
+          switching_to_automatic_mode (id) AS (
+            SELECT id::bigint FROM (VALUES #{automatic_ids.presence || '(NULL)'}) AS t(id)
+          ),
+
+          -- recursively fetch all work packages that are eligible for rescheduling
           to_schedule (id, manually, hierarchy_up, origin) AS (
 
             SELECT * FROM (VALUES#{values}) AS t(id, manually, hierarchy_up, origin)
@@ -175,9 +187,14 @@ module WorkPackages::Scopes
 
             SELECT
               relations.from_id id,
-              (related_work_packages.schedule_manually
-                OR (COALESCE(descendants.manually, false)
-                    AND NOT (to_schedule.origin AND relations.hierarchy_up))
+              (
+                (
+                  related_work_packages.schedule_manually
+                  AND switching_to_automatic_mode.id IS NULL
+                ) OR (
+                  COALESCE(descendants.manually, false)
+                  AND NOT (to_schedule.origin AND relations.hierarchy_up)
+                )
               ) manually,
               relations.hierarchy_up,
               false origin
@@ -211,6 +228,8 @@ module WorkPackages::Scopes
               ) relations ON relations.to_id = to_schedule.id
             LEFT JOIN work_packages related_work_packages
               ON relations.from_id = related_work_packages.id
+            LEFT JOIN switching_to_automatic_mode
+              ON related_work_packages.id = switching_to_automatic_mode.id
             LEFT JOIN LATERAL (
               SELECT
                 descendant_hierarchies.ancestor_id from_id,

@@ -109,7 +109,7 @@ module TableHelpers
         end
         # create relations only after having created all work packages
         table_data.work_package_identifiers.each do |identifier| # rubocop:disable Style/CombinableLoops
-          create_follows_relations(identifier)
+          create_relations(identifier)
         end
         [work_packages_by_identifier, relations]
       end
@@ -125,15 +125,17 @@ module TableHelpers
         end
       end
 
-      def create_follows_relations(identifier)
+      def create_relations(identifier)
         work_package_relations(identifier).each do |relation|
-          predecessor = find_work_package_by_name(relation[:predecessor])
-          follower = work_packages_by_identifier[identifier]
+          to = find_work_package_by_name(relation[:with])
+          from = work_packages_by_identifier[identifier]
+          extra_attributes = { lag: relation[:lag] }.compact
           relations << FactoryBot.create(
-            :follows_relation,
-            from: follower,
-            to: predecessor,
-            lag: relation[:lag]
+            :relation,
+            relation_type: relation[:type],
+            from:,
+            to:,
+            **extra_attributes
           )
         end
       end

@@ -33,6 +33,7 @@ class Relations::BaseService < BaseServices::BaseCallable
   attr_accessor :user
 
   def initialize(user:)
+    super()
     self.user = user
   end
 
@@ -54,20 +55,22 @@ class Relations::BaseService < BaseServices::BaseCallable
   end
 
   def set_defaults(model)
-    if Relation::TYPE_FOLLOWS == model.relation_type
+    if model.follows?
       model.lag ||= 0
     else
       model.lag = nil
     end
   end
 
-  def reschedule(model)
+  def reschedule(relation)
     schedule_result = WorkPackages::SetScheduleService
-                      .new(user:, work_package: model.to)
+                      .new(user:,
+                           work_package: relation.predecessor,
+                           switching_to_automatic_mode: switching_to_automatic_mode(relation))
                       .call
 
-    # The to-work_package will not be altered by the schedule service so
-    # we do not have to save the result of the service.
+    # The predecessor work package will not be altered by the schedule service so
+    # we do not have to save the result of the service, only the dependent results.
     save_result = if schedule_result.success?
                     schedule_result.dependent_results.all? { |dr| !dr.result.changed? || dr.result.save(validate: false) }
                   end || false
@@ -75,5 +78,33 @@ class Relations::BaseService < BaseServices::BaseCallable
     schedule_result.success = save_result
 
     schedule_result
+  end
+
+  def switching_to_automatic_mode(relation)
+    if should_switch_successor_to_automatic_mode?(relation)
+      [relation.successor]
+    else
+      []
+    end
+  end
+
+  def should_switch_successor_to_automatic_mode?(relation)
+    relation.follows? \
+      && creating? \
+      && last_successor_relation?(relation) \
+      && has_no_children?(relation.successor)
+  end
+
+  def creating?
+    self.class.name.include?("Create")
+  end
+
+  def last_successor_relation?(relation)
+    Relation.follows.of_successor(relation.successor)
+                                 .not_of_predecessor(relation.predecessor).none?
+  end
+
+  def has_no_children?(work_package)
+    !WorkPackage.exists?(parent: work_package)
   end
 end

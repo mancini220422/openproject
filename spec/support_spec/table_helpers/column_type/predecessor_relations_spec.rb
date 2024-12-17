@@ -31,7 +31,7 @@
 require "spec_helper"
 
 module TableHelpers::ColumnType
-  RSpec.describe Predecessors do
+  RSpec.describe PredecessorRelations do
     subject(:column_type) { described_class.new }
 
     def parsed_data(table)
@@ -65,8 +65,8 @@ module TableHelpers::ColumnType
         TABLE
         expect(work_package_data)
           .to eq([
-                   [{ raw: "follows main with lag 3", type: :follows, predecessor: "main", lag: 3 }],
-                   [{ raw: "main with lag 3", type: :follows, predecessor: "main", lag: 3 }]
+                   [{ raw: "follows main with lag 3", type: :follows, with: "main", lag: 3 }],
+                   [{ raw: "main with lag 3", type: :follows, with: "main", lag: 3 }]
                  ])
       end
 
@@ -78,8 +78,8 @@ module TableHelpers::ColumnType
         TABLE
         expect(work_package_data)
           .to eq([
-                   [{ raw: "follows main", type: :follows, predecessor: "main", lag: 0 }],
-                   [{ raw: "main", type: :follows, predecessor: "main", lag: 0 }]
+                   [{ raw: "follows main", type: :follows, with: "main", lag: 0 }],
+                   [{ raw: "main", type: :follows, with: "main", lag: 0 }]
                  ])
       end
 
@@ -92,13 +92,13 @@ module TableHelpers::ColumnType
         expect(work_package_data)
           .to eq([
                    [
-                     { raw: "follows wp1", type: :follows, predecessor: "wp1", lag: 0 },
-                     { raw: "follows wp2", type: :follows, predecessor: "wp2", lag: 0 }
+                     { raw: "follows wp1", type: :follows, with: "wp1", lag: 0 },
+                     { raw: "follows wp2", type: :follows, with: "wp2", lag: 0 }
                    ],
                    [
-                     { raw: "follows wp1", type: :follows, predecessor: "wp1", lag: 0 },
-                     { raw: "wp2", type: :follows, predecessor: "wp2", lag: 0 },
-                     { raw: "wp3", type: :follows, predecessor: "wp3", lag: 0 }
+                     { raw: "follows wp1", type: :follows, with: "wp1", lag: 0 },
+                     { raw: "wp2", type: :follows, with: "wp2", lag: 0 },
+                     { raw: "wp3", type: :follows, with: "wp3", lag: 0 }
                    ]
                  ])
       end

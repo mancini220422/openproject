@@ -27,12 +27,13 @@
 #++
 
 class WorkPackages::SetScheduleService
-  attr_accessor :user, :work_packages, :initiated_by
+  attr_accessor :user, :work_packages, :initiated_by, :switching_to_automatic_mode
 
-  def initialize(user:, work_package:, initiated_by: nil)
+  def initialize(user:, work_package:, initiated_by: nil, switching_to_automatic_mode: [])
     self.user = user
     self.work_packages = Array(work_package)
     self.initiated_by = initiated_by
+    self.switching_to_automatic_mode = switching_to_automatic_mode
   end
 
   def call(changed_attributes = %i(start_date due_date))
@@ -95,7 +96,7 @@ class WorkPackages::SetScheduleService
   def schedule_following
     altered = []
 
-    WorkPackages::ScheduleDependency.new(work_packages).in_schedule_order do |scheduled, dependency|
+    WorkPackages::ScheduleDependency.new(work_packages, switching_to_automatic_mode:).in_schedule_order do |scheduled, dependency|
       reschedule(scheduled, dependency)
 
       altered << scheduled if scheduled.changed?

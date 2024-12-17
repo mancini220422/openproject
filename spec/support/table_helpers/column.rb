@@ -35,7 +35,8 @@ require_relative "column_type/days_counting"
 require_relative "column_type/duration"
 require_relative "column_type/hierarchy"
 require_relative "column_type/percentage"
-require_relative "column_type/predecessors"
+require_relative "column_type/predecessor_relations"
+require_relative "column_type/related_to_relations"
 require_relative "column_type/schedule"
 require_relative "column_type/scheduling_mode"
 require_relative "column_type/status"
@@ -54,7 +55,8 @@ module TableHelpers
       derived_done_ratio: ColumnType::Percentage,
       hierarchy: ColumnType::Hierarchy,
       ignore_non_working_days: ColumnType::DaysCounting,
-      predecessors: ColumnType::Predecessors,
+      predecessor_relations: ColumnType::PredecessorRelations,
+      related_to_relations: ColumnType::RelatedToRelations,
       schedule: ColumnType::Schedule,
       schedule_manually: ColumnType::SchedulingMode,
       status: ColumnType::Status,
@@ -97,7 +99,9 @@ module TableHelpers
       when /\s*scheduling mode\s*/
         :schedule_manually
       when /\s*predecessors\s*/
-        :predecessors
+        :predecessor_relations
+      when /\s*relate[ds][ _]to\s*/
+        :related_to_relations
       when /status/, /hierarchy/
         to_identifier(header)
       else

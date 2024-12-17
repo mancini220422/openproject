@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 #-- copyright
 # OpenProject is an open source project management software.
-# Copyright (C) the OpenProject GmbH
+# Copyright (C) 2012-2024 the OpenProject GmbH
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version 3.
@@ -26,32 +28,42 @@
 # See COPYRIGHT and LICENSE files for more details.
 #++
 
-class Relations::DeleteService < BaseServices::Delete
-  def after_perform(_result)
-    result = super
-    if result.success? && successor_must_switch_to_manual_mode?
-      deleted_relation.successor.update(schedule_manually: true)
+module TableHelpers
+  module ColumnType
+    # Column to add relates/related to relations to work packages.
+    #
+    # Supported texts:
+    #   - :wp
+    #
+    # They can be combined by separated them with commas: "wp1, wp2".
+    #
+    # Example:
+    #
+    #   | subject   | related to |
+    #   | main      |            |
+    #   | other one | main       |
+    class RelatedToRelations < Generic
+      def attributes_for_work_package(_attribute, _work_package)
+        {}
+      end
+
+      def extract_data(_attribute, raw_header, work_package_data, _work_packages_data)
+        relations =
+          work_package_data.dig(:row, raw_header)
+                           .split(",")
+                           .map(&:strip)
+                           .compact_blank
+                           .map { |name| make_related_to_relation(name) }
+        { relations: }.compact_blank
+      end
+
+      def make_related_to_relation(name)
+        {
+          raw: name,
+          type: :relates,
+          with: name
+        }
+      end
     end
-    result
-  end
-
-  private
-
-  def deleted_relation
-    model
-  end
-
-  def successor_must_switch_to_manual_mode?
-    deleted_relation.follows? \
-      && successor_has_dates? \
-      && was_last_relation_to_the_successor?
-  end
-
-  def successor_has_dates?
-    deleted_relation.successor.start_date.present? || deleted_relation.successor.due_date.present?
-  end
-
-  def was_last_relation_to_the_successor?
-    Relation.follows.of_successor(deleted_relation.successor).none?
   end
 end

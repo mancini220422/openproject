@@ -41,10 +41,11 @@
 #   package, but are necessary to accurately determine the new start and due
 #   dates of the moving work packages.
 class WorkPackages::ScheduleDependency
-  attr_accessor :dependencies
+  attr_accessor :dependencies, :switching_to_automatic_mode
 
-  def initialize(moved_work_packages)
+  def initialize(moved_work_packages, switching_to_automatic_mode: [])
     self.moved_work_packages = Array(moved_work_packages)
+    self.switching_to_automatic_mode = Array(switching_to_automatic_mode)
 
     preload_scheduling_data
 
@@ -136,7 +137,7 @@ class WorkPackages::ScheduleDependency
 
   def moving_work_packages
     @moving_work_packages ||= WorkPackage
-                                .for_scheduling(moved_work_packages)
+                                .for_scheduling(moved_work_packages, switching_to_automatic_mode:)
   end
 
   # All work packages preloaded during initialization.
@@ -166,6 +167,8 @@ class WorkPackages::ScheduleDependency
 
     # rehydrate the predecessors and followers of follows relations
     rehydrate_follows_relations
+
+    fix_switching_to_automatic_mode_work_packages
   end
 
   # Returns all the descendants of moved and moving work packages that are not
@@ -205,6 +208,15 @@ class WorkPackages::ScheduleDependency
     known_follows_relations.each do |relation|
       relation.from = work_package_by_id(relation.from_id)
       relation.to = work_package_by_id(relation.to_id)
+    end
+  end
+
+  def fix_switching_to_automatic_mode_work_packages
+    ids = switching_to_automatic_mode.map(&:id)
+    known_work_packages.each do |work_package|
+      if ids.include?(work_package.id)
+        work_package.schedule_manually = false
+      end
     end
   end
 end

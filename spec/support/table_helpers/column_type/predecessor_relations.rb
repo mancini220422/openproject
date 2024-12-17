@@ -48,7 +48,7 @@ module TableHelpers
     #
     # Adapted from (now deleted) original implementation
     # in `spec/support/schedule_helpers/chart_builder.rb`.
-    class Predecessors < Generic
+    class PredecessorRelations < Generic
       def attributes_for_work_package(_attribute, _work_package)
         {}
       end
@@ -60,31 +60,20 @@ module TableHelpers
       end
 
       def parse_predecessors(predecessors)
-        predecessors.reduce({}) do |data, predecessor|
-          case parse_predecessor(predecessor)
-          in {relations: relation}
-            data[:relations] ||= []
-            data[:relations] << relation
-          end
-          data
+        relations = predecessors.map do |predecessor|
+          parse_predecessor(predecessor)
         end
-      end
-
-      def relations_for_raw_value(raw_value)
-        raw_value.split
-        {}
+        { relations: }.compact_blank
       end
 
       def parse_predecessor(predecessor)
         case predecessor
         when /^(?:follows)?\s*(.+?)(?: with lag (\d+))?\s*$/
           {
-            relations: {
-              raw: predecessor,
-              type: :follows,
-              predecessor: $1,
-              lag: $2.to_i
-            }
+            raw: predecessor,
+            type: :follows,
+            with: $1,
+            lag: $2.to_i
           }
         else
           spell_checker = DidYouMean::SpellChecker.new(

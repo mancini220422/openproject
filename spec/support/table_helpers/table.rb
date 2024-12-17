@@ -42,8 +42,23 @@ module TableHelpers
       @work_packages_by_identifier.values
     end
 
-    def relation(successor:)
-      @relations.find { |relation| relation.follows? && relation.from.subject == successor }
+    # Finds a relation by its predecessor and/or successor.
+    #
+    # Example:
+    #
+    #   relation(successor: "succ")
+    #
+    # will return the first created follows/precedes relation having the successor with subject "succ".
+    #
+    # @param predecessor [String, nil] the predecessor's subject name
+    # @param successor [String, nil] the successor's subjectname
+    # @return [Relation, nil] the relation or nil if no relation matches
+    def relation(predecessor: nil, successor: nil)
+      @relations.find do |relation|
+        relation.follows? \
+          && (predecessor.nil? || relation.predecessor.subject == predecessor) \
+          && (successor.nil? || relation.successor.subject == successor)
+      end
     end
 
     def relations
