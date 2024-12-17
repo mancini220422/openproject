@@ -39,11 +39,13 @@ RSpec.describe Relations::CreateService do
 
   let(:work_package1) do
     build_stubbed(:work_package,
+                  subject: "work_package1",
                   due_date: work_package1_due_date,
                   start_date: work_package1_start_date)
   end
   let(:work_package2) do
     build_stubbed(:work_package,
+                  subject: "work_package2",
                   due_date: work_package2_due_date,
                   start_date: work_package2_start_date)
   end
@@ -111,7 +113,7 @@ RSpec.describe Relations::CreateService do
     before do
       expect(WorkPackages::SetScheduleService)
         .to receive(:new)
-        .with(user:, work_package: work_package1)
+        .with(user:, work_package: work_package1, switching_to_automatic_mode: [work_package2])
         .and_return(set_schedule_service)
 
       expect(set_schedule_service)

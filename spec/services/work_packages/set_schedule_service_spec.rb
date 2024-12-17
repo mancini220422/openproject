@@ -529,9 +529,9 @@ RSpec.describe WorkPackages::SetScheduleService do
       before do
         allow(WorkPackage)
           .to receive(:for_scheduling)
-          .and_wrap_original do |method, *args|
+          .and_wrap_original do |method, *args, **kwargs|
             wanted_order = [sibling_follower_of_work_package, follower_of_parent_work_package, parent_work_package]
-            method.call(*args).in_order_of(:id, wanted_order.map(&:id))
+            method.call(*args, **kwargs).in_order_of(:id, wanted_order.map(&:id))
           end
       end
 
