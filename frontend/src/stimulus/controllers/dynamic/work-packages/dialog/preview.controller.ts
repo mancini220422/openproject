@@ -97,7 +97,6 @@ export abstract class DialogPreviewController extends Controller {
       } else {
         target.addEventListener('input', this.debouncedPreview);
       }
-      target.addEventListener('blur', this.debouncedPreview);
 
       if (target.dataset.focus === 'true') {
         this.focusAndSetCursorPositionToEndOfInput(target);
@@ -116,7 +115,6 @@ export abstract class DialogPreviewController extends Controller {
       } else {
         target.removeEventListener('input', this.debouncedPreview);
       }
-      target.removeEventListener('blur', this.debouncedPreview);
     });
     const turboFrame = this.formTarget.closest('turbo-frame') as HTMLTurboFrameElement;
     if (turboFrame) {
