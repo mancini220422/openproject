@@ -49,20 +49,23 @@ module WorkPackages
       attr_reader :work_package
 
       def initialize(work_package:,
-                     focused_field: :start_date,
+                     start_date:, due_date:, duration:, focused_field: :start_date,
                      touched_field_map: {})
         super()
 
         @work_package = work_package
         @focused_field = focused_field_by_selection(focused_field)
         @touched_field_map = touched_field_map
+        @start_date = start_date
+        @due_date = due_date
+        @duration = duration
       end
 
       form do |query_form|
         query_form.group(layout: :horizontal) do |group|
-          text_field(group, name: :start_date, label: I18n.t("attributes.start_date"))
-          text_field(group, name: :due_date, label: I18n.t("attributes.due_date"))
-          text_field(group, name: :duration, label: I18n.t("activerecord.attributes.work_package.duration"))
+          text_field(group, name: :start_date, label: I18n.t("attributes.start_date"), value: @start_date)
+          text_field(group, name: :due_date, label: I18n.t("attributes.due_date"), value: @due_date)
+          text_field(group, name: :duration, label: I18n.t("activerecord.attributes.work_package.duration"), value: @duration)
 
           hidden_touched_field(group, name: :start_date)
           hidden_touched_field(group, name: :due_date)
@@ -83,10 +86,11 @@ module WorkPackages
 
       def text_field(group,
                      name:,
-                     label:)
+                     label:,
+                     value:)
         text_field_options = default_field_options(name).merge(
           name:,
-          value: field_value(name),
+          value: field_value(name, value),
           label:,
           validation_message: validation_message(name)
         )
@@ -121,12 +125,13 @@ module WorkPackages
         @touched_field_map["#{name}_touched"] || false
       end
 
-      def field_value(name)
+      def field_value(name, value = nil)
         errors = @work_package.errors.where(name)
         if (user_value = errors.map { |error| error.options[:value] }.find { !_1.nil? })
           user_value
+        elsif value.present?
+          value
         else
-          # TODO
           @work_package.public_send(name)
         end
       end

@@ -48,6 +48,38 @@ module WorkPackages
 
       private
 
+      def ignore_non_working_days?
+        if params[:work_package].present? && params[:work_package][:ignore_non_working_days].present?
+          ActiveModel::Type::Boolean.new.cast((params[:work_package][:ignore_non_working_days]))
+        else
+          work_package.ignore_non_working_days
+        end
+      end
+
+      def start_date
+        if params[:work_package].present? && params[:work_package][:start_date].present?
+          params[:work_package][:start_date]
+        else
+          work_package.start_date
+        end
+      end
+
+      def due_date
+        if params[:work_package].present? && params[:work_package][:due_date].present?
+          params[:work_package][:due_date]
+        else
+          work_package.due_date
+        end
+      end
+
+      def duration
+        if params[:work_package].present? && params[:work_package][:duration].present?
+          params[:work_package][:duration]
+        else
+          work_package.duration
+        end
+      end
+
       def show_banner?
         true # TODO
       end
