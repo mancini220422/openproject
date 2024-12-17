@@ -51,6 +51,18 @@ module WorkPackages::Relations
              dependent: :nullify,
              inverse_of: :from
 
+    # Relations where the current work package is followed by another one.
+    # In this case,
+    #   * from is the following work package
+    #   * to is self
+    has_many :precedes_relations,
+             -> { where(relation_type: Relation::TYPE_FOLLOWS) },
+             class_name: "Relation",
+             foreign_key: :to_id,
+             autosave: true,
+             dependent: :nullify,
+             inverse_of: :to
+
     # Relations where the current work package blocks another one.
     # In this case,
     #   * from is self.id

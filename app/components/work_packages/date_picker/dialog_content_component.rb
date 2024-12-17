@@ -48,6 +48,18 @@ module WorkPackages
 
       private
 
+      def precedes_relations
+        work_package.precedes_relations.visible
+      end
+
+      def follow_relations
+        work_package.follows_relations.visible
+      end
+
+      def children
+        work_package.children.visible
+      end
+
       def disabled?
         !schedule_manually
       end
