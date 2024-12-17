@@ -62,7 +62,7 @@
                         first_row.with_column(mb: 1) do
                           render(Primer::Alpha::CheckBox.new(name: "work_package[ignore_non_working_days]",
                                                              label: I18n.t("work_packages.datepicker_modal.ignore_non_working_days.title"),
-                                                             checked: !ignore_non_working_days?,
+                                                             checked: !work_package.ignore_non_working_days,
                                                              disabled: disabled?,
                                                              value: 0,
                                                              unchecked_value: 1,
@@ -77,18 +77,15 @@
                                                                 work_package:,
                                                                 focused_field:,
                                                                 touched_field_map:,
-                                                                disabled: disabled?,
-                                                                start_date:,
-                                                                due_date:,
-                                                                duration:))
+                                                                disabled: disabled?))
                     end
 
                     body.with_row(mb: 3) do
                       helpers.angular_component_tag "opce-wp-modal-date-picker",
                                                     inputs: {
-                                                      start_date: start_date,
-                                                      due_date: due_date,
-                                                      ignore_non_working_days: ignore_non_working_days?,
+                                                      start_date: work_package.start_date,
+                                                      due_date: work_package.due_date,
+                                                      ignore_non_working_days: work_package.ignore_non_working_days,
                                                       schedule_manually:,
                                                       is_schedulable: !disabled?
                                                     }
