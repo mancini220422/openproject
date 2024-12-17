@@ -483,7 +483,10 @@ module WorkPackages
     end
 
     def validate_duration_integer
-      errors.add :duration, :not_an_integer if model.duration_before_type_cast != model.duration
+      if (!model.duration_before_type_cast.is_a?(String) && model.duration_before_type_cast != model.duration) ||
+        (model.duration_before_type_cast.is_a?(String) && model.duration_before_type_cast.to_i.to_s != model.duration_before_type_cast)
+        errors.add :duration, :not_an_integer
+      end
     end
 
     def validate_duration_matches_dates

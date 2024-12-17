@@ -141,15 +141,6 @@ class WorkPackages::DatePickerController < ApplicationController
 
   def work_package_datepicker_params
     if params[:work_package]
-      # Transform to an Integer as the duration parameter is strictly expected to be an Integer
-      # Todo ?
-      params.require(:work_package)[:duration] =
-        begin
-          Integer(String(params.require(:work_package)[:duration]))
-        rescue StandardError
-          ArgumentError
-        end
-
       params.require(:work_package)
             .slice(*allowed_touched_params)
             .merge(schedule_manually:)
