@@ -52,21 +52,22 @@ export default class PreviewController extends DialogPreviewController {
     return wpPath.endsWith('/work_packages/new/date_picker') ? 'new' : 'edit';
   }
 
-  dispatchChangeEvent(field:HTMLInputElement|null, wpParams:[string, string][]) {
+  dispatchChangeEvent(field:HTMLInputElement) {
     document.dispatchEvent(
       new CustomEvent('date-picker:input-changed', {
         detail: {
-          startDate: this.getValueFor(wpParams, 'start_date'),
-          dueDate: this.getValueFor(wpParams, 'due_date'),
-          ignoreNonWorkingDays: field?.checked,
+          field: field.name,
+          value: this.getValueFor(field),
         },
       }),
     );
   }
 
-  private getValueFor(wpParams:[string, string][], key:string):string|undefined {
-    const param = wpParams.find(([k, _]) => k === `work_package[${key}]`);
+  private getValueFor(field:HTMLInputElement):string {
+    if (field.type === 'checkbox') {
+      return field.checked.toString();
+    }
 
-    return param ? param[1] : undefined;
+    return field.value;
   }
 }

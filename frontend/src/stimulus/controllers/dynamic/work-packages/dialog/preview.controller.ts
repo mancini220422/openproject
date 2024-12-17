@@ -86,6 +86,11 @@ export abstract class DialogPreviewController extends Controller {
               // In case the element is an OpenProject custom dom element, morphing is prevented.
               return !oldNode.tagName?.startsWith('OPCE-');
             },
+            afterNodeMorphed: (oldNode:Element, newNode:Element) => {
+              if (newNode.tagName === "INPUT" && (newNode as HTMLInputElement).name && (newNode as HTMLInputElement).name.startsWith('work_package[')) {
+                this.dispatchChangeEvent((newNode as HTMLInputElement));
+              }
+            },
           },
         });
       };
@@ -157,8 +162,6 @@ export abstract class DialogPreviewController extends Controller {
     if (turboFrame) {
       turboFrame.src = editUrl;
     }
-
-    this.dispatchChangeEvent(field, wpParams);
   }
 
   private focusAndSetCursorPositionToEndOfInput(field:HTMLInputElement) {
@@ -173,7 +176,7 @@ export abstract class DialogPreviewController extends Controller {
 
   abstract ensureValidWpAction(path:string):string;
 
-  abstract dispatchChangeEvent(field:HTMLInputElement|null, wpParams:[string, string][]):void;
+  abstract dispatchChangeEvent(field:HTMLInputElement|null):void;
 
   protected isBeingEdited(fieldName:string) {
     return fieldName === this.targetFieldName;

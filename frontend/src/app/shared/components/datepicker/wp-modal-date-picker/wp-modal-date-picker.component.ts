@@ -116,14 +116,24 @@ export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements
   }
 
   changeListener(event:CustomEvent) {
-    this.startDate = event.detail?.startDate;
-    this.dueDate = event.detail?.dueDate;
-
-    if (event.detail?.ignoreNonWorkingDays !== undefined) {
-      this.ignoreNonWorkingDays = !event.detail?.ignoreNonWorkingDays;
+    switch (event.detail.field) {
+      case 'work_package[start_date]':
+        this.startDate = event.detail.value;
+        break;
+      case 'work_package[due_date]':
+        this.dueDate = event.detail.value;
+        break;
+      case 'work_package[ignore_non_working_days]':
+        this.ignoreNonWorkingDays = event.detail.value !== 'true';
+        break;
+      default:
+        // Case fallthrough for eslint
+        return;
     }
 
-    this.initializeDatepicker();
+    window.setTimeout(() => {
+      this.initializeDatepicker();
+    });
   }
 
   private initializeDatepicker() {
