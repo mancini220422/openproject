@@ -48,6 +48,10 @@ module WorkPackages
 
       private
 
+      def disabled?
+        !schedule_manually
+      end
+
       def ignore_non_working_days?
         if params[:work_package].present? && params[:work_package][:ignore_non_working_days].present?
           ActiveModel::Type::Boolean.new.cast((params[:work_package][:ignore_non_working_days]))

@@ -61,6 +61,7 @@
                                                        checked: !ignore_non_working_days?,
                                                        value: 0,
                                                        unchecked_value: 1,
+                                                       disabled: disabled?,
                                                        data: { "work-packages--date-picker--preview-target": "fieldInput",
                                                                action: "work-packages--date-picker--preview#markFieldAsTouched" }))
                   end
@@ -72,6 +73,7 @@
                                                           work_package:,
                                                           focused_field:,
                                                           touched_field_map:,
+                                                          disabled: disabled?,
                                                           start_date:,
                                                           due_date:,
                                                           duration:))
@@ -84,7 +86,7 @@
                                                 due_date: due_date,
                                                 ignore_non_working_days: ignore_non_working_days?,
                                                 schedule_manually:,
-                                                is_schedulable: true # TODO
+                                                is_schedulable: !disabled?
                                               }
               end
             end

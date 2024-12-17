@@ -49,7 +49,11 @@ module WorkPackages
       attr_reader :work_package
 
       def initialize(work_package:,
-                     start_date:, due_date:, duration:, focused_field: :start_date,
+                     start_date:,
+                     due_date:,
+                     duration:,
+                     disabled:,
+                     focused_field: :start_date,
                      touched_field_map: {})
         super()
 
@@ -59,6 +63,7 @@ module WorkPackages
         @start_date = start_date
         @due_date = due_date
         @duration = duration
+        @disabled = disabled
       end
 
       form do |query_form|
@@ -91,6 +96,7 @@ module WorkPackages
         text_field_options = default_field_options(name).merge(
           name:,
           value: field_value(name, value),
+          disabled: @disabled,
           label:,
           validation_message: validation_message(name)
         )
