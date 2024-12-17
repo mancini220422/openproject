@@ -46,7 +46,7 @@ class WorkPackages::DatePickerController < ApplicationController
     respond_to do |format|
       format.html do
         render :show,
-               locals: { work_package:, manually_scheduled:, params: },
+               locals: { work_package:, schedule_manually:, params: },
                layout: false
       end
 
@@ -55,7 +55,7 @@ class WorkPackages::DatePickerController < ApplicationController
 
         replace_via_turbo_stream(
           component: WorkPackages::DatePicker::DialogContentComponent.new(work_package:,
-                                                                          manually_scheduled:,
+                                                                          schedule_manually:,
                                                                           focused_field:,
                                                                           touched_field_map:)
         )
@@ -101,7 +101,7 @@ class WorkPackages::DatePickerController < ApplicationController
 
   def datepicker_modal_component
     WorkPackages::DatePicker::DialogContentComponent.new(work_package: @work_package,
-                                                         manually_scheduled:,
+                                                         schedule_manually:,
                                                          focused_field:,
                                                          touched_field_map:)
   end
@@ -115,31 +115,46 @@ class WorkPackages::DatePickerController < ApplicationController
   end
 
   def touched_field_map
-    params.require(:work_package)
-          .slice("manually_scheduled_was",
-                 "ignore_non_working_days_touched",
-                 "start_date_touched",
-                 "due_date_touched",
-                 "duration_touched")
-          .transform_values { _1 == "true" }
-          .permit!
+    if params[:work_package]
+      params.require(:work_package)
+            .slice("schedule_manually_touched",
+                   "ignore_non_working_days_touched",
+                   "start_date_touched",
+                   "due_date_touched",
+                   "duration_touched")
+            .transform_values { _1 == "true" }
+            .permit!
+    else
+      {}
+    end
   end
 
-  def manually_scheduled
-    if params[:manually_scheduled].present?
-      params[:manually_scheduled]
-    elsif params[:work_package].present? && params[:work_package][:manually_scheduled].present?
-      params[:work_package][:manually_scheduled]
+  def schedule_manually
+    if params[:schedule_manually].present?
+      params[:schedule_manually]
+    elsif params[:work_package].present? && params[:work_package][:schedule_manually].present?
+      params[:work_package][:schedule_manually]
     else
       work_package.schedule_manually
     end
   end
 
   def work_package_datepicker_params
-    params.require(:work_package)
-          .slice(*allowed_touched_params)
-          .merge(manually_scheduled:)
-          .permit!
+    if params[:work_package]
+      # Transform to an Integer as the duration parameter is strictly expected to be an Integer
+      # Todo ?
+      params.require(:work_package)[:duration] =
+        begin
+          Integer(String(params.require(:work_package)[:duration]))
+        rescue StandardError
+          ArgumentError
+        end
+
+      params.require(:work_package)
+            .slice(*allowed_touched_params)
+            .merge(schedule_manually:)
+            .permit!
+    end
   end
 
   def allowed_touched_params
@@ -155,10 +170,14 @@ class WorkPackages::DatePickerController < ApplicationController
   end
 
   def set_date_attributes_to_work_package
-    WorkPackages::SetAttributesService
-      .new(user: current_user,
-           model: @work_package,
-           contract_class: WorkPackages::CreateContract)
-      .call(work_package_datepicker_params)
+    wp_params = work_package_datepicker_params
+
+    if wp_params.present?
+      WorkPackages::SetAttributesService
+        .new(user: current_user,
+             model: @work_package,
+             contract_class: WorkPackages::CreateContract)
+        .call(wp_params)
+    end
   end
 end

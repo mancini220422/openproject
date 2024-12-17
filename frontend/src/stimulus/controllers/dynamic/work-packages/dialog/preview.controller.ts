@@ -67,7 +67,7 @@ export abstract class DialogPreviewController extends Controller {
       }
     });
 
-    this.debouncedPreview = debounce((event:Event) => { void this.preview(event); }, 300);
+    this.debouncedPreview = debounce((event:Event) => { void this.preview(event); }, 200);
 
     // Turbo supports morphing, by adding the <turbo-frame refresh="morph">
     // attribute. However, it does not work that well with primer input: when

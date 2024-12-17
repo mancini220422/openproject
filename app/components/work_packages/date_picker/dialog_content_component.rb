@@ -35,13 +35,13 @@ module WorkPackages
 
       DIALOG_FORM_ID = "datepicker-form"
 
-      attr_accessor :work_package, :manually_scheduled, :focused_field, :touched_field_map
+      attr_accessor :work_package, :schedule_manually, :focused_field, :touched_field_map
 
-      def initialize(work_package:, manually_scheduled: true, focused_field: :start_date, touched_field_map: {})
+      def initialize(work_package:, schedule_manually: true, focused_field: :start_date, touched_field_map: {})
         super
 
         @work_package = work_package
-        @manually_scheduled = ActiveModel::Type::Boolean.new.cast(manually_scheduled)
+        @schedule_manually = ActiveModel::Type::Boolean.new.cast(schedule_manually)
         @focused_field = focused_field
         @touched_field_map = touched_field_map
       end

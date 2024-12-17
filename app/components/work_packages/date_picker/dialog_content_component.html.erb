@@ -4,7 +4,7 @@
                               controller: "work-packages--date-picker--preview" }) do
       component_collection do |collection|
         if show_banner?
-          collection.with_component(WorkPackages::DatePicker::BannerComponent.new(work_package:, manually_scheduled:))
+          collection.with_component(WorkPackages::DatePicker::BannerComponent.new(work_package:, manually_scheduled: schedule_manually))
         end
 
         collection.with_component(Primer::Alpha::Dialog::Body.new) do
@@ -24,33 +24,33 @@
                       component.with_input do
                         render(Primer::Alpha::SegmentedControl.new("aria-label": I18n.t("work_packages.datepicker_modal.mode.title"))) do |control|
                           control.with_item(tag: :a,
-                                            href: work_package_datepicker_dialog_content_path(params.merge(manually_scheduled: true).permit!),
+                                            href: work_package_datepicker_dialog_content_path(params.merge(schedule_manually: true).permit!),
                                             data: { turbo_stream: true },
                                             label: I18n.t("work_packages.datepicker_modal.mode.manual"),
                                             title: I18n.t("work_packages.datepicker_modal.mode.manual"),
-                                            selected: manually_scheduled)
+                                            selected: schedule_manually)
                           control.with_item(tag: :a,
-                                            href: work_package_datepicker_dialog_content_path(params.merge(manually_scheduled: false).permit!),
+                                            href: work_package_datepicker_dialog_content_path(params.merge(schedule_manually: false).permit!),
                                             data: { turbo_stream: true },
                                             label: I18n.t("work_packages.datepicker_modal.mode.automatic"),
                                             title: I18n.t("work_packages.datepicker_modal.mode.automatic"),
-                                            selected: !manually_scheduled)
+                                            selected: !schedule_manually)
                         end
                       end
                     end)
                     concat(
                         f.hidden_field(:work_package,
-                                       name: "work_package[manually_scheduled]",
-                                       value: manually_scheduled)
+                                       name: "work_package[schedule_manually]",
+                                       value: schedule_manually)
                     )
                     concat(
                         f.hidden_field(:work_package,
-                                       name: "work_package[manually_scheduled_touched]",
-                                       value: params[:manually_scheduled].present?)
+                                       name: "work_package[schedule_manually_touched]",
+                                       value: params[:schedule_manually].present?)
                     )
                     concat(
                         f.hidden_field(:work_package,
-                                       name: "work_package[initial][manually_scheduled]",
+                                       name: "work_package[initial][schedule_manually]",
                                        value: work_package.schedule_manually)
                     )
                   end
@@ -80,7 +80,7 @@
                                                 start_date: work_package.start_date,
                                                 due_date: work_package.due_date,
                                                 ignore_non_working_days: work_package.ignore_non_working_days,
-                                                schedule_manually: manually_scheduled,
+                                                schedule_manually:,
                                                 is_schedulable: true # TODO
                                               }
               end
