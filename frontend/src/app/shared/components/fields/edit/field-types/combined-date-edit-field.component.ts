@@ -56,8 +56,6 @@ export class CombinedDateEditFieldComponent extends DatePickerEditFieldComponent
 
   opened = false;
 
-  turboFrameSrc:string;
-
   text = {
     placeholder: {
       startDate: this.I18n.t('js.label_no_start_date'),
@@ -66,22 +64,8 @@ export class CombinedDateEditFieldComponent extends DatePickerEditFieldComponent
     },
   };
 
-  constructor(
-    readonly I18n:I18nService,
-    readonly elementRef:ElementRef,
-    @Inject(OpEditingPortalChangesetToken) protected change:ResourceChangeset<HalResource>,
-    @Inject(OpEditingPortalSchemaToken) public schema:IFieldSchema,
-    @Inject(OpEditingPortalHandlerToken) readonly handler:EditFieldHandler,
-    readonly cdRef:ChangeDetectorRef,
-    readonly injector:Injector,
-    readonly pathHelper:PathHelperService,
-  ) {
-    super(I18n, elementRef, change, schema, handler, cdRef, injector);
-  }
-
   ngOnInit() {
     super.ngOnInit();
-    this.turboFrameSrc = `${this.pathHelper.workPackageDatepickerDialogContentPath(this.change.id)}?field=${this.name}`;
   }
 
   get isMultiDate():boolean {
@@ -105,23 +89,12 @@ export class CombinedDateEditFieldComponent extends DatePickerEditFieldComponent
     this.resetDates();
   }
 
-  public handleSuccessfulCreate(JSONResponse:{ duration:number, startDate:Date, dueDate:Date, includeNonWorkingDays:boolean, scheduleManually:boolean }):void {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
-    this.resource.duration = JSONResponse.duration;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
-    this.resource.dueDate = JSONResponse.dueDate;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
-    this.resource.startDate = JSONResponse.startDate;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
-    this.resource.includeNonWorkingDays = JSONResponse.includeNonWorkingDays;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
-    this.resource.scheduleManually = JSONResponse.scheduleManually;
-
-    this.onModalClosed();
+  public save():void {
+    this.handler.handleUserSubmit();
   }
 
-  public handleSuccessfulUpdate():void {
-    this.onModalClosed();
+  public cancel():void {
+    this.handler.reset();
   }
 
   // Overwrite super in order to set the initial dates.

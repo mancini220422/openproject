@@ -8,7 +8,6 @@ import { CommonModule } from '@angular/common';
 
 import { I18nService } from 'core-app/core/i18n/i18n.service';
 import { OpModalSingleDatePickerComponent } from './modal-single-date-picker/modal-single-date-picker.component';
-import { OpWpMultiDateFormComponent } from './wp-multi-date-form/wp-multi-date-form.component';
 import { OpWpSingleDateFormComponent } from './wp-single-date-form/wp-single-date-form.component';
 import { OpBasicDatePickerModule } from './basic-datepicker.module';
 import { OpSpotModule } from 'core-app/spot/spot.module';
@@ -35,7 +34,6 @@ import { OpWpModalDatePickerComponent } from 'core-app/shared/components/datepic
 
   declarations: [
     OpModalSingleDatePickerComponent,
-    OpWpMultiDateFormComponent,
     OpWpSingleDateFormComponent,
     OpDatePickerSheetComponent,
     OpWpModalDatePickerComponent,
@@ -43,7 +41,6 @@ import { OpWpModalDatePickerComponent } from 'core-app/shared/components/datepic
 
   exports: [
     OpModalSingleDatePickerComponent,
-    OpWpMultiDateFormComponent,
     OpWpSingleDateFormComponent,
     OpBasicDatePickerModule,
     OpDatePickerSheetComponent,
