@@ -103,7 +103,8 @@
                   follow_relations.each do |relation|
                     component.with_row(scheme: :default) do
                       render(WorkPackageRelationsTab::RelationComponent.new(work_package:,
-                                                                            relation:))
+                                                                            relation:,
+                                                                            editable: false))
                     end
                   end
                 end
@@ -118,7 +119,8 @@
                   precedes_relations.each do |relation|
                     component.with_row(scheme: :default) do
                       render(WorkPackageRelationsTab::RelationComponent.new(work_package:,
-                                                                            relation:))
+                                                                            relation:,
+                                                                            editable: false))
                     end
                   end
                 end
@@ -134,7 +136,8 @@
                     component.with_row(scheme: :default) do
                       render(WorkPackageRelationsTab::RelationComponent.new(work_package:,
                                                                             relation: nil,
-                                                                            child:))
+                                                                            child:,
+                                                                            editable: false))
                     end
                   end
                 end
