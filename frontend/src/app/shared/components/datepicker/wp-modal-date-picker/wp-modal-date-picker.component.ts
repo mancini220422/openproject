@@ -34,7 +34,6 @@ import {
   ElementRef,
   Injector,
   Input,
-  OnInit,
   ViewChild,
 } from '@angular/core';
 import { I18nService } from 'core-app/core/i18n/i18n.service';
@@ -42,10 +41,7 @@ import { TimezoneService } from 'core-app/core/datetime/timezone.service';
 import { DayElement } from 'flatpickr/dist/types/instance';
 import flatpickr from 'flatpickr';
 import { ApiV3Service } from 'core-app/core/apiv3/api-v3.service';
-import { DateModalRelationsService } from 'core-app/shared/components/datepicker/services/date-modal-relations.service';
 import { onDayCreate } from 'core-app/shared/components/datepicker/helpers/date-modal.helpers';
-import { WeekdayService } from 'core-app/core/days/weekday.service';
-import { FocusHelperService } from 'core-app/shared/directives/focus/focus-helper';
 import { DeviceService } from 'core-app/core/browser/device.service';
 import { DatePicker } from '../datepicker';
 import { UntilDestroyedMixin } from 'core-app/shared/helpers/angular/until-destroyed.mixin';
@@ -67,7 +63,7 @@ import { filter } from 'rxjs/operators';
     '../styles/datepicker.modal.sass',
   ],
 })
-export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements AfterViewInit, OnInit {
+export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements AfterViewInit {
   @Input() public ignoreNonWorkingDays:boolean;
   @Input() public scheduleManually:boolean;
 
@@ -77,7 +73,9 @@ export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements
   @Input() public isSchedulable:boolean = true;
   @Input() public minimalSchedulingDate:Date|null;
 
-  @Input() fieldName:string = '';
+  @Input() fieldName:'start_date'|'due_date' = 'start_date';
+  @Input() startDateFieldId:string;
+  @Input() dueDateFieldId:string;
 
   @ViewChild('flatpickrTarget') flatpickrTarget:ElementRef;
 
@@ -90,17 +88,11 @@ export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements
     readonly I18n:I18nService,
     readonly timezoneService:TimezoneService,
     readonly deviceService:DeviceService,
-    readonly weekdayService:WeekdayService,
-    readonly focusHelper:FocusHelperService,
     readonly pathHelper:PathHelperService,
     readonly elementRef:ElementRef,
   ) {
     super();
     populateInputsFromDataset(this);
-  }
-
-  ngOnInit():void {
-    //this.setCurrentActivatedField(this.initialActivatedField);
   }
 
   ngAfterViewInit():void {
@@ -152,22 +144,38 @@ export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements
           this.ensureHoveredSelection(instance.calendarContainer);
         },
         onChange: (dates:Date[], _datestr, instance) => {
-          this.startDate = dates[0];
-          this.dueDate = dates[1];
+          // Todo: Make code better
+          if (this.fieldName === 'due_date') {
+            this.dueDate = dates[0];
 
-          /*const activeField = this.currentlyActivatedDateField;
+            if (this.dueDateFieldId) {
+              const dueDateField = document.getElementById(this.dueDateFieldId) as HTMLInputElement;
+              dueDateField.value = this.timezoneService.formattedISODate(this.dueDate);
+              dueDateField.dispatchEvent(new Event('input'));
+            }
 
-          // When two values are passed from datepicker and we don't have duration set,
-          // just take the range provided by them
-          if (dates.length === 2 && !this.duration) {
-            this.setDatesAndDeriveDuration(dates[0], dates[1]);
-            this.toggleCurrentActivatedField();
-            return;
+            // Toggle the active field
+            if (this.startDateFieldId) {
+              document.getElementById(this.startDateFieldId)?.focus();
+            }
+            this.fieldName = 'start_date';
+          } else {
+            this.startDate = dates[0];
+
+            if (this.startDateFieldId) {
+              const dueDateField = document.getElementById(this.startDateFieldId) as HTMLInputElement;
+              dueDateField.value = this.timezoneService.formattedISODate(this.startDate);
+              dueDateField.dispatchEvent(new Event('input'));
+            }
+
+            // Toggle the active field
+            if (this.dueDateFieldId) {
+              document.getElementById(this.dueDateFieldId)?.focus();
+            }
+            this.fieldName = 'due_date';
           }
 
-          // Update with the same flow as entering a value
-          const { latestSelectedDateObj } = instance as { latestSelectedDateObj:Date };
-          this.datepickerChanged$.next([activeField, latestSelectedDateObj]);*/
+          instance.setDate([this.startDate, this.dueDate]);
         },
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         onDayCreate: async (dObj:Date[], dStr:string, fp:flatpickr.Instance, dayElem:DayElement) => {
