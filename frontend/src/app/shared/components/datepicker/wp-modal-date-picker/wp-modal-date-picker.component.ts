@@ -144,34 +144,13 @@ export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements
           this.ensureHoveredSelection(instance.calendarContainer);
         },
         onChange: (dates:Date[], _datestr, instance) => {
-          // Todo: Make code better
           if (this.fieldName === 'due_date') {
             this.dueDate = dates[0];
-
-            if (this.dueDateFieldId) {
-              const dueDateField = document.getElementById(this.dueDateFieldId) as HTMLInputElement;
-              dueDateField.value = this.timezoneService.formattedISODate(this.dueDate);
-              dueDateField.dispatchEvent(new Event('input'));
-            }
-
-            // Toggle the active field
-            if (this.startDateFieldId) {
-              document.getElementById(this.startDateFieldId)?.focus();
-            }
+            this.setDateFieldAndFocus(this.dueDate, this.dueDateFieldId, this.startDateFieldId);
             this.fieldName = 'start_date';
           } else {
             this.startDate = dates[0];
-
-            if (this.startDateFieldId) {
-              const dueDateField = document.getElementById(this.startDateFieldId) as HTMLInputElement;
-              dueDateField.value = this.timezoneService.formattedISODate(this.startDate);
-              dueDateField.dispatchEvent(new Event('input'));
-            }
-
-            // Toggle the active field
-            if (this.dueDateFieldId) {
-              document.getElementById(this.dueDateFieldId)?.focus();
-            }
+            this.setDateFieldAndFocus(this.startDate, this.startDateFieldId, this.dueDateFieldId);
             this.fieldName = 'due_date';
           }
 
@@ -217,5 +196,18 @@ export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements
         filter(() => !(!!this.startDate && !!this.dueDate)),
       )
       .subscribe(() => calendarContainer.classList.add('flatpickr-container-suppress-hover'));
+  }
+
+  private setDateFieldAndFocus(date:Date, fieldId:string | null, nextFieldId:string | null):void {
+    if (fieldId) {
+      const field = document.getElementById(fieldId) as HTMLInputElement;
+      field.value = this.timezoneService.formattedISODate(date);
+      field.dispatchEvent(new Event('input'));
+    }
+
+    // Toggle focus to the next field
+    if (nextFieldId) {
+      document.getElementById(nextFieldId)?.focus();
+    }
   }
 }
