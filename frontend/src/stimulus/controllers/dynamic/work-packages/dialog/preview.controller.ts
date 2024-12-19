@@ -29,7 +29,10 @@
  */
 
 import { Controller } from '@hotwired/stimulus';
-import { debounce, DebouncedFunc } from 'lodash';
+import {
+  debounce,
+  DebouncedFunc,
+} from 'lodash';
 import Idiomorph from 'idiomorph/dist/idiomorph.cjs';
 
 interface TurboBeforeFrameRenderEventDetail {
@@ -82,12 +85,12 @@ export abstract class DialogPreviewController extends Controller {
         Idiomorph.morph(currentElement, newElement, {
           ignoreActiveValue: true,
           callbacks: {
-            beforeNodeMorphed: (oldNode:Element, newNode:Element) => {
+            beforeNodeMorphed: (oldNode:Element) => {
               // In case the element is an OpenProject custom dom element, morphing is prevented.
               return !oldNode.tagName?.startsWith('OPCE-');
             },
             afterNodeMorphed: (oldNode:Element, newNode:Element) => {
-              if (newNode.tagName === "INPUT" && (newNode as HTMLInputElement).name && (newNode as HTMLInputElement).name.startsWith('work_package[')) {
+              if (newNode.tagName === 'INPUT' && (newNode as HTMLInputElement).name && (newNode as HTMLInputElement).name.startsWith('work_package[')) {
                 this.dispatchChangeEvent((newNode as HTMLInputElement));
               }
             },

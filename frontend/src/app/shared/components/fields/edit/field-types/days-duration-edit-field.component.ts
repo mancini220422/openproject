@@ -28,32 +28,17 @@
 
 import {
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
-  ElementRef,
-  Inject,
-  Injector,
   OnInit,
 } from '@angular/core';
 import { DatePickerEditFieldComponent } from 'core-app/shared/components/fields/edit/field-types/date-picker-edit-field.component';
 import * as moment from 'moment-timezone';
-import { I18nService } from 'core-app/core/i18n/i18n.service';
-import {
-  OpEditingPortalChangesetToken,
-  OpEditingPortalHandlerToken,
-  OpEditingPortalSchemaToken,
-} from 'core-app/shared/components/fields/edit/edit-field.component';
-import { ResourceChangeset } from 'core-app/shared/components/fields/changeset/resource-changeset';
-import { HalResource } from 'core-app/features/hal/resources/hal-resource';
-import { IFieldSchema } from 'core-app/shared/components/fields/field.base';
-import { EditFieldHandler } from 'core-app/shared/components/fields/edit/editing-portal/edit-field-handler';
-import { PathHelperService } from 'core-app/core/path-helper/path-helper.service';
 
 @Component({
   templateUrl: './days-duration-edit-field.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DaysDurationEditFieldComponent extends DatePickerEditFieldComponent implements OnInit{
+export class DaysDurationEditFieldComponent extends DatePickerEditFieldComponent implements OnInit {
   opened = false;
 
   public get formattedValue():number {
@@ -73,7 +58,7 @@ export class DaysDurationEditFieldComponent extends DatePickerEditFieldComponent
   }
 
   onModalClosed() {
-    this.handler.handleUserSubmit();
+    void this.handler.handleUserSubmit();
     this.opened = false;
   }
 

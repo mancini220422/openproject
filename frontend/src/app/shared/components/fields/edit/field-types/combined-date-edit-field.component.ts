@@ -27,26 +27,11 @@
 //++
 
 import {
-  ChangeDetectorRef,
   Component,
-  ElementRef,
-  Inject,
-  Injector,
   OnInit,
 } from '@angular/core';
 import { DatePickerEditFieldComponent } from 'core-app/shared/components/fields/edit/field-types/date-picker-edit-field.component';
 import { WorkPackageResource } from 'core-app/features/hal/resources/work-package-resource';
-import { PathHelperService } from 'core-app/core/path-helper/path-helper.service';
-import { I18nService } from 'core-app/core/i18n/i18n.service';
-import { ResourceChangeset } from 'core-app/shared/components/fields/changeset/resource-changeset';
-import { HalResource } from 'core-app/features/hal/resources/hal-resource';
-import { IFieldSchema } from 'core-app/shared/components/fields/field.base';
-import { EditFieldHandler } from 'core-app/shared/components/fields/edit/editing-portal/edit-field-handler';
-import {
-  OpEditingPortalChangesetToken,
-  OpEditingPortalHandlerToken,
-  OpEditingPortalSchemaToken,
-} from 'core-app/shared/components/fields/edit/edit-field.component';
 
 @Component({
   templateUrl: './combined-date-edit-field.component.html',
@@ -90,7 +75,7 @@ export class CombinedDateEditFieldComponent extends DatePickerEditFieldComponent
   }
 
   public save():void {
-    this.handler.handleUserSubmit();
+    void this.handler.handleUserSubmit();
   }
 
   public cancel():void {

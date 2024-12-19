@@ -130,13 +130,13 @@ class WorkPackages::DatePickerController < ApplicationController
   end
 
   def schedule_manually
-    if params[:schedule_manually].present?
-      params[:schedule_manually]
-    elsif params[:work_package].present? && params[:work_package][:schedule_manually].present?
-      params[:work_package][:schedule_manually]
-    else
+    find_if_present(params[:schedule_manually]) ||
+      find_if_present(params.dig(:work_package, :schedule_manually)) ||
       work_package.schedule_manually
-    end
+  end
+
+  def find_if_present(value)
+    value.presence
   end
 
   def work_package_datepicker_params

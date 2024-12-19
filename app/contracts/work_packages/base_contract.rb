@@ -483,10 +483,20 @@ module WorkPackages
     end
 
     def validate_duration_integer
-      if (!model.duration_before_type_cast.is_a?(String) && model.duration_before_type_cast != model.duration) ||
-        (model.duration_before_type_cast.is_a?(String) && model.duration_before_type_cast.to_i.to_s != model.duration_before_type_cast)
+      unless valid_duration?(model.duration_before_type_cast, model.duration)
         errors.add :duration, :not_an_integer
       end
+    end
+
+    def valid_duration?(value, duration)
+      # the values don't match (e.g because a float was passed)
+      return false if !value.is_a?(String) && value != duration
+
+      # A string is passed, put the transformed value does not match
+      return false if value.is_a?(String) && value.to_i.to_s != value
+
+      # duration is valid
+      true
     end
 
     def validate_duration_matches_dates

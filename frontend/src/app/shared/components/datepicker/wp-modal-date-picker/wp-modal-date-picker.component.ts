@@ -101,6 +101,7 @@ export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements
     document.addEventListener('date-picker:input-changed', this.changeListener.bind(this));
   }
 
+  // eslint-disable-next-line @angular-eslint/use-lifecycle-interface
   ngOnDestroy():void {
     super.ngOnDestroy();
 
@@ -108,15 +109,17 @@ export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements
   }
 
   changeListener(event:CustomEvent) {
-    switch (event.detail.field) {
+    const details = (event.detail as { field:string, value:string });
+
+    switch (details.field) {
       case 'work_package[start_date]':
-        this.startDate = event.detail.value;
+        this.startDate = new Date(details.value);
         break;
       case 'work_package[due_date]':
-        this.dueDate = event.detail.value;
+        this.dueDate = new Date(details.value);
         break;
       case 'work_package[ignore_non_working_days]':
-        this.ignoreNonWorkingDays = event.detail.value !== 'true';
+        this.ignoreNonWorkingDays = details.value !== 'true';
         break;
       default:
         // Case fallthrough for eslint
@@ -166,6 +169,7 @@ export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements
           );
         },
       },
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       this.flatpickrTarget.nativeElement,
     );
   }
