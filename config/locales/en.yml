@@ -706,6 +706,12 @@ en:
         automatic: "Automatic"
         manual: "Manual"
       show_relations: "Show relations"
+      tabs:
+        aria_label: "Datepicker tabs"
+        children: "Children"
+        dates: "Dates"
+        predecessors: "Predecessors"
+        successors: "Successors"
 
     x_descendants:
       one: "One descendant work package"

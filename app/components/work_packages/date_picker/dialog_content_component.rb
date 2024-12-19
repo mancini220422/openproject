@@ -27,6 +27,7 @@
 #++
 
 # frozen_string_literal: true
+
 module WorkPackages
   module DatePicker
     class DialogContentComponent < ApplicationComponent
@@ -62,6 +63,24 @@ module WorkPackages
 
       def disabled?
         !schedule_manually
+      end
+
+      def additional_tabs
+        [
+          {
+            key: "predecessors",
+            relations: follow_relations
+          },
+          {
+            key: "successors",
+            relations: precedes_relations
+          },
+          {
+            key: "children",
+            relations: children,
+            is_child_relation?: true
+          }
+        ]
       end
 
       def show_banner?
