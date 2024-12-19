@@ -64,7 +64,7 @@ module WorkPackages
         query_form.group(layout: :horizontal) do |group|
           text_field(group, name: :start_date, label: I18n.t("attributes.start_date"))
           text_field(group, name: :due_date, label: I18n.t("attributes.due_date"))
-          text_field(group, name: :duration, label: I18n.t("activerecord.attributes.work_package.duration"))
+          text_field(group, name: :duration, label: I18n.t("activerecord.attributes.work_package.duration"), disabled: false)
 
           hidden_touched_field(group, name: :start_date)
           hidden_touched_field(group, name: :due_date)
@@ -83,31 +83,13 @@ module WorkPackages
         field
       end
 
-      def text_field(group,
-                     name:,
-                     label:)
+      def text_field(group, name:, label:, disabled: @disabled)
         text_field_options = default_field_options(name).merge(
           name:,
           value: field_value(name),
-          disabled: @disabled,
+          disabled:,
           label:,
           validation_message: validation_message(name)
-        )
-
-        group.text_field(**text_field_options)
-      end
-
-      def readonly_text_field(group,
-                              name:,
-                              label:,
-                              placeholder: true)
-        text_field_options = default_field_options(name).merge(
-          name:,
-          value: field_value(name),
-          label:,
-          readonly: true,
-          classes: "input--readonly",
-          placeholder: ("-" if placeholder)
         )
 
         group.text_field(**text_field_options)
