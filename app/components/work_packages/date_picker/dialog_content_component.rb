@@ -50,15 +50,15 @@ module WorkPackages
       private
 
       def precedes_relations
-        work_package.precedes_relations.visible
+        @precedes_relations ||= work_package.precedes_relations
       end
 
       def follow_relations
-        work_package.follows_relations.visible
+        @follow_relations ||= work_package.follows_relations
       end
 
       def children
-        work_package.children.visible
+        @children ||= work_package.children
       end
 
       def disabled?
@@ -83,8 +83,8 @@ module WorkPackages
         ]
       end
 
-      def show_banner?
-        true # TODO
+      def schedulable?
+        @schedule_manually || precedes_relations.any?
       end
     end
   end
