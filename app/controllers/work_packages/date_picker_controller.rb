@@ -141,6 +141,8 @@ class WorkPackages::DatePickerController < ApplicationController
 
   def work_package_datepicker_params
     if params[:work_package]
+      handle_milestone_dates
+
       params.require(:work_package)
             .slice(*allowed_touched_params)
             .merge(schedule_manually:)
@@ -169,6 +171,14 @@ class WorkPackages::DatePickerController < ApplicationController
              model: @work_package,
              contract_class: WorkPackages::CreateContract)
         .call(wp_params)
+    end
+  end
+
+  def handle_milestone_dates
+    if work_package.is_milestone?
+      # Set the dueDate as the SetAttributesService will otherwise throw an error because the fields do not match
+      params.require(:work_package)[:due_date] = params.require(:work_package)[:start_date]
+      params.require(:work_package)[:due_date_touched] = "true"
     end
   end
 end

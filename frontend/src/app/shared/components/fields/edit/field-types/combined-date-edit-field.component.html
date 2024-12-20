@@ -13,15 +13,7 @@
   />
 
   <ng-container slot="body">
-    <op-wp-single-date-form
-      *ngIf="opened && !isMultiDate"
-      [value]="dates"
-      [changeset]="change"
-      (save)="save()"
-      (cancel)="cancel()"
-    ></op-wp-single-date-form>
-
-    <turbo-frame *ngIf="turboFrameSrc && opened && isMultiDate"
+    <turbo-frame *ngIf="turboFrameSrc && opened"
                  [src]="turboFrameSrc"
                  opModalWithTurboContent
                  [change]="change"

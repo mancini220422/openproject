@@ -55,6 +55,7 @@ module WorkPackages
         super()
 
         @work_package = work_package
+        @is_milestone = work_package.milestone?
         @focused_field = focused_field_by_selection(focused_field)
         @touched_field_map = touched_field_map
         @disabled = disabled
@@ -62,13 +63,21 @@ module WorkPackages
 
       form do |query_form|
         query_form.group(layout: :horizontal) do |group|
-          text_field(group, name: :start_date, label: I18n.t("attributes.start_date"))
-          text_field(group, name: :due_date, label: I18n.t("attributes.due_date"))
-          text_field(group, name: :duration, label: I18n.t("activerecord.attributes.work_package.duration"), disabled: false)
 
-          hidden_touched_field(group, name: :start_date)
-          hidden_touched_field(group, name: :due_date)
-          hidden_touched_field(group, name: :duration)
+          if @is_milestone
+            text_field(group, name: :start_date, label: I18n.t("attributes.date"))
+
+            hidden_touched_field(group, name: :start_date)
+          else
+            text_field(group, name: :start_date, label: I18n.t("attributes.start_date"))
+            text_field(group, name: :due_date, label: I18n.t("attributes.due_date"))
+            text_field(group, name: :duration, label: I18n.t("activerecord.attributes.work_package.duration"))
+
+            hidden_touched_field(group, name: :start_date)
+            hidden_touched_field(group, name: :due_date)
+            hidden_touched_field(group, name: :duration)
+          end
+
           hidden_touched_field(group, name: :ignore_non_working_days)
 
           group.fields_for(:initial) do |builder|

@@ -77,6 +77,8 @@ export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements
   @Input() startDateFieldId:string;
   @Input() dueDateFieldId:string;
 
+  @Input() isMilestone:boolean = false;
+
   @ViewChild('flatpickrTarget') flatpickrTarget:ElementRef;
 
   private datePickerInstance:DatePicker;
@@ -136,9 +138,9 @@ export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements
     this.datePickerInstance = new DatePicker(
       this.injector,
       '#flatpickr-input',
-      [this.startDate || '', this.dueDate || ''],
+      this.isMilestone ? this.startDate : [this.startDate || '', this.dueDate || ''],
       {
-        mode: 'range',
+        mode: this.isMilestone ? 'single' : 'range',
         showMonths: this.deviceService.isMobile ? 1 : 2,
         inline: true,
         onReady: (_date, _datestr, instance) => {
@@ -147,17 +149,24 @@ export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements
           this.ensureHoveredSelection(instance.calendarContainer);
         },
         onChange: (dates:Date[], _datestr, instance) => {
-          if (this.fieldName === 'due_date') {
+          if (this.isMilestone) {
+            this.startDate = dates[0];
+            this.setDateFieldAndFocus(this.startDate, this.startDateFieldId, null);
+
+            instance.setDate(this.startDate);
+          } else if (this.fieldName === 'due_date') {
             this.dueDate = dates[0];
             this.setDateFieldAndFocus(this.dueDate, this.dueDateFieldId, this.startDateFieldId);
             this.fieldName = 'start_date';
+
+            instance.setDate([this.startDate, this.dueDate]);
           } else {
             this.startDate = dates[0];
             this.setDateFieldAndFocus(this.startDate, this.startDateFieldId, this.dueDateFieldId);
             this.fieldName = 'due_date';
-          }
 
-          instance.setDate([this.startDate, this.dueDate]);
+            instance.setDate([this.startDate, this.dueDate]);
+          }
         },
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         onDayCreate: async (dObj:Date[], dStr:string, fp:flatpickr.Instance, dayElem:DayElement) => {

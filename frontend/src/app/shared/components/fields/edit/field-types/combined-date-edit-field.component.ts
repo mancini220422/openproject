@@ -53,10 +53,6 @@ export class CombinedDateEditFieldComponent extends DatePickerEditFieldComponent
     super.ngOnInit();
   }
 
-  get isMultiDate():boolean {
-    return !this.change.schema.isMilestone;
-  }
-
   public onInputClick(event:MouseEvent) {
     event.stopPropagation();
   }
