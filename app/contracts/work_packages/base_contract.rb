@@ -101,19 +101,19 @@ module WorkPackages
     attribute :schedule_manually
     attribute :ignore_non_working_days,
               writable: ->(*) {
-                !automatically_scheduled_parent?
+                leaf_or_manually_scheduled?
               }
 
     attribute :start_date,
               writable: ->(*) {
-                !automatically_scheduled_parent?
+                leaf_or_manually_scheduled?
               } do
       validate_after_soonest_start(:start_date)
     end
 
     attribute :due_date,
               writable: ->(*) {
-                !automatically_scheduled_parent?
+                leaf_or_manually_scheduled?
               } do
       validate_after_soonest_start(:due_date)
     end
@@ -627,8 +627,8 @@ module WorkPackages
       @calculated_duration ||= WorkPackages::Shared::Days.for(model).duration(model.start_date, model.due_date)
     end
 
-    def automatically_scheduled_parent?
-      !model.leaf? && !model.schedule_manually?
+    def leaf_or_manually_scheduled?
+      model.leaf? || model.schedule_manually?
     end
   end
 end
