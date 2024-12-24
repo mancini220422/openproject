@@ -47,7 +47,7 @@ RSpec.describe WorkPackages::SetAttributesService,
   end
 
   let(:work_package) do
-    wp = build_stubbed(:work_package, project:, status: status_0_pct_complete)
+    wp = build_stubbed(:work_package, project:, subject: "work_package", status: status_0_pct_complete)
     wp.type = initial_type
     wp.clear_changes_information
 
@@ -1784,12 +1784,12 @@ RSpec.describe WorkPackages::SetAttributesService,
     context "when the soonest start date is later than the current start date" do
       let(:soonest_start) { Time.zone.today + 3.days }
 
-      it_behaves_like "service call" do
-        it "sets the start date to the soonest possible start date" do
-          subject
-
-          expect(work_package.start_date).to eql(Time.zone.today + 3.days)
-          expect(work_package.due_date).to eql(Time.zone.today + 8.days)
+      include_examples "service call", description: "sets the start date to the soonest possible start date" do
+        let(:expected_attributes) do
+          {
+            start_date: Time.zone.today + 3.days,
+            due_date: Time.zone.today + 8.days
+          }
         end
       end
     end
@@ -1797,12 +1797,12 @@ RSpec.describe WorkPackages::SetAttributesService,
     context "when the soonest start date is earlier than the current start date" do
       let(:soonest_start) { Time.zone.today - 3.days }
 
-      it_behaves_like "service call" do
-        it "sets the start date to the soonest possible start date" do
-          subject
-
-          expect(work_package.start_date).to eql(Time.zone.today - 3.days)
-          expect(work_package.due_date).to eql(Time.zone.today + 2.days)
+      include_examples "service call", description: "sets the start date to the soonest possible start date" do
+        let(:expected_attributes) do
+          {
+            start_date: Time.zone.today - 3.days,
+            due_date: Time.zone.today + 2.days
+          }
         end
       end
     end
@@ -1817,14 +1817,13 @@ RSpec.describe WorkPackages::SetAttributesService,
         work_package.ignore_non_working_days = false
       end
 
-      it_behaves_like "service call" do
-        it "sets the start date to the soonest possible start date being a working day" do
-          subject
-
-          expect(work_package).to have_attributes(
+      include_examples "service call",
+                       description: "sets the start date to the soonest possible start date being a working day" do
+        let(:expected_attributes) do
+          {
             start_date: next_monday,
             due_date: next_monday + 7.days
-          )
+          }
         end
       end
     end
@@ -1832,12 +1831,12 @@ RSpec.describe WorkPackages::SetAttributesService,
     context "when the soonest start date is before the current start date" do
       let(:soonest_start) { Time.zone.today - 3.days }
 
-      it_behaves_like "service call" do
-        it "sets the start date to the soonest possible start date" do
-          subject
-
-          expect(work_package.start_date).to eql(soonest_start)
-          expect(work_package.due_date).to eql(Time.zone.today + 2.days)
+      include_examples "service call", description: "sets the start date to the soonest possible start date" do
+        let(:expected_attributes) do
+          {
+            start_date: soonest_start,
+            due_date: Time.zone.today + 2.days
+          }
         end
       end
     end
@@ -1845,12 +1844,12 @@ RSpec.describe WorkPackages::SetAttributesService,
     context "when the soonest start date is nil" do
       let(:soonest_start) { nil }
 
-      it_behaves_like "service call" do
-        it "sets the start date to the soonest possible start date" do
-          subject
-
-          expect(work_package.start_date).to eql(Time.zone.today)
-          expect(work_package.due_date).to eql(Time.zone.today + 5.days)
+      include_examples "service call", description: "sets the start date to the soonest possible start date" do
+        let(:expected_attributes) do
+          {
+            start_date: Time.zone.today,
+            due_date: Time.zone.today + 5.days
+          }
         end
       end
     end
@@ -1858,10 +1857,10 @@ RSpec.describe WorkPackages::SetAttributesService,
     context "when the work package also has a child" do
       let(:child) do
         build_stubbed(:work_package,
+                      subject: "child",
                       start_date: child_start_date,
                       due_date: child_due_date)
       end
-      let(:child_start_date) { Time.zone.today + 2.days }
       let(:child_due_date) { Time.zone.today + 10.days }
 
       before do
@@ -1871,25 +1870,30 @@ RSpec.describe WorkPackages::SetAttributesService,
       end
 
       context "when the child's start date is after soonest_start" do
-        it_behaves_like "service call" do
-          it "sets the dates to the child dates" do
-            subject
+        let(:child_start_date) { Time.zone.today + 2.days }
+        let(:soonest_start) { Time.zone.today + 1.day }
 
-            expect(work_package.start_date).to eql(Time.zone.today + 2.days)
-            expect(work_package.due_date).to eql(Time.zone.today + 10.days)
+        include_examples "service call", description: "sets the dates to the child dates" do
+          let(:expected_attributes) do
+            {
+              start_date: Time.zone.today + 2.days,
+              due_date: Time.zone.today + 10.days
+            }
           end
         end
       end
 
       context "when the child's start date is before soonest_start" do
+        let(:child_start_date) { Time.zone.today + 2.days }
         let(:soonest_start) { Time.zone.today + 3.days }
 
-        it_behaves_like "service call" do
-          it "sets the dates to soonest date and to the duration of the child" do
-            subject
-
-            expect(work_package.start_date).to eql(Time.zone.today + 3.days)
-            expect(work_package.due_date).to eql(Time.zone.today + 11.days)
+        # TODO: Update this: this is no longer true. Now a parent always inherits dates from its children.
+        include_examples "service call", description: "sets the dates to soonest date and to the duration of the child" do
+          let(:expected_attributes) do
+            {
+              start_date: Time.zone.today + 3.days,
+              due_date: Time.zone.today + 11.days
+            }
           end
         end
       end
