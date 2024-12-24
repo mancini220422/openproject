@@ -102,7 +102,7 @@ module TableHelpers
           else
             values = tables_data.flat_map { _1.values_for_attribute(column.attribute) }
             values_max_size = values.map { column.format(_1).size }.max
-            [column.title.size, values_max_size].max
+            [column.title.size, values_max_size].compact.max
           end
         end
     end

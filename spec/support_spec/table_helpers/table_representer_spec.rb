@@ -68,6 +68,19 @@ module TableHelpers
       end
     end
 
+    context "when there are no work packages" do
+      let(:table_data) do
+        TableData.from_work_packages([], columns)
+      end
+      let(:columns) { [Column.for("subject")] }
+
+      it "renders no rows" do
+        expect(representer.render(table_data)).to eq <<~TABLE
+          | subject |
+        TABLE
+      end
+    end
+
     describe "subject column" do
       let(:columns) { [Column.for("subject")] }
 
@@ -129,6 +142,18 @@ module TableHelpers
           |           X |
           |           X |
         TABLE
+      end
+
+      context "when there are no work packages" do
+        let(:table_data) do
+          TableData.from_work_packages([], columns)
+        end
+
+        it "renders no rows" do
+          expect(representer.render(table_data)).to eq <<~TABLE
+            | MTWTFSS |
+          TABLE
+        end
       end
 
       context "when non working days are defined" do
