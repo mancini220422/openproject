@@ -1666,6 +1666,7 @@ en:
   button_create: "Create"
   button_create_and_continue: "Create and continue"
   button_delete: "Delete"
+  button_delete_permanently: "Delete permanently"
   button_decline: "Decline"
   button_delete_watcher: "Delete watcher %{name}"
   button_download: "Download"
