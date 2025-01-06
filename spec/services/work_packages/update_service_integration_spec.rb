@@ -972,6 +972,106 @@ RSpec.describe WorkPackages::UpdateService, "integration", type: :model do
     end
   end
 
+  context "when setting the parent" do
+    let(:attributes) { { parent: new_parent } }
+
+    before do
+      set_factory_default(:priority, priority)
+      set_factory_default(:project_with_types, project)
+      set_factory_default(:status, status)
+      set_factory_default(:type, type)
+      set_factory_default(:user, user)
+
+      set_non_working_week_days("saturday", "sunday")
+    end
+
+    context "without dates and with the parent being restricted in its ability to be moved" do
+      let_work_packages(<<~TABLE)
+        subject                | MTWTFSS | scheduling mode | predecessors
+        work_package           |         | manual          |
+        new_parent_predecessor |   X     | manual          |
+        new_parent             |         | automatic       | follows new_parent_predecessor with lag 3
+      TABLE
+
+      it "schedules parent to start and end at soonest working start date and the child to start at the parent start" do
+        expect_work_packages(subject.all_results, <<~TABLE)
+          subject      | MTWTFSS   |
+          work_package |         [ |
+          new_parent   |         X |
+        TABLE
+      end
+    end
+
+    context "without dates, with a duration and with the parent being restricted in its ability to be moved" do
+      let_work_packages(<<~TABLE)
+        subject                | MTWTFSS | duration | scheduling mode | predecessors
+        work_package           |         |        4 | manual          |
+        new_parent_predecessor |   X     |          | manual          |
+        new_parent             |         |          | automatic       | follows new_parent_predecessor with lag 3
+      TABLE
+
+      it "schedules the moved work package to start at the parent soonest date and sets due date to keep the same duration " \
+         "and schedules the parent dates to match the child dates" do
+        expect_work_packages(subject.all_results, <<~TABLE)
+          subject      | MTWTFSS      |
+          work_package |         XXXX |
+          new_parent   |         XXXX |
+        TABLE
+      end
+    end
+
+    context "with the parent being restricted in its ability to be moved and with a due date before parent constraint" do
+      let_work_packages(<<~TABLE)
+        subject                | MTWTFSS   | scheduling mode | predecessors
+        work_package           | ]         | manual          |
+        new_parent_predecessor | X         | manual          |
+        new_parent             |           | automatic       | follows new_parent_predecessor with lag 3
+      TABLE
+
+      it "schedules the moved work package to start and end at the parent soonest working start date" do
+        expect_work_packages(subject.all_results, <<~TABLE)
+          subject      | MTWTFSS |
+          work_package |     X   |
+          new_parent   |     X   |
+        TABLE
+      end
+    end
+
+    context "with the parent being restricted in its ability to be moved and with a due date after parent constraint" do
+      let_work_packages(<<~TABLE)
+        subject                | MTWTFSS   | scheduling mode | predecessors
+        work_package           |         ] | manual          |
+        new_parent_predecessor | X         | manual          |
+        new_parent             |           | automatic       | follows new_parent_predecessor with lag 3
+      TABLE
+
+      it "schedules the moved work package to start at the parent soonest working start date and keep the due date" do
+        expect_work_packages(subject.all_results, <<~TABLE)
+          subject      | MTWTFSS   |
+          work_package |     X..XX |
+          new_parent   |     X..XX |
+        TABLE
+      end
+    end
+
+    context "with the parent being restricted but work package already has both dates set" do
+      let_work_packages(<<~TABLE)
+        subject                | MTWTFSS   | scheduling mode | predecessors
+        work_package           |        XX | manual          |
+        new_parent_predecessor | X         | manual          |
+        new_parent             |           | automatic       | follows new_parent_predecessor with lag 3
+      TABLE
+
+      it "does not reschedule the moved work package, and sets new parent dates to child dates" do
+        expect_work_packages(subject.all_results, <<~TABLE)
+          subject      | MTWTFSS   |
+          work_package |        XX |
+          new_parent   |        XX |
+        TABLE
+      end
+    end
+  end
+
   describe "changing the parent with the parent having a predecessor restricting it moving to an earlier date" do
     # there is actually some time between the new parent and its predecessor
     let(:new_parent_attributes) do
