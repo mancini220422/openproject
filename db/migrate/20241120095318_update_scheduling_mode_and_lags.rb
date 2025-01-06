@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class UpdateSchedulingModeAndLags < ActiveRecord::Migration[7.1]
   def up
     change_column_default :work_packages, :schedule_manually, from: false, to: true
