@@ -73,7 +73,7 @@ RSpec.describe Principals::Scopes::OrderedByName do
       end
     end
 
-    context "with lastname_coma_firstname user sort", with_settings: { user_format: :lastname_coma_firstname } do
+    context "with lastname_comma_firstname user sort", with_settings: { user_format: :lastname_comma_firstname } do
       it_behaves_like "sorted results" do
         let(:order) { [anonymous.id, eve.id, group.id, placeholder_user.id, alice.id] }
       end

@@ -135,7 +135,7 @@ RSpec.describe Principal do
     shared_let(:placeholder_user_id) { create(:placeholder_user, name: "Wannabejohn").id }
 
     shared_examples "name formatting" do
-      context "for lastname_coma_firstname formatter", with_settings: { user_format: :lastname_coma_firstname } do
+      context "for lastname_comma_firstname formatter", with_settings: { user_format: :lastname_comma_firstname } do
         it "returns formatted user name" do
           expect(user.name).to eq "Smith, John"
         end

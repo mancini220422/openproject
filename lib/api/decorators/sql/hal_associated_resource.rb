@@ -58,7 +58,7 @@ module API
 
           def associated_user_link_title(table_name)
             -> {
-              join_string = if Setting.user_format == :lastname_coma_firstname
+              join_string = if Setting.user_format == :lastname_comma_firstname
                               " || ', ' || "
                             else
                               " || ' ' || "

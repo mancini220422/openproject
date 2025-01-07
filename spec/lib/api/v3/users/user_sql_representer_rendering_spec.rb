@@ -99,7 +99,7 @@ RSpec.describe API::V3::Users::UserSqlRepresenter, "rendering" do
       it_behaves_like "name property depending on user format setting"
     end
 
-    context "when user_format is set to lastname_coma_firstname", with_settings: { user_format: :lastname_coma_firstname } do
+    context "when user_format is set to lastname_comma_firstname", with_settings: { user_format: :lastname_comma_firstname } do
       it_behaves_like "name property depending on user format setting"
     end
 

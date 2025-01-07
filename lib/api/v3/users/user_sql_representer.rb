@@ -39,7 +39,7 @@ module API
               "firstname"
             when :lastname_firstname
               "concat(lastname, ' ', firstname)"
-            when :lastname_coma_firstname
+            when :lastname_comma_firstname
               "concat(lastname, ', ', firstname)"
             when :lastname_n_firstname
               "concat_ws(lastname, '', firstname)"
