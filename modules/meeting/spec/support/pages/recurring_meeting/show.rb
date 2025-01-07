@@ -113,8 +113,19 @@ module Pages::RecurringMeeting
       expect(page).to have_css("#new-meeting-dialog")
     end
 
+    def delete_meeting_series
+      page.find_test_selector("recurring-meeting-action-menu").click
+      click_on "Delete meeting series"
+
+      expect(page).to have_css("#delete-recurring-meeting-dialog")
+    end
+
     def in_edit_dialog(&)
       page.within("#new-meeting-dialog", &)
+    end
+
+    def in_delete_dialog(&)
+      page.within("#delete-recurring-meeting-dialog", &)
     end
 
     def expect_no_meeting(date:)

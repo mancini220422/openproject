@@ -259,6 +259,13 @@ en:
       weekly_interval: "Every %{interval} weeks on %{weekday}"
       frequency: "%{base} at %{time}"
       full: "%{base} at %{time}, ends on %{end_date}"
+    delete_dialog:
+      title: "Delete meeting series"
+      heading: "Permanently delete this meeting series?"
+      confirmation_message_html: >
+        Deleting <strong>%{title}</strong> will delete all %{count} meetings in this series.
+
+        This action is not reversible. Please proceed with caution.
 
   notice_successful_notification: "Notification sent successfully"
   notice_timezone_missing: No time zone is set and %{zone} is assumed. To choose your time zone, please click here.

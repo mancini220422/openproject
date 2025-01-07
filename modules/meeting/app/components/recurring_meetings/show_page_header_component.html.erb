@@ -39,10 +39,11 @@
 
       menu.with_item(
         label: I18n.t(:label_recurring_meeting_series_delete),
-        href: polymorphic_path([@project, @meeting]),
+        href: polymorphic_path([:delete_dialog, @project, @meeting]),
         scheme: :danger,
-        form_arguments: {
-          method: :delete, data: { confirm: t("text_are_you_sure"), turbo: 'false' }
+        tag: :a,
+        content_arguments: {
+          data: { controller: 'async-dialog' }
         }
       )
     end

@@ -177,9 +177,10 @@ module RecurringMeetings
       menu.with_item(
         label: past? ? I18n.t(:label_recurring_meeting_delete) : I18n.t(:label_recurring_meeting_cancel),
         scheme: :danger,
-        href: current_project_meeting_path(meeting),
-        form_arguments: {
-          method: :delete, data: { confirm: I18n.t(:label_recurring_occurrence_delete_confirmation), turbo: false }
+        href: polymorphic_path([:delete_dialog, current_project, meeting]),
+        tag: :a,
+        content_arguments: {
+          data: { controller: "async-dialog" }
         }
       ) do |item|
         item.with_leading_visual_icon(icon: :trash)

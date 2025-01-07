@@ -88,13 +88,17 @@ RSpec.describe "Recurring meetings CRUD",
   it "can delete a recurring meeting from the show page and return to the index page" do
     show_page.visit!
 
-    click_on "recurring-meeting-action-menu"
+    show_page.delete_meeting_series
+    show_page.in_delete_dialog do
+      page.check "I understand that this deletion cannot be reversed"
 
-    accept_confirm(I18n.t("text_are_you_sure")) do
-      click_on "Delete meeting series"
+      click_on "Delete permanently"
     end
 
     expect(page).to have_current_path meetings_path # check path
+
+    expect_flash(type: :success, message: "Successful deletion.")
+    show_page.expect_no_meeting date: "12/31/2024 01:30 PM"
   end
 
   it "can use the 'Create from template' button" do
