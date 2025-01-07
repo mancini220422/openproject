@@ -848,7 +848,8 @@ RSpec.describe WorkPackages::UpdateService, "integration", type: :model do
       }
     end
 
-    let(:attributes) { { parent: parent_work_package } }
+    # `schedule_manually: true` is the default value. Adding it here anyway for explicitness.
+    let(:attributes) { { parent: parent_work_package, schedule_manually: true } }
 
     it "sets the parent and child dates correctly" do
       expect(subject)
@@ -972,7 +973,7 @@ RSpec.describe WorkPackages::UpdateService, "integration", type: :model do
     end
   end
 
-  context "when setting the parent" do
+  context "when being manually scheduled and setting the parent" do
     let(:attributes) { { parent: new_parent } }
 
     before do
@@ -1081,7 +1082,8 @@ RSpec.describe WorkPackages::UpdateService, "integration", type: :model do
       set_factory_default(:user, user)
     end
 
-    context "when the work package is automatically scheduled with dates set" do
+    context "when the work package is automatically scheduled with both dates set " \
+            "and start date is before predecessor's due date" do
       let_work_packages(<<~TABLE)
         subject                | MTWTFSS        | scheduling mode | predecessors
         new_parent_predecessor | XX             | manual          |
@@ -1102,6 +1104,112 @@ RSpec.describe WorkPackages::UpdateService, "integration", type: :model do
           new_parent_predecessor | XX      | manual
           new_parent             |   XXX   | automatic
           work_package           |   XXX   | automatic
+        TABLE
+      end
+    end
+
+    context "when the work package is automatically scheduled with both dates set after predecessor's due date" do
+      let_work_packages(<<~TABLE)
+        subject                | MTWTFSS        | scheduling mode | predecessors
+        new_parent_predecessor | XX             | manual          |
+        new_parent             |         XXXXXX | automatic       | new_parent_predecessor
+        work_package           |     XXX        | automatic       |
+      TABLE
+      let(:attributes) { { parent: new_parent } }
+
+      it "reschedules the work package to start ASAP and keeps the duration; " \
+         "the parent is rescheduled like its child" do
+        expect(subject).to be_success
+        expect(work_package.reload.parent).to eq new_parent
+        expect(subject.all_results.map(&:subject)).to contain_exactly("work_package", "new_parent")
+
+        # The work_package dates are moved to the parent's soonest start date.
+        # The parent dates are the same as its child.
+        expect_work_packages(subject.all_results + [new_parent_predecessor], <<~TABLE)
+          subject                | MTWTFSS | scheduling mode
+          new_parent_predecessor | XX      | manual
+          new_parent             |   XXX   | automatic
+          work_package           |   XXX   | automatic
+        TABLE
+      end
+    end
+
+    context "when the work package is automatically scheduled without any dates set" do
+      let_work_packages(<<~TABLE)
+        subject                | MTWTFSS        | scheduling mode | predecessors
+        new_parent_predecessor | XX             | manual          |
+        new_parent             |         XXXXXX | automatic       | new_parent_predecessor
+        work_package           |                | automatic       |
+      TABLE
+      let(:attributes) { { parent: new_parent } }
+
+      it "reschedules the work package to start ASAP and leaves its due date unset; " \
+         "the parent is rescheduled to start ASAP too and end on the same day (use child start date as due date)" do
+        expect(subject).to be_success
+        expect(work_package.reload.parent).to eq new_parent
+        expect(subject.all_results.map(&:subject)).to contain_exactly("work_package", "new_parent")
+
+        # The work_package start date is set to the parent's soonest start date.
+        # Both parent dates are the same as its child start date.
+        expect_work_packages(subject.all_results + [new_parent_predecessor], <<~TABLE)
+          subject                | MTWTFSS | scheduling mode
+          new_parent_predecessor | XX      | manual
+          new_parent             |   X     | automatic
+          work_package           |   [     | automatic
+        TABLE
+      end
+    end
+
+    context "when the work package is automatically scheduled with only a due date being set before predecessor's due date" do
+      let_work_packages(<<~TABLE)
+        subject                | MTWTFSS        | scheduling mode | predecessors
+        new_parent_predecessor | XX             | manual          |
+        new_parent             |         XXXXXX | automatic       | new_parent_predecessor
+        work_package           | ]              | automatic       |
+      TABLE
+      let(:attributes) { { parent: new_parent } }
+
+      it "reschedules the work package to start ASAP and changes the due date to be the same as start date; " \
+         "the parent is rescheduled like its child" do
+        expect(subject).to be_success
+        expect(work_package.reload.parent).to eq new_parent
+        expect(subject.all_results.map(&:subject)).to contain_exactly("work_package", "new_parent")
+
+        # The work_package start date is set to the parent's soonest start date.
+        # The work_package due date is moved to the same as start date (can't start earlier).
+        # The parent dates are the same as its child.
+        expect_work_packages(subject.all_results + [new_parent_predecessor], <<~TABLE)
+          subject                | MTWTFSS | scheduling mode
+          new_parent_predecessor | XX      | manual
+          new_parent             |   X     | automatic
+          work_package           |   X     | automatic
+        TABLE
+      end
+    end
+
+    context "when the work package is automatically scheduled with only a due date being set after predecessor's due date" do
+      let_work_packages(<<~TABLE)
+        subject                | MTWTFSS        | scheduling mode | predecessors
+        new_parent_predecessor | XX             | manual          |
+        new_parent             |         XXXXXX | automatic       | new_parent_predecessor
+        work_package           |       ]        | automatic       |
+      TABLE
+      let(:attributes) { { parent: new_parent } }
+
+      it "reschedules the work package to start ASAP and keeps the due date; " \
+         "the parent is rescheduled like its child" do
+        expect(subject).to be_success
+        expect(work_package.reload.parent).to eq new_parent
+        expect(subject.all_results.map(&:subject)).to contain_exactly("work_package", "new_parent")
+
+        # The work_package start date is set to the parent's soonest start date.
+        # The work_package due date is kept.
+        # The parent dates are the same as its child.
+        expect_work_packages(subject.all_results + [new_parent_predecessor], <<~TABLE)
+          subject                | MTWTFSS | scheduling mode
+          new_parent_predecessor | XX      | manual
+          new_parent             |   XXXXX | automatic
+          work_package           |   XXXXX | automatic
         TABLE
       end
     end
@@ -1128,6 +1236,32 @@ RSpec.describe WorkPackages::UpdateService, "integration", type: :model do
           new_parent_predecessor | XX      | manual
           new_parent             |  XXX    | automatic
           work_package           |  XXX    | manual
+        TABLE
+      end
+    end
+
+    context "when the work package is automatically scheduled, has a child and no dates" do
+      let_work_packages(<<~TABLE)
+        hierarchy              | MTWTFSS        | scheduling mode | predecessors
+        new_parent_predecessor | XX             | manual          |
+        new_parent             |   XXXXXX       | automatic       | new_parent_predecessor
+        work_package           |                | automatic       |
+          child                |                | automatic       |
+      TABLE
+      let(:attributes) { { parent: new_parent } }
+
+      it "sets work package and child start date to be soonest start, " \
+         "and parent's start and due dates to be work package start date" do
+        expect(subject).to be_success
+        expect(work_package.reload.parent).to eq new_parent
+        expect(subject.all_results.map(&:subject)).to contain_exactly("child", "work_package", "new_parent")
+
+        expect_work_packages(subject.all_results + [new_parent_predecessor], <<~TABLE)
+          subject                | MTWTFSS | scheduling mode
+          new_parent_predecessor | XX      | manual
+          new_parent             |   X     | automatic
+          work_package           |   [     | automatic
+          child                  |   [     | automatic
         TABLE
       end
     end

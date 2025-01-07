@@ -39,10 +39,6 @@ class WorkPackages::SetScheduleService
   def call(changed_attributes = %i(start_date due_date))
     altered = []
 
-    if %i(parent parent_id).intersect?(changed_attributes)
-      altered += schedule_by_parent
-    end
-
     if %i(start_date due_date parent parent_id).intersect?(changed_attributes)
       altered += schedule_following
     end
@@ -57,25 +53,6 @@ class WorkPackages::SetScheduleService
   end
 
   private
-
-  # rubocop:disable Metrics/AbcSize
-  def schedule_by_parent
-    work_packages
-      .select { |wp| wp.start_date.nil? && wp.parent }
-      .each do |wp|
-        days = WorkPackages::Shared::Days.for(wp)
-        wp.start_date = days.soonest_working_day(wp.parent.soonest_start)
-        if wp.due_date || wp.duration
-          wp.due_date = [
-            wp.start_date,
-            days.due_date(wp.start_date, wp.duration),
-            wp.due_date
-          ].compact.max
-          assign_cause_for_journaling(wp, :parent)
-        end
-      end
-  end
-  # rubocop:enable Metrics/AbcSize
 
   # Finds all work packages that need to be rescheduled because of a
   # rescheduling of the service's work package and reschedules them.
@@ -194,7 +171,6 @@ class WorkPackages::SetScheduleService
   def assign_cause_initiated_by_work_package(work_package, _relation)
     # For now we only track a generic cause, and not a specialized reason depending on the relation
     # work_package.journal_cause = case relation
-    #                             when :parent then Journal::CausedByWorkPackageParentChange.new(initiated_by)
     #                             when :children then Journal::CausedByWorkPackageChildChange.new(initiated_by)
     #                             when :predecessor then Journal::CausedByWorkPackagePredecessorChange.new(initiated_by)
     #                             end
