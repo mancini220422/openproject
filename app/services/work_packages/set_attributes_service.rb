@@ -362,9 +362,11 @@ class WorkPackages::SetAttributesService < BaseServices::SetAttributes
   end
 
   def new_start_date
+    return if work_package.schedule_manually?
+
     current_start_date = work_package.start_date || work_package.due_date
 
-    return unless current_start_date && work_package.schedule_automatically?
+    return if current_start_date.nil?
 
     min_start = new_start_date_from_parent || new_start_date_from_self
     min_start = days.soonest_working_day(min_start)

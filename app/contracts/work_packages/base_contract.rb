@@ -227,7 +227,9 @@ module WorkPackages
     attr_reader :can
 
     def validate_after_soonest_start(date_attribute)
-      if !model.schedule_manually? && before_soonest_start?(date_attribute)
+      return if model.schedule_manually?
+
+      if before_soonest_start?(date_attribute)
         message = I18n.t("activerecord.errors.models.work_package.attributes.start_date.violates_relationships",
                          soonest_start: model.soonest_start)
 
