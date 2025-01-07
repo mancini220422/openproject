@@ -1072,122 +1072,63 @@ RSpec.describe WorkPackages::UpdateService, "integration", type: :model do
     end
   end
 
-  describe "changing the parent with the parent having a predecessor restricting it moving to an earlier date" do
-    # there is actually some time between the new parent and its predecessor
-    let(:new_parent_attributes) do
-      work_package_attributes.merge(
-        subject: "new parent",
-        parent: nil,
-        schedule_manually: false,
-        start_date: Time.zone.today + 8.days,
-        due_date: Time.zone.today + 14.days
-      )
-    end
-    let(:new_parent_work_package) do
-      create(:work_package, new_parent_attributes)
-    end
-
-    let(:new_parent_predecessor_attributes) do
-      work_package_attributes.merge(
-        subject: "new parent predecessor",
-        parent: nil,
-        start_date: Time.zone.today + 1.day,
-        due_date: Time.zone.today + 4.days
-      )
-    end
-    let(:new_parent_predecessor_work_package) do
-      create(:work_package, new_parent_predecessor_attributes).tap do |wp|
-        create(:follows_relation, from: new_parent_work_package, to: wp)
-      end
-    end
-
-    let(:work_package_attributes) do
-      { project_id: project.id,
-        type_id: type.id,
-        author_id: user.id,
-        status_id: status.id,
-        priority:,
-        start_date: Time.zone.today,
-        due_date: Time.zone.today + 3.days }
-    end
-
+  describe "setting an automatically scheduled parent having a predecessor restricting it moving to an earlier date" do
     before do
-      work_package.reload
-      new_parent_work_package.reload
-      new_parent_predecessor_work_package.reload
+      set_factory_default(:priority, priority)
+      set_factory_default(:project_with_types, project)
+      set_factory_default(:status, status)
+      set_factory_default(:type, type)
+      set_factory_default(:user, user)
     end
 
-    context "when the work package is automatically scheduled" do
-      let(:attributes) { { parent: new_parent_work_package, schedule_manually: false } }
+    context "when the work package is automatically scheduled with dates set" do
+      let_work_packages(<<~TABLE)
+        subject                | MTWTFSS        | scheduling mode | predecessors
+        new_parent_predecessor | XX             | manual          |
+        new_parent             |         XXXXXX | automatic       | new_parent_predecessor
+        work_package           |  XXX           | automatic       |
+      TABLE
+      let(:attributes) { { parent: new_parent } }
 
-      it "reschedules the parent and the work package while adhering to the limitation imposed by the predecessor" do
-        expect(subject)
-          .to be_success
+      it "reschedules the work package and the parent to start ASAP while being limited by the predecessor" do
+        expect(subject).to be_success
+        expect(work_package.reload.parent).to eq new_parent
+        expect(subject.all_results.map(&:subject)).to contain_exactly("work_package", "new_parent")
 
-        # sets the parent and adapts the dates
-        # The dates are overwritten as the new parent is unable
-        # to move to the dates of its new child because of the follows relation.
-        work_package.reload
-        expect(work_package.parent)
-          .to eq new_parent_work_package
-        expect(work_package.start_date)
-          .to eq new_parent_predecessor_attributes[:due_date] + 1.day
-        expect(work_package.due_date)
-          .to eq new_parent_predecessor_attributes[:due_date] + 4.days
-
-        # adapts the parent's dates but adheres to its limitations
-        # due to the follows relationship
-        new_parent_work_package.reload
-        expect(new_parent_work_package.start_date)
-          .to eq new_parent_predecessor_attributes[:due_date] + 1.day
-        expect(new_parent_work_package.due_date)
-          .to eq new_parent_predecessor_attributes[:due_date] + 4.days
-
-        # The parent's predecessor is unchanged
-        new_parent_predecessor_work_package.reload
-        expect(new_parent_predecessor_work_package.start_date)
-          .to eq new_parent_predecessor_work_package[:start_date]
-        expect(new_parent_predecessor_work_package.due_date)
-          .to eq new_parent_predecessor_work_package[:due_date]
-
-        expect(subject.all_results.uniq)
-          .to contain_exactly(work_package, new_parent_work_package)
+        # The work_package dates are moved to the parent's soonest start date.
+        # The parent dates are the same as its child.
+        expect_work_packages(subject.all_results + [new_parent_predecessor], <<~TABLE)
+          subject                | MTWTFSS | scheduling mode
+          new_parent_predecessor | XX      | manual
+          new_parent             |   XXX   | automatic
+          work_package           |   XXX   | automatic
+        TABLE
       end
     end
 
-    context "when the work package is manually scheduled" do
-      let(:attributes) { { parent: new_parent_work_package, schedule_manually: true } }
+    context "when the work package is manually scheduled with dates set" do
+      let_work_packages(<<~TABLE)
+        subject                | MTWTFSS        | scheduling mode | predecessors
+        new_parent_predecessor | XX             | manual          |
+        new_parent             |         XXXXXX | automatic       | new_parent_predecessor
+        work_package           |  XXX           | manual          |
+      TABLE
+      let(:attributes) { { parent: new_parent } }
 
       it "sets parent's dates to be the same as the work package despite the predecessor constraints" do
-        expect(subject)
-          .to be_success
+        expect(subject).to be_success
+        expect(work_package.reload.parent).to eq new_parent
+        expect(subject.all_results.map(&:subject)).to contain_exactly("work_package", "new_parent")
 
-        # sets the parent and do not change the dates as it is manually scheduled
-        work_package.reload
-        expect(work_package.parent)
-          .to eq new_parent_work_package
-        expect(work_package.start_date)
-          .to eq work_package_attributes[:start_date]
-        expect(work_package.due_date)
-          .to eq work_package_attributes[:due_date]
-
+        # The work_package dates are not changed as it's manually scheduled.
         # The parent dates are the same as its child. The follows relation is
         # ignored as children dates always take precedence over relations.
-        new_parent_work_package.reload
-        expect(new_parent_work_package.start_date)
-          .to eq work_package_attributes[:start_date]
-        expect(new_parent_work_package.due_date)
-          .to eq work_package_attributes[:due_date]
-
-        # The parent's predecessor is unchanged
-        new_parent_predecessor_work_package.reload
-        expect(new_parent_predecessor_work_package.start_date)
-          .to eq new_parent_predecessor_work_package[:start_date]
-        expect(new_parent_predecessor_work_package.due_date)
-          .to eq new_parent_predecessor_work_package[:due_date]
-
-        expect(subject.all_results.uniq)
-          .to contain_exactly(work_package, new_parent_work_package)
+        expect_work_packages(subject.all_results + [new_parent_predecessor], <<~TABLE)
+          subject                | MTWTFSS | scheduling mode
+          new_parent_predecessor | XX      | manual
+          new_parent             |  XXX    | automatic
+          work_package           |  XXX    | manual
+        TABLE
       end
     end
   end
