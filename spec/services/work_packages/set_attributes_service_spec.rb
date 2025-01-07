@@ -853,8 +853,48 @@ RSpec.describe WorkPackages::SetAttributesService,
       end
     end
 
-    context "with start date changed" do
-      let(:work_package) { build_stubbed(:work_package, start_date: Time.zone.today, due_date: Time.zone.today + 5.days) }
+    context "with start date changed on a manually scheduled work package" do
+      let(:work_package) do
+        build_stubbed(:work_package, schedule_manually: true,
+                                     start_date: Time.zone.today,
+                                     due_date: Time.zone.today + 5.days)
+      end
+      let(:call_attributes) { { start_date: Time.zone.today + 1.day } }
+      let(:expected_attributes) { {} }
+
+      it_behaves_like "service call" do
+        it "sets the start date value" do
+          subject
+
+          expect(work_package.start_date)
+            .to eq(Time.zone.today + 1.day)
+        end
+
+        it "keeps the due date value" do
+          subject
+
+          expect(work_package.due_date)
+            .to eq(Time.zone.today + 5.days)
+        end
+
+        it "updates the duration" do
+          subject
+
+          expect(work_package.duration)
+            .to eq 5
+        end
+      end
+    end
+
+    # TODO: update this test: on an automatically scheduled work package, the
+    # start date is set to the soonest start date and cannot be changed. An
+    # error is to be expected!
+    context "with start date changed on an automatically scheduled work package" do
+      let(:work_package) do
+        build_stubbed(:work_package, schedule_manually: false,
+                                     start_date: Time.zone.today,
+                                     due_date: Time.zone.today + 5.days)
+      end
       let(:call_attributes) { { start_date: Time.zone.today + 1.day } }
       let(:expected_attributes) { {} }
 
