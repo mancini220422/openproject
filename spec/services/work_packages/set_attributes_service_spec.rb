@@ -1801,21 +1801,26 @@ RSpec.describe WorkPackages::SetAttributesService,
   end
 
   context "when switching back to automatic scheduling" do
+    shared_let(:project) { create(:project) }
+    let(:predecessor) do
+      create(:work_package,
+             subject: "predecessor",
+             project:,
+             ignore_non_working_days: true,
+             schedule_manually: true,
+             start_date: soonest_start - 1.day,
+             due_date: soonest_start - 1.day)
+    end
     let(:work_package) do
-      wp = build_stubbed(:work_package,
-                         project:,
-                         ignore_non_working_days: true,
-                         schedule_manually: true,
-                         start_date: Time.zone.today,
-                         due_date: Time.zone.today + 5.days)
-      wp.type = build_stubbed(:type)
-      wp.clear_changes_information
-
-      allow(wp)
-        .to receive(:soonest_start)
-        .and_return(soonest_start)
-
-      wp
+      create(:work_package,
+             subject: "work_package",
+             project:,
+             ignore_non_working_days: true,
+             schedule_manually: true,
+             start_date: Time.zone.today,
+             due_date: Time.zone.today + 5.days) do |wp|
+        create(:follows_relation, from: wp, to: predecessor)
+      end
     end
     let(:call_attributes) { { schedule_manually: false } }
     let(:expected_attributes) { {} }
@@ -1881,8 +1886,11 @@ RSpec.describe WorkPackages::SetAttributesService,
       end
     end
 
-    context "when the soonest start date is nil" do
-      let(:soonest_start) { nil }
+    context "when the soonest start date is nil (no predecessors)" do
+      before do
+        work_package # create the relation
+        predecessor.destroy # destroy the predecessor AND the relation
+      end
 
       include_examples "service call", description: "sets the start date to the soonest possible start date" do
         let(:expected_attributes) do
@@ -1894,45 +1902,41 @@ RSpec.describe WorkPackages::SetAttributesService,
       end
     end
 
-    context "when the work package also has a child" do
-      let(:child) do
-        build_stubbed(:work_package,
-                      subject: "child",
-                      start_date: child_start_date,
-                      due_date: child_due_date)
+    context "when the work package also has a manually scheduled child" do
+      let!(:child) do
+        create(:work_package,
+               subject: "child",
+               parent: work_package,
+               schedule_manually: true,
+               start_date: child_start_date,
+               due_date: child_due_date)
       end
+      let(:child_start_date) { Time.zone.today + 2.days }
       let(:child_due_date) { Time.zone.today + 10.days }
 
-      before do
-        allow(work_package)
-          .to receive(:children)
-          .and_return([child])
-      end
+      context "when the soonest start is before the child's start date" do
+        let(:soonest_start) { child_start_date - 1.day }
 
-      context "when the child's start date is after soonest_start" do
-        let(:child_start_date) { Time.zone.today + 2.days }
-        let(:soonest_start) { Time.zone.today + 1.day }
-
-        include_examples "service call", description: "sets the dates to the child dates" do
+        include_examples "service call",
+                         description: "sets the dates to the child dates, without moving parent to soonest start" do
           let(:expected_attributes) do
             {
-              start_date: Time.zone.today + 2.days,
-              due_date: Time.zone.today + 10.days
+              start_date: child_start_date,
+              due_date: child_due_date
             }
           end
         end
       end
 
-      context "when the child's start date is before soonest_start" do
-        let(:child_start_date) { Time.zone.today + 2.days }
-        let(:soonest_start) { Time.zone.today + 3.days }
+      context "when the soonest start is after the child's start date" do
+        let(:soonest_start) { child_start_date + 1.day }
 
-        # TODO: Update this: this is no longer true. Now a parent always inherits dates from its children.
-        include_examples "service call", description: "sets the dates to soonest date and to the duration of the child" do
+        include_examples "service call",
+                         description: "sets the dates to the child dates, regardless of the soonest date" do
           let(:expected_attributes) do
             {
-              start_date: Time.zone.today + 3.days,
-              due_date: Time.zone.today + 11.days
+              start_date: child_start_date,
+              due_date: child_due_date
             }
           end
         end

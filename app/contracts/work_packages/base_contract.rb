@@ -228,6 +228,7 @@ module WorkPackages
 
     def validate_after_soonest_start(date_attribute)
       return if model.schedule_manually?
+      return if model.children.any?
 
       if before_soonest_start?(date_attribute)
         message = I18n.t("activerecord.errors.models.work_package.attributes.start_date.violates_relationships",

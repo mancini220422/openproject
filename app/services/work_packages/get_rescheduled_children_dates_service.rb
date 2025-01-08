@@ -1,0 +1,156 @@
+# frozen_string_literal: true
+
+#-- copyright
+# OpenProject is an open source project management software.
+# Copyright (C) the OpenProject GmbH
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version 3.
+#
+# OpenProject is a fork of ChiliProject, which is a fork of Redmine. The copyright follows:
+# Copyright (C) 2006-2013 Jean-Philippe Lang
+# Copyright (C) 2010-2013 the ChiliProject Team
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+# See COPYRIGHT and LICENSE files for more details.
+#++
+
+# Service to get the new dates of an automatically scheduled parent from its
+# children once the children have been rescheduled.
+#
+# It simulates a rescheduling and then returns the dates the parent should have:
+# the earliest start date and the latest due date of the children.
+class WorkPackages::GetRescheduledChildrenDatesService
+  attr_accessor :work_package
+
+  ParentDates = Data.define(:start_date, :due_date)
+
+  def initialize(work_package:)
+    self.work_package = Array(work_package).first
+  end
+
+  def call(changed_attributes = %i(start_date due_date))
+    if %i(start_date due_date parent parent_id).intersect?(changed_attributes)
+      schedule_following
+    end
+
+    children = @dependencies.children_by_parent_id(work_package.id)
+    start_date = children.min_by(&:start_date).start_date
+    due_date = children.max_by(&:due_date).due_date
+
+    ServiceResult.success(result: ParentDates.new(start_date:, due_date:))
+  end
+
+  private
+
+  # Finds all work packages that need to be rescheduled because of a
+  # rescheduling of the service's work package and reschedules them.
+  #
+  # The order of the rescheduling is important as successors' dates are
+  # calculated based on their predecessors' dates and ancestors' dates based on
+  # their children's dates.
+  #
+  # Thus, the work packages following (having a follows relation, direct or
+  # transitively) the service's work package are first all loaded, and then
+  # sorted by their need to be scheduled before one another:
+  #
+  # - predecessors are scheduled before their successors
+  # - children/descendants are scheduled before their parents/ancestors
+  #
+  # Manually scheduled work packages are not encountered at this point as they
+  # are filtered out when fetching the work packages eligible for rescheduling.
+  def schedule_following
+    work_packages = [work_package]
+    work_packages << work_package.parent if work_package.parent && work_package.parent_id_changed?
+    @dependencies = WorkPackages::ScheduleDependency.new(work_packages, switching_to_automatic_mode: [work_package])
+    @dependencies.in_schedule_order do |scheduled, dependency|
+      reschedule(scheduled, dependency)
+    end
+  end
+
+  # Schedules work packages based on either
+  #  - their descendants if they are parents
+  #  - their predecessors (or predecessors of their ancestors) if they are
+  #    leaves
+  def reschedule(scheduled, dependency)
+    if dependency.has_descendants?
+      reschedule_by_descendants(scheduled, dependency)
+    else
+      reschedule_by_predecessors(scheduled, dependency)
+    end
+  end
+
+  # Inherits the start/due_date from the descendants of this work package.
+  #
+  # Only parent work packages are scheduled like this. start_date receives the
+  # minimum of the dates (start_date and due_date) of the descendants due_date
+  # receives the maximum of the dates (start_date and due_date) of the
+  # descendants
+  def reschedule_by_descendants(scheduled, dependency)
+    set_dates(scheduled, dependency.start_date, dependency.due_date)
+  end
+
+  # Calculates the dates of a work package based on its follows relations.
+  #
+  # The start date of a work package is constrained by its direct and indirect
+  # predecessors, as it must start strictly after all predecessors finish.
+  #
+  # The follows relations of ancestors are considered to be equal to own follows
+  # relations as they inhibit moving a work package just the same. Only leaf
+  # work packages are calculated like this.
+  #
+  # work package is moved to a later date:
+  #   - following work packages are moved forward only to ensure they start
+  #     after their predecessor's finish date. They may not need to move at all
+  #     when there a time buffer between a follower and its predecessors
+  #     (predecessors can also be acquired transitively by ancestors)
+  #
+  # work package moved to an earlier date:
+  #   - following work packages do not move at all.
+  def reschedule_by_predecessors(scheduled, dependency)
+    return unless dependency.soonest_start_date
+
+    new_start_date = dependency.soonest_start_date
+    new_due_date = determine_due_date(scheduled, new_start_date)
+    set_dates(scheduled, new_start_date, new_due_date)
+  end
+
+  def determine_due_date(work_package, start_date)
+    # due date is set only if the moving work package already has one or has a
+    # duration. If not, due date is nil (and duration will be nil too).
+    return unless work_package.due_date || work_package.duration
+
+    due_date =
+      if work_package.duration
+        days(work_package).due_date(start_date, work_package.duration)
+      else
+        work_package.due_date
+      end
+
+    # if due date is before start date, then start is used as due date.
+    [start_date, due_date].max
+  end
+
+  def set_dates(work_package, start_date, due_date)
+    work_package.start_date = start_date
+    work_package.due_date = due_date
+    work_package.duration = days(work_package).duration(start_date, due_date)
+  end
+
+  def days(work_package)
+    WorkPackages::Shared::Days.for(work_package)
+  end
+end

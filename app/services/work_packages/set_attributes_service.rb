@@ -266,7 +266,24 @@ class WorkPackages::SetAttributesService < BaseServices::SetAttributes
 
   def update_dates
     unify_milestone_dates
+    if work_package.children.any?
+      update_dates_from_rescheduled_children
+    else
+      update_dates_from_self
+    end
+  end
 
+  def update_dates_from_rescheduled_children
+    return if work_package.schedule_manually?
+
+    # do a schedule call to get the children rescheduled before getting their dates
+    service = WorkPackages::GetRescheduledChildrenDatesService.new(work_package:)
+    parent_dates = service.call.result
+    work_package.start_date = parent_dates.start_date
+    work_package.due_date = parent_dates.due_date
+  end
+
+  def update_dates_from_self
     min_start = new_start_date
 
     return unless min_start
@@ -370,9 +387,6 @@ class WorkPackages::SetAttributesService < BaseServices::SetAttributes
 
       days.soonest_working_day(new_start_date_from_parent)
     else
-      # current_start_date = work_package.start_date || work_package.due_date
-      # return if current_start_date.nil?
-
       min_start = new_start_date_from_parent || new_start_date_from_self
       days.soonest_working_day(min_start)
     end

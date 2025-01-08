@@ -1267,6 +1267,122 @@ RSpec.describe WorkPackages::UpdateService, "integration", type: :model do
     end
   end
 
+  context "when switching scheduling mode to automatic" do
+    let(:attributes) { { schedule_manually: false } }
+
+    before do
+      set_factory_default(:priority, priority)
+      set_factory_default(:project_with_types, project)
+      set_factory_default(:status, status)
+      set_factory_default(:type, type)
+      set_factory_default(:user, user)
+
+      set_non_working_week_days("saturday", "sunday")
+    end
+
+    context "when the work package has a manually scheduled child " \
+            "and a predecessor restricting it moving to an earlier date" do
+      let_work_packages(<<~TABLE)
+        | hierarchy    | MTWTFSS | scheduling mode | predecessors
+        | predecessor  |   XX    | manual          |
+        | work_package | XXX     | manual          | predecessor
+        |   child      |  X      | manual          |
+      TABLE
+
+      it "sets the dates to the child dates, despite the predecessor" do
+        expect(subject).to be_success
+
+        expect_work_packages_after_reload([work_package, predecessor, child], <<~TABLE)
+          | subject      | MTWTFSS | scheduling mode
+          | predecessor  |   XX    | manual
+          | work_package |  X      | automatic
+          | child        |  X      | manual
+        TABLE
+      end
+    end
+
+    context "when the work package has an automatically scheduled child " \
+            "and a predecessor restricting it moving to an earlier date" do
+      let_work_packages(<<~TABLE)
+        | hierarchy         | MTWTFSS | scheduling mode | predecessors
+        | predecessor       |   XX    | manual          |
+        | child_predecessor | X       | manual          |
+        | work_package      |  XXXX   | manual          | predecessor
+        |   child           |  XXX    | automatic       | child_predecessor
+      TABLE
+
+      it "sets the dates to start after the predecessor" do
+        expect(subject).to be_success
+
+        expect_work_packages_after_reload([predecessor, child_predecessor, work_package, child], <<~TABLE)
+          | subject           | MTWTFSS   | scheduling mode
+          | predecessor       |   XX      | manual
+          | child_predecessor | X         | manual
+          | work_package      |     X..XX | automatic
+          | child             |     X..XX | automatic
+        TABLE
+      end
+    end
+
+    context "when the work package has an automatically scheduled child, " \
+            "a second manually scheduled child and a predecessor restricting it moving to an earlier date" do
+      let_work_packages(<<~TABLE)
+        | hierarchy    | MTWTFSS | scheduling mode | predecessors
+        | predecessor  |   XX    | manual          |
+        | work_package |  XXXX   | manual          | predecessor
+        |   child1     | X       | manual          |
+        |   child2     |  XX     | automatic       | child1
+      TABLE
+
+      it "reschedule the automatic child to start after the predecessor and parent dates span over both children dates" do
+        expect(subject).to be_success
+
+        expect_work_packages_after_reload([predecessor, work_package, child1, child2], <<~TABLE)
+          | subject           | MTWTFSS  | scheduling mode
+          | predecessor       |   XX     | manual
+          | work_package      | XXXXX..X | automatic
+          | child1            | X        | manual
+          | child2            |     X..X | automatic
+        TABLE
+      end
+    end
+  end
+
+  context "when setting dates" do
+    before do
+      set_factory_default(:priority, priority)
+      set_factory_default(:project_with_types, project)
+      set_factory_default(:status, status)
+      set_factory_default(:type, type)
+      set_factory_default(:user, user)
+
+      set_non_working_week_days("saturday", "sunday")
+    end
+
+    context "on a manually scheduled parent having a predecessor" do
+      let_work_packages(<<~TABLE)
+        | hierarchy    | MTWTFSS | scheduling mode | predecessors
+        | predecessor  |   XX    | manual          |
+        | work_package | XXX     | manual          | predecessor
+        |   child      |  X      | manual          |
+      TABLE
+
+      # change due date of work package from Wednesday to Friday
+      let(:attributes) { { due_date: work_package.due_date + 2.days } }
+
+      it "sets the dates to the given dates" do
+        expect(subject).to be_success
+
+        expect_work_packages_after_reload([work_package, predecessor, child], <<~TABLE)
+          | subject      | MTWTFSS | scheduling mode
+          | predecessor  |   XX    | manual
+          | work_package | XXXXX   | manual
+          | child        |  X      | manual
+        TABLE
+      end
+    end
+  end
+
   describe "removing the parent on a work package which precedes its sibling" do
     let(:work_package_attributes) do
       { project_id: project.id,
