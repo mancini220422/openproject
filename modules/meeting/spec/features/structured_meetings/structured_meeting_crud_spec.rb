@@ -212,11 +212,17 @@ RSpec.describe "Structured meetings CRUD",
   it "can delete a meeting and get back to the index page" do
     click_on("op-meetings-header-action-trigger")
 
-    accept_confirm(I18n.t("text_are_you_sure")) do
-      click_on "Delete meeting"
+    click_on "Delete meeting"
+
+    within "#delete-meeting-dialog" do
+      check "I understand that this deletion cannot be reversed"
+
+      click_on "Delete permanently"
     end
 
     expect(page).to have_current_path project_meetings_path(project)
+
+    expect_flash(type: :success, message: "Successful deletion.")
   end
 
   context "when exporting as ICS" do

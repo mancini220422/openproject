@@ -34,6 +34,10 @@ class StructuredMeeting < Meeting
            inverse_of: :meeting
   accepts_nested_attributes_for :agenda_items
 
+  def self.model_name
+    @model_name ||= ActiveModel::Name.new(self, nil, "Meeting")
+  end
+
   # triggered by MeetingAgendaItem#after_create/after_destroy/after_save
   def calculate_agenda_item_time_slots
     current_time = start_time

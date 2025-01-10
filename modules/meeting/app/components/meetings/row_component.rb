@@ -140,19 +140,12 @@ module Meetings
 
       menu.with_item(label: recurring_meeting.present? ? I18n.t(:label_recurring_meeting_delete) : I18n.t(:label_meeting_delete),
                      scheme: :danger,
-                     href: meeting_path(model),
-                     form_arguments: {
-                       method: :delete, data: { confirm: delete_confirm_message, turbo: false }
+                     href: delete_dialog_meeting_path(model),
+                     tag: :a,
+                     content_arguments: {
+                       data: { controller: "async-dialog" }
                      }) do |item|
         item.with_leading_visual_icon(icon: :trash)
-      end
-    end
-
-    def delete_confirm_message
-      if recurring_meeting.present?
-        I18n.t(:label_recurring_meeting_delete_confirmation, name: recurring_meeting.title)
-      else
-        I18n.t("text_are_you_sure")
       end
     end
 

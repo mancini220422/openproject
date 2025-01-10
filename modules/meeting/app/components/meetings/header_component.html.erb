@@ -95,9 +95,10 @@
 
         menu.with_item(label: delete_label,
                        scheme: :danger,
-                       href: meeting_path(@meeting),
-                       form_arguments: {
-                         method: :delete, data: { confirm: t("text_are_you_sure"), turbo: 'false' }
+                       href: polymorphic_path([:delete_dialog, @project, @meeting]),
+                       tag: :a,
+                       content_arguments: {
+                         data: { controller: "async-dialog" }
                        }) do |item|
           item.with_leading_visual_icon(icon: :trash)
         end if delete_enabled?

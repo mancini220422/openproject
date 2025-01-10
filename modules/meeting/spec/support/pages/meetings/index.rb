@@ -126,7 +126,7 @@ module Pages::Meetings
 
     def expect_delete_action(meeting)
       within more_menu(meeting) do
-        expect(page).to have_button("Delete meeting")
+        expect(page).to have_link("Delete meeting")
       end
     end
 
