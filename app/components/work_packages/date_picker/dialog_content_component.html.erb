@@ -14,8 +14,7 @@
               tab.with_panel  do
                 primer_form_with(
                   model: work_package,
-                  url: work_package_datepicker_dialog_content_path,
-                  method: :put,
+                  url: submit_path,
                   id: DIALOG_FORM_ID,
                   data: { "work-packages--date-picker--preview-target": "form" },
                   html: { autocomplete: "off" },
@@ -36,6 +35,7 @@
                                 control.with_item(tag: :a,
                                                   href: work_package_datepicker_dialog_content_path(params.merge(schedule_manually: false).permit!),
                                                   data: { turbo_stream: true },
+                                                  disabled: work_package.new_record?,
                                                   label: I18n.t("work_packages.datepicker_modal.mode.automatic"),
                                                   title: I18n.t("work_packages.datepicker_modal.mode.automatic"),
                                                   selected: !schedule_manually)

@@ -43,11 +43,22 @@ module WorkPackages
 
         @work_package = work_package
         @schedule_manually = ActiveModel::Type::Boolean.new.cast(schedule_manually)
-        @focused_field = focused_field
+        @focused_field = parse_focused_field(focused_field)
         @touched_field_map = touched_field_map
       end
 
       private
+
+      def submit_path
+        if work_package.new_record?
+          url_for(controller: "work_packages/date_picker",
+                  action: "create")
+        else
+          url_for(controller: "work_packages/date_picker",
+                  action: "update",
+                  work_package_id: work_package.id)
+        end
+      end
 
       def precedes_relations
         @precedes_relations ||= work_package.precedes_relations
@@ -85,6 +96,10 @@ module WorkPackages
 
       def schedulable?
         @schedule_manually || precedes_relations.any?
+      end
+
+      def parse_focused_field(focused_field)
+        %i[start_date due_date duration].include?(focused_field) ? focused_field : :start_date
       end
     end
   end

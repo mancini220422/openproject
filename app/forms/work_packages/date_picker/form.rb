@@ -56,7 +56,7 @@ module WorkPackages
 
         @work_package = work_package
         @is_milestone = work_package.milestone?
-        @focused_field = focused_field_by_selection(focused_field)
+        @focused_field = focused_field
         @touched_field_map = touched_field_map
         @disabled = disabled
       end
@@ -87,10 +87,6 @@ module WorkPackages
       end
 
       private
-
-      def focused_field_by_selection(field)
-        field
-      end
 
       def text_field(group, name:, label:, disabled: @disabled)
         text_field_options = default_field_options(name).merge(

@@ -37,8 +37,8 @@ class WorkPackages::DatePickerController < ApplicationController
 
   layout false
 
-  before_action :find_work_package
-  authorization_checked! :show, :update, :edit
+  before_action :find_work_package, except: %i[new create]
+  authorization_checked! :show, :update, :edit, :new, :create
 
   attr_accessor :work_package
 
@@ -64,11 +64,53 @@ class WorkPackages::DatePickerController < ApplicationController
     end
   end
 
+  def new
+    make_fake_initial_work_package
+    set_date_attributes_to_work_package
+
+    render datepicker_modal_component, status: :ok
+  end
+
   def edit
     set_date_attributes_to_work_package
 
     render datepicker_modal_component
   end
+
+  # rubocop:disable Metrics/AbcSize
+  def create
+    make_fake_initial_work_package
+    service_call = set_date_attributes_to_work_package
+
+    if service_call.errors
+                   .map(&:attribute)
+                   .intersect?(ERROR_PRONE_ATTRIBUTES)
+      respond_to do |format|
+        format.turbo_stream do
+          # Bundle 422 status code into stream response so
+          # Angular has context as to the success or failure of
+          # the request in order to fetch the new set of Work Package
+          # attributes in the ancestry solely on success.
+          render turbo_stream: [
+            turbo_stream.morph("wp-datepicker-dialog--content", progress_modal_component)
+          ], status: :unprocessable_entity
+        end
+      end
+    else
+      render json: {
+        startDate: @work_package.start_date,
+        dueDate: @work_package.due_date,
+        duration: @work_package.duration,
+        scheduleManually: @work_package.schedule_manually,
+        includeNonWorkingDays: if @work_package.ignore_non_working_days.nil?
+                                 false
+                               else
+                                 @work_package.ignore_non_working_days
+                               end
+      }
+    end
+  end
+  # rubocop:enable Metrics/AbcSize
 
   def update
     service_call = WorkPackages::UpdateService
@@ -160,6 +202,14 @@ class WorkPackages::DatePickerController < ApplicationController
 
   def touched?(field)
     touched_field_map[:"#{field}_touched"]
+  end
+
+  def make_fake_initial_work_package
+    initial_params = params["work_package"]["initial"]
+                       .slice(*%w[start_date due_date duration ignore_non_working_days])
+                       .permit!
+    @work_package = WorkPackage.new(initial_params)
+    @work_package.clear_changes_information
   end
 
   def set_date_attributes_to_work_package

@@ -305,6 +305,10 @@ export class PathHelperService {
   }
 
   public workPackageDatepickerDialogContentPath(workPackageId:string|number):string {
+    if (workPackageId === 'new') {
+      return `${this.workPackagePath(workPackageId)}/datepicker_dialog_content/new`;
+    }
+
     return `${this.workPackagePath(workPackageId)}/datepicker_dialog_content`;
   }
 

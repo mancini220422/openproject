@@ -40,16 +40,16 @@ export default class PreviewController extends DialogPreviewController {
   ensureValidPathname(formAction:string):string {
     const wpPath = new URL(formAction);
 
-    if (wpPath.pathname.endsWith('/work_packages/date_picker')) {
+    if (wpPath.pathname.endsWith('/work_packages/datepicker_dialog_content')) {
       // Replace /work_packages/date_picker with /work_packages/new/date_picker
-      wpPath.pathname = wpPath.pathname.replace('/work_packages/date_picker', '/work_packages/new/date_picker');
+      wpPath.pathname = wpPath.pathname.replace('/work_packages/datepicker_dialog_content', '/work_packages/new/datepicker_dialog_content');
     }
 
     return wpPath.toString();
   }
 
   ensureValidWpAction(wpPath:string):string {
-    return wpPath.endsWith('/work_packages/new/date_picker') ? 'new' : 'edit';
+    return wpPath.endsWith('/work_packages/new/datepicker_dialog_content') ? 'new' : 'edit';
   }
 
   dispatchChangeEvent(field:HTMLInputElement) {

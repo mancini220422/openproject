@@ -58,6 +58,7 @@ export class CombinedDateEditFieldComponent extends DatePickerEditFieldComponent
   }
 
   public showDatePickerModal():void {
+    this.updateFrameSrc();
     this.opened = true;
   }
 
@@ -75,7 +76,10 @@ export class CombinedDateEditFieldComponent extends DatePickerEditFieldComponent
   }
 
   public cancel():void {
-    this.handler.reset();
+    if (!this.handler.inEditMode) {
+      this.handler.reset();
+    }
+    this.onModalClosed();
   }
 
   // Overwrite super in order to set the initial dates.

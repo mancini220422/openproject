@@ -643,16 +643,16 @@ Rails.application.routes.draw do
                controller: "work_packages/progress",
                as: :work_package_progress
     end
+
     resource :datepicker_dialog_content,
              only: %i[show new edit update],
              controller: "work_packages/date_picker",
              on: :member,
              as: "datepicker_dialog_content"
     collection do
-      resource :progress,
+      resource :datepicker_dialog_content,
                only: :create,
-               controller: "work_packages/date_picker",
-               as: :work_package_progress
+               controller: "work_packages/date_picker"
     end
 
     resources :relations_tab, only: %i[index], controller: "work_package_relations_tab"

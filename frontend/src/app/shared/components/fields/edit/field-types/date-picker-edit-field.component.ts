@@ -94,7 +94,7 @@ export abstract class DatePickerEditFieldComponent extends EditFieldComponent im
 
   public handleSuccessfulCreate(JSONResponse:{ duration:number, startDate:Date, dueDate:Date, includeNonWorkingDays:boolean, scheduleManually:boolean }):void {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
-    this.resource.duration = JSONResponse.duration;
+    this.resource.duration = JSONResponse.duration ? this.timezoneService.toISODuration(JSONResponse.duration, 'days') : null;
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
     this.resource.dueDate = JSONResponse.dueDate;
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
@@ -112,4 +112,45 @@ export abstract class DatePickerEditFieldComponent extends EditFieldComponent im
   }
 
   public onModalClosed():void { }
+
+  public updateFrameSrc():void {
+    const url = new URL(
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      this.pathHelper.workPackageDatepickerDialogContentPath(this.resource.id as string),
+      window.location.origin,
+    );
+
+    url.searchParams.set('field', this.name);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-member-access
+    url.searchParams.set('work_package[initial][start_date]', this.nullAsEmptyStringFormatter(this.resource.startDate));
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-member-access
+    url.searchParams.set('work_package[initial][due_date]', this.nullAsEmptyStringFormatter(this.resource.dueDate));
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-member-access
+    url.searchParams.set('work_package[initial][duration]', this.nullAsEmptyStringFormatter(this.resource.duration));
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    url.searchParams.set('work_package[initial][ignore_non_working_days]', this.nullAsEmptyStringFormatter(this.resource.includeNonWorkingDays));
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-member-access
+    url.searchParams.set('work_package[start_date]', this.nullAsEmptyStringFormatter(this.resource.startDate));
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-member-access
+    url.searchParams.set('work_package[due_date]', this.nullAsEmptyStringFormatter(this.resource.dueDate));
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-member-access
+    url.searchParams.set('work_package[duration]', this.nullAsEmptyStringFormatter(this.resource.duration));
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    url.searchParams.set('work_package[ignore_non_working_days]', this.nullAsEmptyStringFormatter(this.resource.includeNonWorkingDays));
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    if (this.resource?.id === 'new') {
+      url.searchParams.set('work_package[start_date_touched]', 'true');
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    this.turboFrameSrc = url.toString();
+  }
+
+  private nullAsEmptyStringFormatter(value:null|string):string {
+    if (value === undefined || value === null) {
+      return '';
+    }
+    return value;
+  }
 }
