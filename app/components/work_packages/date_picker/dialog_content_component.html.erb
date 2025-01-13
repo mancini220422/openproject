@@ -136,7 +136,10 @@
               I18n.t("button_cancel")
             end
 
-            footer.with_component(Primer::ButtonComponent.new(scheme: :primary, type: :submit, form: DIALOG_FORM_ID)) do
+            footer.with_component(Primer::ButtonComponent.new(scheme: :primary,
+                                                              type: :submit,
+                                                              form: DIALOG_FORM_ID,
+                                                              disabled: !schedulable?)) do
               I18n.t("button_save")
             end
           end

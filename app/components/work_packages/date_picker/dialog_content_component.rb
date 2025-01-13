@@ -64,8 +64,8 @@ module WorkPackages
         @precedes_relations ||= work_package.precedes_relations
       end
 
-      def follow_relations
-        @follow_relations ||= work_package.follows_relations
+      def follows_relations
+        @follows_relations ||= work_package.follows_relations
       end
 
       def children
@@ -80,7 +80,7 @@ module WorkPackages
         [
           {
             key: "predecessors",
-            relations: follow_relations
+            relations: follows_relations
           },
           {
             key: "successors",
@@ -95,7 +95,7 @@ module WorkPackages
       end
 
       def schedulable?
-        @schedule_manually || precedes_relations.any?
+        @schedule_manually || follows_relations.any?
       end
 
       def parse_focused_field(focused_field)
