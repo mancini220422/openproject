@@ -114,14 +114,22 @@
                 tab_content.with_text { I18n.t("work_packages.datepicker_modal.tabs.#{tab[:key]}") }
                 tab_content.with_counter(count: tab[:relations].count)
                 tab_content.with_panel do
-                  render(border_box_container(padding: :condensed)) do |box|
-                    tab[:relations].visible.each do |relation|
-                      box.with_row(scheme: :default) do
-                        render(WorkPackageRelationsTab::RelationComponent.new(work_package:,
-                                                                              relation: (relation unless tab[:is_child_relation?]),
-                                                                              child: (relation if tab[:is_child_relation?]),
-                                                                              editable: false))
+                  if tab[:relations].any?
+                    render(border_box_container(padding: :condensed)) do |box|
+                      tab[:relations].visible.each do |relation|
+                        box.with_row(scheme: :default) do
+                          render(WorkPackageRelationsTab::RelationComponent.new(work_package:,
+                                                                                relation: (relation unless tab[:is_child_relation?]),
+                                                                                child: (relation if tab[:is_child_relation?]),
+                                                                                editable: false))
+                        end
                       end
+                    end
+                  else
+                    render(Primer::Beta::Blankslate.new(border: true)) do |component|
+                      component.with_visual_icon(icon: :book, size: :medium)
+                      component.with_heading(tag: :h2) { I18n.t("work_packages.datepicker_modal.tabs.blankslate.#{tab[:key]}.title") }
+                      component.with_description { I18n.t("work_packages.datepicker_modal.tabs.blankslate.#{tab[:key]}.description") }
                     end
                   end
                 end

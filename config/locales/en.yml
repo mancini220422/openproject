@@ -715,6 +715,16 @@ en:
         dates: "Dates"
         predecessors: "Predecessors"
         successors: "Successors"
+        blankslate:
+          predecessors:
+            title: "No predecessors"
+            description: "This work package does not have any predecessors."
+          successors:
+            title: "No successors"
+            description: "This work package does not have any successors."
+          children:
+            title: "No children"
+            description: "This work package does not have any children."
 
     x_descendants:
       one: "One descendant work package"
