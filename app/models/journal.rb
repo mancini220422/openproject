@@ -162,11 +162,13 @@ class Journal < ApplicationRecord
   end
 
   def successor
-    @successor ||= self.class
-                       .where(journable_type:, journable_id:)
-                       .where("#{self.class.table_name}.version > ?", version)
-                       .order(version: :asc)
-                       .first
+    return @successor if defined?(@successor)
+
+    @successor = self.class
+                     .where(journable_type:, journable_id:)
+                     .where("#{self.class.table_name}.version > ?", version)
+                     .order(version: :asc)
+                     .first
   end
 
   def noop?
@@ -194,14 +196,16 @@ class Journal < ApplicationRecord
   end
 
   def predecessor
-    @predecessor ||= if initial?
-                       nil
-                     else
-                       self.class
-                         .where(journable_type:, journable_id:)
-                         .where("#{self.class.table_name}.version < ?", version)
-                         .order(version: :desc)
-                         .first
-                     end
+    return @predecessor if defined?(@predecessor)
+
+    @predecessor = if initial?
+                     nil
+                   else
+                     self.class
+                       .where(journable_type:, journable_id:)
+                       .where("#{self.class.table_name}.version < ?", version)
+                       .order(version: :desc)
+                       .first
+                   end
   end
 end
