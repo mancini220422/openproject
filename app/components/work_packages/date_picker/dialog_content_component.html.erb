@@ -7,7 +7,7 @@
           collection.with_component(WorkPackages::DatePicker::BannerComponent.new(work_package:, manually_scheduled: schedule_manually))
         end
 
-        collection.with_component(Primer::Alpha::Dialog::Body.new(classes: "Overlay-body_autocomplete_height")) do
+        collection.with_component(Primer::Alpha::Dialog::Body.new(classes: "wp-datepicker-dialog--content")) do
           render(Primer::Alpha::UnderlinePanels.new(label: I18n.t("work_packages.datepicker_modal.tabs.aria_label"))) do |component|
             component.with_tab(selected: true, id: "wp-datepicker-dialog--content-tab--dates") do |tab|
               tab.with_text { I18n.t("work_packages.datepicker_modal.tabs.dates") }
