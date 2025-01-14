@@ -3,7 +3,7 @@
     component_wrapper(data: { "application-target": "dynamic",
                               controller: "work-packages--date-picker--preview" }) do
       component_collection do |collection|
-        if schedulable?
+        if schedulable? && has_relations?
           collection.with_component(WorkPackages::DatePicker::BannerComponent.new(work_package:, manually_scheduled: schedule_manually))
         end
 

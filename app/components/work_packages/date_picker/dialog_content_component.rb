@@ -98,6 +98,10 @@ module WorkPackages
         @schedule_manually || follows_relations.any?
       end
 
+      def has_relations?
+        precedes_relations.any? || follows_relations.any? || children.any?
+      end
+
       def parse_focused_field(focused_field)
         %i[start_date due_date duration].include?(focused_field) ? focused_field : :start_date
       end
