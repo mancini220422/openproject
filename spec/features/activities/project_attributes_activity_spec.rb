@@ -94,7 +94,7 @@ RSpec.describe "Project attributes activity", :js do
 
     visit project_activity_index_path(project)
 
-    check "Project attributes"
+    check "Project details"
 
     click_on "Apply"
 
@@ -139,7 +139,7 @@ RSpec.describe "Project attributes activity", :js do
 
       visit activity_index_path
 
-      check "Project attributes"
+      check "Project details"
 
       click_on "Apply"
 

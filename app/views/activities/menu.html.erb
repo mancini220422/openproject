@@ -15,7 +15,7 @@
       <p>
         <% if @activity.event_types.include?("project_attributes") %>
           <%= check_box_tag "event_types[]", "project_attributes", @activity.scope.include?("project_attributes"), id: "event_types_project_attributes" %>
-          <label for="event_types_project_attributes"><%=t("activity.filter.project_attribute")%></label>
+          <label for="event_types_project_attributes"><%= t("activity.filter.project_details") %></label>
           <br />
         <% end -%>
         <% if @project && @project.descendants.active.any? %>
