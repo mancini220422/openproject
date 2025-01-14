@@ -130,10 +130,10 @@ module Activities
       journal_ids = events.map(&:event_id)
 
       Journal
-      .includes(:data, :customizable_journals, :attachable_journals, :bcf_comment)
-      .find(journal_ids)
-      .then { |journals| ::API::V3::Activities::ActivityEagerLoadingWrapper.wrap(journals) }
-      .index_by(&:id)
+        .includes(:data, :customizable_journals, :attachable_journals, :bcf_comment)
+        .find(journal_ids)
+        .then { |journals| ::API::V3::Activities::ActivityEagerLoadingWrapper.wrap(journals) }
+        .index_by(&:id)
     end
 
     def sort_by_most_recent_first(events)
