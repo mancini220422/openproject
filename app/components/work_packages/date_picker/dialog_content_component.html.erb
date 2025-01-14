@@ -21,7 +21,7 @@
                   ) do |f|
                   flex_layout do |body|
                     body.with_row(mb: 3) do
-                      flex_layout(align_items: :flex_end, justify_content: :space_between) do |first_row|
+                      flex_layout(classes: "wp-datepicker-dialog--form-block", align_items: :flex_end, justify_content: :space_between) do |first_row|
                         first_row.with_column do
                           concat(render(Primer::Alpha::FormControl.new(label: I18n.t("work_packages.datepicker_modal.mode.title"))) do |component|
                             component.with_input do
@@ -73,7 +73,7 @@
                     end
 
                     if schedulable?
-                      body.with_row(mb: 3) do
+                      body.with_row(mb: 3, classes: "FormControl-horizontalGroup--sm-vertical") do
                         render(WorkPackages::DatePicker::Form.new(f,
                                                                   work_package:,
                                                                   focused_field:,

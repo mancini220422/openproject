@@ -70,6 +70,14 @@ module WorkPackages
         end
       end
 
+      def mobile_title
+        if @manually_scheduled
+          I18n.t("work_packages.datepicker_modal.banner.title.manual_mobile")
+        else
+          I18n.t("work_packages.datepicker_modal.banner.title.automatic_mobile")
+        end
+      end
+
       def description
         if @manually_scheduled
           if children.any?
@@ -85,6 +93,18 @@ module WorkPackages
 
         I18n.t("work_packages.datepicker_modal.banner.description.click_on_show_relations_to_open_gantt",
                button_name: I18n.t("work_packages.datepicker_modal.show_relations"))
+      end
+
+      def mobile_description
+        text = if @manually_scheduled
+                 I18n.t("work_packages.datepicker_modal.banner.description.manual_mobile")
+               else
+                 I18n.t("work_packages.datepicker_modal.banner.description.automatic_mobile")
+               end
+
+        "#{text} #{render(Primer::Beta::Link.new(tag: :a, href: link, target: '_blank')) do
+          I18n.t('work_packages.datepicker_modal.show_relations')
+        end}".html_safe
       end
 
       def overlapping_predecessor?
@@ -116,6 +136,14 @@ module WorkPackages
           .pluck(:from_id, :to_id)
           .flatten
           .uniq
+      end
+
+      def banner_options
+        {
+          scheme:,
+          full: true,
+          icon: :info
+        }
       end
     end
   end
