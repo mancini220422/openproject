@@ -8,7 +8,8 @@
         end
 
         collection.with_component(Primer::Alpha::Dialog::Body.new(classes: "wp-datepicker-dialog--content")) do
-          render(Primer::Alpha::UnderlinePanels.new(label: I18n.t("work_packages.datepicker_modal.tabs.aria_label"))) do |component|
+          render(Primer::Alpha::UnderlinePanels.new(label: I18n.t("work_packages.datepicker_modal.tabs.aria_label"),
+                                                    classes: "wp-datepicker-dialog--UnderlineNav")) do |component|
             component.with_tab(selected: true, id: "wp-datepicker-dialog--content-tab--dates") do |tab|
               tab.with_text { I18n.t("work_packages.datepicker_modal.tabs.dates") }
               tab.with_panel  do
