@@ -129,17 +129,34 @@ class WorkPackages::UpdateService < BaseServices::Update
   end
 
   def reschedule_related(work_package)
-    rescheduled = if work_package.saved_change_to_parent_id? && work_package.parent_id_before_last_save
-                    reschedule_former_siblings(work_package).dependent_results
-                  else
-                    []
-                  end
+    moved_work_packages = [work_package]
 
-    rescheduled + reschedule(work_package, [work_package]).dependent_results
+    # if parent changed, we find a child or a predecessor of the former parent to
+    # give it to the SetScheduleService so that the former parent is rescheduled.
+    if parent_just_changed?(work_package)
+      former_parent_id = work_package.parent_id_before_last_save
+      some_child_or_predecessor = find_some_child_or_predecessor(former_parent_id)
+      if some_child_or_predecessor
+        moved_work_packages << some_child_or_predecessor
+      else # rubocop:disable Style/EmptyElse
+        # aha! switch former parent to manual mode?
+      end
+    end
+
+    reschedule(work_package, moved_work_packages).dependent_results
   end
 
-  def reschedule_former_siblings(work_package)
-    reschedule(work_package, WorkPackage.where(parent_id: work_package.parent_id_before_last_save))
+  def parent_just_changed?(work_package)
+    work_package.saved_change_to_parent_id? && work_package.parent_id_before_last_save
+  end
+
+  def find_some_child_or_predecessor(former_parent_id)
+    former_parent = WorkPackage.find(former_parent_id)
+    if a_child = former_parent.children.first
+      a_child
+    elsif a_relation = Relation.follows.of_successor(former_parent).first
+      a_relation.predecessor
+    end
   end
 
   def reschedule(work_package, work_packages)

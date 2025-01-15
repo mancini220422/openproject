@@ -1196,12 +1196,6 @@ RSpec.describe WorkPackages::UpdateService, "integration", type: :model do
 
     let(:attributes) { { parent: nil } }
 
-    before do
-      work_package.reload
-      parent_work_package.reload
-      sibling_work_package.reload
-    end
-
     it "removes the parent and reschedules it" do
       expect(subject)
         .to be_success
@@ -1217,6 +1211,37 @@ RSpec.describe WorkPackages::UpdateService, "integration", type: :model do
         parent_work_package    |     XXXXXXX | automatic
           sibling_work_package |     XXXXXXX | automatic
       TABLE
+    end
+  end
+
+  context "when removing the last child of an automatically scheduled parent" do
+    let(:attributes) { { parent: nil } }
+
+    describe "when the parent has predecessors and successors" do
+      let_work_packages(<<~TABLE)
+        hierarchy      | MTWTFSS | scheduling mode | predecessors
+        predecessor    | X       | manual          |
+        parent         |    XXX  | automatic       | predecessor
+          work_package |    XXX  | manual          |
+        successor      |       X | automatic       | parent
+      TABLE
+
+      it "keeps former parent duration and moves it to its soonest start date, and successors are rescheduled" do
+        expect(subject)
+          .to be_success
+        expect(subject.all_results.pluck(:subject))
+          .to contain_exactly("work_package", "parent", "successor")
+        expect(work_package.reload.parent).to be_nil
+
+        expect_work_packages(subject.all_results + [predecessor], <<~TABLE)
+          subject        | MTWTFSS | scheduling mode |
+          predecessor    | X       | manual          |
+          parent         |  XXX    | automatic       |
+          successor      |     X   | automatic       |
+
+          work_package   |    XXX  | manual          |
+        TABLE
+      end
     end
   end
 
