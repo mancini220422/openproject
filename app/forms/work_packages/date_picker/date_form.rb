@@ -28,7 +28,7 @@
 
 module WorkPackages
   module DatePicker
-    class Form < ApplicationForm
+    class DateForm < ApplicationForm
       ##
       # Primer::Forms::BaseComponent or ApplicationForm will always autofocus the
       # first input field with an error present on it. Despite this behavior being
@@ -49,12 +49,14 @@ module WorkPackages
       attr_reader :work_package
 
       def initialize(work_package:,
+                     schedule_manually:,
                      disabled:,
                      focused_field: :start_date,
                      touched_field_map: {})
         super()
 
         @work_package = work_package
+        @schedule_manually = schedule_manually
         @is_milestone = work_package.milestone?
         @focused_field = focused_field
         @touched_field_map = touched_field_map
@@ -63,6 +65,7 @@ module WorkPackages
 
       form do |query_form|
         query_form.group(layout: :horizontal) do |group|
+          group.hidden(name: "schedule_manually", value: @schedule_manually)
 
           if @is_milestone
             text_field(group, name: :start_date, label: I18n.t("attributes.date"))
@@ -79,6 +82,7 @@ module WorkPackages
           end
 
           hidden_touched_field(group, name: :ignore_non_working_days)
+          hidden_touched_field(group, name: :schedule_manually)
 
           group.fields_for(:initial) do |builder|
             WorkPackages::DatePicker::InitialValuesForm.new(builder, work_package:)

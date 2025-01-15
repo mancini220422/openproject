@@ -30,61 +30,47 @@
 
 module WorkPackages
   module DatePicker
-    class DialogContentComponent < ApplicationComponent
+    class FormContentComponent < ApplicationComponent
       include OpPrimer::ComponentHelpers
       include OpTurbo::Streamable
 
-      DIALOG_FORM_ID = "datepicker-form"
+      attr_accessor :form_id, :schedulable, :work_package, :schedule_manually, :focused_field, :touched_field_map
 
-      attr_accessor :work_package, :schedule_manually, :focused_field, :touched_field_map
-
-      def initialize(work_package:, schedule_manually: true, focused_field: :start_date, touched_field_map: {})
+      def initialize(form_id:,
+                     schedulable:,
+                     work_package:,
+                     schedule_manually: true,
+                     focused_field: :start_date,
+                     touched_field_map: {})
         super
 
+        @form_id = form_id
+        @schedulable = schedulable
         @work_package = work_package
         @schedule_manually = ActiveModel::Type::Boolean.new.cast(schedule_manually)
-        @focused_field = focused_field
+        @focused_field = parse_focused_field(focused_field)
         @touched_field_map = touched_field_map
       end
 
       private
 
-      def precedes_relations
-        @precedes_relations ||= work_package.precedes_relations
+      def submit_path
+        if work_package.new_record?
+          url_for(controller: "work_packages/date_picker",
+                  action: "create")
+        else
+          url_for(controller: "work_packages/date_picker",
+                  action: "update",
+                  work_package_id: work_package.id)
+        end
       end
 
-      def follows_relations
-        @follows_relations ||= work_package.follows_relations
+      def disabled?
+        !schedule_manually
       end
 
-      def children
-        @children ||= work_package.children
-      end
-
-      def additional_tabs
-        [
-          {
-            key: "predecessors",
-            relations: follows_relations
-          },
-          {
-            key: "successors",
-            relations: precedes_relations
-          },
-          {
-            key: "children",
-            relations: children,
-            is_child_relation?: true
-          }
-        ]
-      end
-
-      def schedulable?
-        @schedule_manually || follows_relations.any?
-      end
-
-      def has_relations?
-        precedes_relations.any? || follows_relations.any? || children.any?
+      def parse_focused_field(focused_field)
+        %i[start_date due_date duration].include?(focused_field) ? focused_field : :start_date
       end
     end
   end
