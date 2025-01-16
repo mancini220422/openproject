@@ -295,16 +295,13 @@ module Journals
     def cleanup_predecessor(predecessor, table_name, column, referenced_id)
       return "SELECT 1" unless predecessor
 
-      sql = <<~SQL
+      sanitize(<<~SQL, column => predecessor.send(referenced_id))
         DELETE
         FROM
          #{table_name}
         WHERE
          #{column} = :#{column}
       SQL
-
-      sanitize sql,
-               column => predecessor.send(referenced_id)
     end
 
     def update_or_insert_journal_sql(predecessor, notes, cause)
@@ -323,7 +320,7 @@ module Journals
       #
       # A lot of the data does not need to be set anew, since we only aggregate if that data stays the same
       # (e.g. the user_id).
-      journal_sql = <<~SQL
+      sql = <<~SQL
         UPDATE
           journals
         SET
@@ -337,14 +334,14 @@ module Journals
           journals.*
       SQL
 
-      sanitize(journal_sql,
+      sanitize(sql,
                notes: notes.presence || predecessor.notes,
                predecessor_id: predecessor.id,
                cause: cause_sql(cause))
     end
 
     def insert_journal_sql(notes, cause)
-      journal_sql = <<~SQL
+      sql = <<~SQL
         INSERT INTO
           journals (
             journable_id,
@@ -375,7 +372,7 @@ module Journals
         RETURNING *
       SQL
 
-      sanitize(journal_sql,
+      sanitize(sql,
                notes:,
                cause: cause_sql(cause),
                journable_id: journable.id,
@@ -385,7 +382,7 @@ module Journals
     end
 
     def insert_data_sql(predecessor, notes, cause)
-      data_sql = <<~SQL
+      sanitize(<<~SQL, journable_id: journable.id)
         INSERT INTO
           #{data_table_name} (
             #{data_sink_columns}
@@ -399,9 +396,6 @@ module Journals
           #{only_on_changed_or_forced_condition_sql(predecessor, notes, cause)}
         RETURNING *
       SQL
-
-      sanitize(data_sql,
-               journable_id: journable.id)
     end
 
     def journable_class_name
@@ -409,7 +403,7 @@ module Journals
     end
 
     def insert_attachable_sql
-      attachable_sql = <<~SQL
+      sanitize(<<~SQL, journable_id: journable.id, journable_class_name:)
         INSERT INTO
           attachable_journals (
             journal_id,
@@ -426,14 +420,10 @@ module Journals
           AND attachments.container_id = :journable_id
           AND attachments.container_type = :journable_class_name
       SQL
-
-      sanitize(attachable_sql,
-               journable_id: journable.id,
-               journable_class_name:)
     end
 
     def insert_customizable_sql
-      customizable_sql = <<~SQL
+      sanitize(<<~SQL, journable_id: journable.id, journable_class_name:)
         INSERT INTO
           customizable_journals (
             journal_id,
@@ -452,14 +442,10 @@ module Journals
           AND custom_values.value IS NOT NULL
           AND custom_values.value != ''
       SQL
-
-      sanitize(customizable_sql,
-               journable_id: journable.id,
-               journable_class_name:)
     end
 
     def insert_storable_sql
-      storable_sql = <<~SQL
+      sanitize(<<~SQL, journable_id: journable.id, journable_class_name:)
         INSERT INTO
           storages_file_links_journals (
             journal_id,
@@ -478,14 +464,10 @@ module Journals
           AND file_links.container_id = :journable_id
           AND file_links.container_type = :journable_class_name
       SQL
-
-      sanitize(storable_sql,
-               journable_id: journable.id,
-               journable_class_name:)
     end
 
     def insert_agenda_itemable_sql
-      agenda_itemable_sql = <<~SQL
+      sanitize(<<~SQL, journable_id: journable.id)
         INSERT INTO
           meeting_agenda_item_journals (
             journal_id,
@@ -517,9 +499,6 @@ module Journals
           #{only_if_created_sql}
           AND agenda_items.meeting_id = :journable_id
       SQL
-
-      sanitize(agenda_itemable_sql,
-               journable_id: journable.id)
     end
 
     # Updates the updated_at timestamp of the journable.
@@ -534,7 +513,7 @@ module Journals
     # otherwise not have receive an updated timestamp.
     def touch_journable_sql(predecessor, notes, cause)
       if journable.class.aaj_options[:timestamp].to_sym == :updated_at
-        update_sql = <<~SQL
+        sql = <<~SQL
           UPDATE
             #{journable_table_name}
           SET
@@ -546,7 +525,7 @@ module Journals
           RETURNING updated_at
         SQL
 
-        sanitize(update_sql,
+        sanitize(sql,
                  update_timestamp: journable.updated_at_previously_changed? ? journable.updated_at : nil,
                  predecessor_timestamp: predecessor&.updated_at,
                  id: journable.id)
@@ -562,12 +541,9 @@ module Journals
     # * setting the updated_at timestamp on an updated (aggregated with) journal
     # * setting the validity_period (upper bound) of the preceding journal.
     def fetch_time_sql
-      update_sql = <<~SQL
+      sanitize(<<~SQL, journable_timestamp:)
         SELECT COALESCE((SELECT updated_at FROM touch_journable), :journable_timestamp) AS updated_at
       SQL
-
-      sanitize(update_sql,
-               journable_timestamp:)
     end
 
     # Sets the validity_period's upper boundary of the preceding journal to the created_at timestamp of the inserted journal.
@@ -590,7 +566,7 @@ module Journals
     end
 
     def select_max_journal_sql(predecessor)
-      sql = <<~SQL
+      sanitize(<<~SQL, journable_id: journable.id, journable_type:)
         SELECT
           :journable_id journable_id,
           :journable_type journable_type,
@@ -607,10 +583,6 @@ module Journals
           AND journals.journable_type = :journable_type
           AND journals.version IN (#{max_journal_sql(predecessor)})
       SQL
-
-      sanitize(sql,
-               journable_id: journable.id,
-               journable_type:)
     end
 
     def select_changed_sql
@@ -634,7 +606,7 @@ module Journals
     end
 
     def attachable_changes_sql
-      attachable_changes_sql = <<~SQL
+      sanitize(<<~SQL, journable_id: journable.id, container_type: journable_class_name)
         SELECT
           max_journals.journable_id
         FROM
@@ -653,14 +625,10 @@ module Journals
           (attachments.id IS NULL AND attachable_journals.attachment_id IS NOT NULL)
           OR (attachable_journals.attachment_id IS NULL AND attachments.id IS NOT NULL)
       SQL
-
-      sanitize(attachable_changes_sql,
-               journable_id: journable.id,
-               container_type: journable_class_name)
     end
 
     def customizable_changes_sql
-      customizable_changes_sql = <<~SQL
+      sanitize(<<~SQL, journable_id: journable.id, customized_type: journable_class_name)
         SELECT
           max_journals.journable_id
         FROM
@@ -681,14 +649,10 @@ module Journals
           OR (#{normalize_newlines_sql('customizable_journals.value')} !=
               #{normalize_newlines_sql('custom_values.value')})
       SQL
-
-      sanitize(customizable_changes_sql,
-               customized_type: journable_class_name,
-               journable_id: journable.id)
     end
 
     def storable_changes_sql
-      storables_changes_sql = <<~SQL
+      sanitize(<<~SQL, journable_id: journable.id, container_type: journable_class_name)
         SELECT
           max_journals.journable_id
         FROM
@@ -707,14 +671,10 @@ module Journals
           (file_links.id IS NULL AND storages_file_links_journals.file_link_id IS NOT NULL)
           OR (storages_file_links_journals.file_link_id IS NULL AND file_links.id IS NOT NULL)
       SQL
-
-      sanitize(storables_changes_sql,
-               journable_id: journable.id,
-               container_type: journable_class_name)
     end
 
     def agenda_itemable_changes_sql
-      agenda_itemable_changes_sql = <<~SQL
+      sanitize(<<~SQL, journable_id: journable.id)
         SELECT
           max_journals.journable_id
         FROM
@@ -741,13 +701,10 @@ module Journals
           OR (agenda_items.work_package_id IS DISTINCT FROM meeting_agenda_item_journals.work_package_id)
           OR (agenda_items.item_type IS DISTINCT FROM meeting_agenda_item_journals.item_type)
       SQL
-
-      sanitize(agenda_itemable_changes_sql,
-               journable_id: journable.id)
     end
 
     def data_changes_sql
-      data_changes_sql = <<~SQL
+      sanitize(<<~SQL, journable_id: journable.id)
         SELECT
           #{journable_table_name}.id journable_id
         FROM
@@ -763,9 +720,6 @@ module Journals
         WHERE
           #{journable_table_name}.id = :journable_id AND (#{data_changes_condition_sql})
       SQL
-
-      sanitize(data_changes_sql,
-               journable_id: journable.id)
     end
 
     def max_journal_sql(predecessor)
