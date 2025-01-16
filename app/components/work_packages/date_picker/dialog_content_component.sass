@@ -1,18 +1,28 @@
-.wp-datepicker-dialog
-
-  @media screen and (min-width: $breakpoint-sm)
-    &--content
+@media screen and (min-width: $breakpoint-sm)
+  .wp-datepicker-dialog
+    &--body
       // We set a fixed height for this dialog zo avoid that it jumps around when the tabs are switched or errors shown
       min-height: 525px
       min-width: 600px
 
-  @media screen and (max-width: $breakpoint-sm)
+@media screen and (max-width: $breakpoint-sm)
+  .wp-datepicker-dialog
     &--UnderlineNav
       display: none !important
-    &--content
+    &--body
       padding-top: var(--stack-padding-normal)
 
     &--form-block
       flex-direction: column !important
       align-items: flex-start !important
       row-gap: 1rem
+
+  // re-implement the scrolling behaviour. Due to the turbo-frame element in between the default Dialog body scrolling does not work
+  .wp-datepicker-dialog--content
+    display: flex
+    flex-direction: column
+    overflow: auto
+
+  .wp-datepicker-dialog--content,
+  #wp-datepicker-dialog--content
+    height: inherit

@@ -1,13 +1,14 @@
 <%=
   content_tag("turbo-frame", id: "wp-datepicker-dialog--content") do
     component_wrapper(data: { "application-target": "dynamic",
-                              controller: "work-packages--date-picker--preview" }) do
+                              controller: "work-packages--date-picker--preview" },
+                      class: "wp-datepicker-dialog--content") do
       component_collection do |collection|
         if schedulable? && has_relations?
           collection.with_component(WorkPackages::DatePicker::BannerComponent.new(work_package:, manually_scheduled: schedule_manually))
         end
 
-        collection.with_component(Primer::Alpha::Dialog::Body.new(classes: "wp-datepicker-dialog--content")) do
+        collection.with_component(Primer::Alpha::Dialog::Body.new(classes: "wp-datepicker-dialog--body")) do
           render(Primer::Alpha::UnderlinePanels.new(label: I18n.t("work_packages.datepicker_modal.tabs.aria_label"),
                                                     classes: "wp-datepicker-dialog--UnderlineNav")) do |component|
             component.with_tab(selected: true, id: "wp-datepicker-dialog--content-tab--dates") do |tab|
