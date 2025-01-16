@@ -236,10 +236,10 @@ module Journals
 
     def for_supported_associations
       associations = {
+        agenda_items: :agenda_itemable,
         attachable?: :attachable,
         customizable?: :customizable,
-        file_links: :storable,
-        agenda_items: :agenda_itemable
+        file_links: :storable
       }
 
       associations.each do |is_associated, association|
