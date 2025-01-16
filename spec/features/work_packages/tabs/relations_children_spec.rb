@@ -113,4 +113,48 @@ RSpec.describe "Relations children tab", :js, :with_cuprite do
       relations_tab.expect_no_new_relation_type("New child")
     end
   end
+
+  context "when all possible custom fields are there" do
+    let!(:user) { create(:admin) }
+
+    before do
+      # Introspect FactoryBot to find all traits used to create work package custom fields
+      traits = FactoryBot.factories[:wp_custom_field].defined_traits
+      traits = traits.reject { |t| t.name == "multi_value" }
+      traits = traits.map { |t| t.name.to_sym }
+
+      traits.each do |trait|
+        [true, false].each do |required| # rubocop:disable Performance/CollectionLiteralInLoop
+          cf = create(:wp_custom_field,
+                      trait,
+                      is_required: required)
+          project.types.first.custom_fields << cf
+          project.work_package_custom_fields << cf
+        end
+      end
+    end
+
+    it "displays a field for each required custom field" do
+      wp_page.visit_tab!("relations")
+      relations_tab.select_relation_type "New child"
+
+      project.work_package_custom_fields.each do |cf|
+        create_dialog.in_dialog do
+          if cf.required?
+            # `visible: :all` is needed as text custom field use a hidden textarea internally
+            expect(page).to have_field cf.name, visible: :all
+          else
+            expect(page).to have_no_field cf.name
+          end
+        end
+      end
+    end
+
+    it "focuses the subject input field" do
+      wp_page.visit_tab!("relations")
+      relations_tab.select_relation_type "New child"
+
+      create_dialog.expect_subject_field_focused
+    end
+  end
 end

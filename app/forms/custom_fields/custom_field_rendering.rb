@@ -84,9 +84,7 @@ module CustomFields::CustomFieldRendering
       CustomFields::Inputs::Int.new(builder, **form_args)
     when "float"
       CustomFields::Inputs::Float.new(builder, **form_args)
-    when "hierarchy"
-      CustomFields::Inputs::SingleSelectList.new(builder, **form_args)
-    when "list"
+    when "hierarchy", "list"
       CustomFields::Inputs::SingleSelectList.new(builder, **form_args)
     when "date"
       CustomFields::Inputs::Date.new(builder, **form_args)
@@ -103,9 +101,7 @@ module CustomFields::CustomFieldRendering
     form_args = form_arguments(custom_field)
 
     case custom_field.field_format
-    when "hierarchy"
-      CustomFields::Inputs::MultiSelectList.new(builder, **form_args)
-    when "list"
+    when "hierarchy", "list"
       CustomFields::Inputs::MultiSelectList.new(builder, **form_args)
     when "user"
       CustomFields::Inputs::MultiUserSelectList.new(builder, **form_args)

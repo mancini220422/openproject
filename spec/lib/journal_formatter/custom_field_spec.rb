@@ -401,7 +401,7 @@ RSpec.describe OpenProject::JournalFormatter::CustomField do
   context "for hierarchy custom field" do
     shared_let(:custom_field) { create(:hierarchy_wp_custom_field) }
     shared_let(:service) { CustomFields::Hierarchy::HierarchicalItemService.new }
-    shared_let(:root) { service.generate_root(custom_field).value! }
+    shared_let(:root) { custom_field.hierarchy_root }
     shared_let(:luke) { service.insert_item(parent: root, label: "luke", short: "LS").value! }
     shared_let(:mara) { service.insert_item(parent: luke, label: "mara").value! }
 

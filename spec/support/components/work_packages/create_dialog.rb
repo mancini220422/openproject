@@ -64,6 +64,14 @@ module Components
         end
       end
 
+      def expect_subject_field_focused
+        in_dialog do
+          subject_field = page.find_field("Subject")
+          subject_field_id_selector = "##{subject_field[:id]}"
+          expect(page).to have_focus_on(subject_field_id_selector)
+        end
+      end
+
       def set_description(value)
         @description.set_markdown(value)
       end

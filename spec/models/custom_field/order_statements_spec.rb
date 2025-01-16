@@ -34,7 +34,7 @@ RSpec.describe CustomField::OrderStatements do
   # integration tests at spec/models/query/results_cf_sorting_integration_spec.rb
   context "when hierarchy" do
     let(:service) { CustomFields::Hierarchy::HierarchicalItemService.new }
-    let(:item) { service.generate_root(custom_field).value! }
+    let(:item) { custom_field.hierarchy_root }
 
     subject(:custom_field) { create(:hierarchy_wp_custom_field) }
 

@@ -167,6 +167,15 @@ FactoryBot.define do
 
     trait :hierarchy do
       field_format { "hierarchy" }
+      hierarchy_root do
+        service = CustomFields::Hierarchy::HierarchicalItemService.new
+        service.generate_root(instance).value!
+      end
+    end
+
+    trait :multi_hierarchy do
+      hierarchy
+      multi_value
     end
 
     factory :project_custom_field, class: "ProjectCustomField" do
