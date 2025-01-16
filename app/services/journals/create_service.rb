@@ -62,6 +62,8 @@ module Journals
 
     private
 
+    def journable_id = journable.id
+
     # If the journalizing happens within the configured aggregation time, is carried out by the same user, has an
     # identical cause and only the predecessor or the journal to be created has notes, the changes are aggregated.
     # Instead of removing the predecessor, return it here so that it can be stripped in the journal creating
@@ -375,14 +377,14 @@ module Journals
       sanitize(sql,
                notes:,
                cause: cause_sql(cause),
-               journable_id: journable.id,
+               journable_id:,
                journable_type:,
                user_id: user.id,
                data_type: journable.class.journal_class.name)
     end
 
     def insert_data_sql(predecessor, notes, cause)
-      sanitize(<<~SQL, journable_id: journable.id)
+      sanitize(<<~SQL, journable_id:)
         INSERT INTO
           #{data_table_name} (
             #{data_sink_columns}
@@ -403,7 +405,7 @@ module Journals
     end
 
     def insert_attachable_sql
-      sanitize(<<~SQL, journable_id: journable.id, journable_class_name:)
+      sanitize(<<~SQL, journable_id:, journable_class_name:)
         INSERT INTO
           attachable_journals (
             journal_id,
@@ -423,7 +425,7 @@ module Journals
     end
 
     def insert_customizable_sql
-      sanitize(<<~SQL, journable_id: journable.id, journable_class_name:)
+      sanitize(<<~SQL, journable_id:, journable_class_name:)
         INSERT INTO
           customizable_journals (
             journal_id,
@@ -445,7 +447,7 @@ module Journals
     end
 
     def insert_storable_sql
-      sanitize(<<~SQL, journable_id: journable.id, journable_class_name:)
+      sanitize(<<~SQL, journable_id:, journable_class_name:)
         INSERT INTO
           storages_file_links_journals (
             journal_id,
@@ -467,7 +469,7 @@ module Journals
     end
 
     def insert_agenda_itemable_sql
-      sanitize(<<~SQL, journable_id: journable.id)
+      sanitize(<<~SQL, journable_id:)
         INSERT INTO
           meeting_agenda_item_journals (
             journal_id,
@@ -566,7 +568,7 @@ module Journals
     end
 
     def select_max_journal_sql(predecessor)
-      sanitize(<<~SQL, journable_id: journable.id, journable_type:)
+      sanitize(<<~SQL, journable_id:, journable_type:)
         SELECT
           :journable_id journable_id,
           :journable_type journable_type,
@@ -606,7 +608,7 @@ module Journals
     end
 
     def attachable_changes_sql
-      sanitize(<<~SQL, journable_id: journable.id, container_type: journable_class_name)
+      sanitize(<<~SQL, journable_id:, container_type: journable_class_name)
         SELECT
           max_journals.journable_id
         FROM
@@ -628,7 +630,7 @@ module Journals
     end
 
     def customizable_changes_sql
-      sanitize(<<~SQL, journable_id: journable.id, customized_type: journable_class_name)
+      sanitize(<<~SQL, journable_id:, customized_type: journable_class_name)
         SELECT
           max_journals.journable_id
         FROM
@@ -652,7 +654,7 @@ module Journals
     end
 
     def storable_changes_sql
-      sanitize(<<~SQL, journable_id: journable.id, container_type: journable_class_name)
+      sanitize(<<~SQL, journable_id:, container_type: journable_class_name)
         SELECT
           max_journals.journable_id
         FROM
@@ -674,7 +676,7 @@ module Journals
     end
 
     def agenda_itemable_changes_sql
-      sanitize(<<~SQL, journable_id: journable.id)
+      sanitize(<<~SQL, journable_id:)
         SELECT
           max_journals.journable_id
         FROM
@@ -704,7 +706,7 @@ module Journals
     end
 
     def data_changes_sql
-      sanitize(<<~SQL, journable_id: journable.id)
+      sanitize(<<~SQL, journable_id:)
         SELECT
           #{journable_table_name}.id journable_id
         FROM
@@ -732,12 +734,12 @@ module Journals
 
       if predecessor
         sanitize "#{sql} AND version < :predecessor_version",
-                 journable_id: journable.id,
+                 journable_id:,
                  journable_type:,
                  predecessor_version: predecessor.version
       else
         sanitize sql,
-                 journable_id: journable.id,
+                 journable_id:,
                  journable_type:
       end
     end
