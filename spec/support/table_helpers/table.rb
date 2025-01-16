@@ -56,8 +56,8 @@ module TableHelpers
     def relation(predecessor: nil, successor: nil)
       @relations.find do |relation|
         relation.follows? \
-          && (predecessor.nil? || relation.predecessor.subject == predecessor) \
-          && (successor.nil? || relation.successor.subject == successor)
+          && (predecessor.nil? || relation.predecessor.subject == subject_of(predecessor)) \
+          && (successor.nil? || relation.successor.subject == subject_of(successor))
       end
     end
 
@@ -66,6 +66,19 @@ module TableHelpers
     end
 
     private
+
+    def subject_of(object)
+      case object
+      when nil
+        nil
+      when String
+        object
+      when WorkPackage
+        object.subject
+      else
+        raise "Cannot find subject for #{object.inspect}"
+      end
+    end
 
     def normalize_name(name)
       symbolic_name = name.to_sym

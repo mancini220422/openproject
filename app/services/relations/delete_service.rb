@@ -27,15 +27,28 @@
 #++
 
 class Relations::DeleteService < BaseServices::Delete
+  include Relations::Concerns::Rescheduling
+
   def after_perform(_result)
     result = super
-    if result.success? && successor_must_switch_to_manual_mode?
-      deleted_relation.successor.update(schedule_manually: true)
+    if result.success?
+      update_related_result = update_related
+      if update_related_result
+        result.merge!(update_related_result)
+      end
     end
     result
   end
 
   private
+
+  def update_related
+    if successor_must_switch_to_manual_mode?
+      switch_successor_to_manual_scheduling
+    elsif successor_must_be_rescheduled?
+      reschedule_successor
+    end
+  end
 
   def deleted_relation
     model
@@ -45,6 +58,21 @@ class Relations::DeleteService < BaseServices::Delete
     deleted_relation.follows? \
       && successor_has_dates? \
       && was_last_relation_to_the_successor?
+  end
+
+  def switch_successor_to_manual_scheduling
+    deleted_relation.successor.update(schedule_manually: true)
+    ServiceResult.success(dependent_results: [ServiceResult.success(result: deleted_relation.successor)])
+  end
+
+  def successor_must_be_rescheduled?
+    deleted_relation.follows? \
+      && !was_last_relation_to_the_successor?
+  end
+
+  def reschedule_successor
+    some_sibling_relation = Relation.follows.of_successor(deleted_relation.successor).first
+    reschedule(some_sibling_relation)
   end
 
   def successor_has_dates?

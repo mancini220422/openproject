@@ -29,6 +29,7 @@
 class Relations::BaseService < BaseServices::BaseCallable
   include Contracted
   include Shared::ServiceContext
+  include Relations::Concerns::Rescheduling
 
   attr_accessor :user
 
@@ -60,51 +61,5 @@ class Relations::BaseService < BaseServices::BaseCallable
     else
       model.lag = nil
     end
-  end
-
-  def reschedule(relation)
-    schedule_result = WorkPackages::SetScheduleService
-                      .new(user:,
-                           work_package: relation.predecessor,
-                           switching_to_automatic_mode: switching_to_automatic_mode(relation))
-                      .call
-
-    # The predecessor work package will not be altered by the schedule service so
-    # we do not have to save the result of the service, only the dependent results.
-    save_result = if schedule_result.success?
-                    schedule_result.dependent_results.all? { |dr| !dr.result.changed? || dr.result.save(validate: false) }
-                  end || false
-
-    schedule_result.success = save_result
-
-    schedule_result
-  end
-
-  def switching_to_automatic_mode(relation)
-    if should_switch_successor_to_automatic_mode?(relation)
-      [relation.successor]
-    else
-      []
-    end
-  end
-
-  def should_switch_successor_to_automatic_mode?(relation)
-    relation.follows? \
-      && creating? \
-      && last_successor_relation?(relation) \
-      && has_no_children?(relation.successor)
-  end
-
-  def creating?
-    self.class.name.include?("Create")
-  end
-
-  def last_successor_relation?(relation)
-    Relation.follows.of_successor(relation.successor)
-                                 .not_of_predecessor(relation.predecessor).none?
-  end
-
-  def has_no_children?(work_package)
-    !WorkPackage.exists?(parent: work_package)
   end
 end

@@ -58,6 +58,10 @@ FactoryBot.define do
     end
   end
 
+  trait :default do
+    is_default { true }
+  end
+
   factory :type_standard, class: "::Type" do
     name { "None" }
     is_standard { true }
