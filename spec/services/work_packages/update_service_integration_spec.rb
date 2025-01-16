@@ -1368,7 +1368,6 @@ RSpec.describe WorkPackages::UpdateService, "integration", type: :model do
   describe "removing an invalid parent" do
     # The parent does not have a required custom field set but will need to be touched since
     # the dates, inherited from its children (and then the only remaining child), will have to be updated.
-    let!(:delete_me) { work_package }
     let!(:parent) do
       create(:work_package,
              type: project.types.first,
@@ -1420,7 +1419,6 @@ RSpec.describe WorkPackages::UpdateService, "integration", type: :model do
 
   describe "updating an invalid work package" do
     # The work package does not have a required custom field set.
-    let!(:delete_me) { work_package }
     let(:mandatory_custom_field) do
       create(:integer_wp_custom_field, is_required: true, is_for_all: true, default_value: nil) do |cf|
         project.types.first.custom_fields << cf
