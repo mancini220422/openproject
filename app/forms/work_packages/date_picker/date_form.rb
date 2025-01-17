@@ -101,6 +101,9 @@ module WorkPackages
           disabled:,
           label:,
           caption: caption(name),
+          data: {
+            test_selector: "op-datepicker-modal--#{name.to_s.dasherize}-field"
+          },
           validation_message: validation_message(name)
         )
 
@@ -114,7 +117,8 @@ module WorkPackages
 
         render(Primer::Beta::Link.new(href: "", data: {
                                         action: "click->work-packages--date-picker--preview#setTodayForField",
-                                        "work-packages--date-picker--preview-field-reference-param": "work_package_#{field}"
+                                        "work-packages--date-picker--preview-field-reference-param": "work_package_#{field}",
+                                        test_selector: "op-datepicker-modal--#{field.to_s.dasherize}-field--today"
                                       })) { text }
       end
 

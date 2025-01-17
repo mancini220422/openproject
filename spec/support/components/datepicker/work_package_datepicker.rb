@@ -29,7 +29,7 @@ module Components
           I18n.t("js.units.day", count: value)
         end
 
-      expect(container).to have_field("duration", with: value, wait: 10)
+      expect(container).to have_field("work_package[duration]", with: value, wait: 10)
     end
 
     def milestone_date_field
@@ -59,19 +59,19 @@ module Components
     ##
     # Expect date (milestone type)
     def expect_milestone_date(value)
-      expect(container).to have_field("date", with: value, wait: 20)
+      expect(container).to have_field("work_package[start_date]", with: value, wait: 20)
     end
 
     ##
     # Expect start date
     def expect_start_date(value)
-      expect(container).to have_field("startDate", with: value, wait: 20)
+      expect(container).to have_field("work_package[start_date]", with: value, wait: 20)
     end
 
     ##
     # Expect due date
     def expect_due_date(value)
-      expect(container).to have_field("endDate", with: value, wait: 20)
+      expect(container).to have_field("work_package[due_date]", with: value, wait: 20)
     end
 
     def set_milestone_date(value)
@@ -95,7 +95,7 @@ module Components
     end
 
     def duration_field
-      container.find_field "duration"
+      container.find_field "work_package[duration]"
     end
 
     def focus_duration
@@ -103,16 +103,8 @@ module Components
     end
 
     def set_today(date)
-      key =
-        case date.to_s
-        when "due"
-          "end"
-        else
-          date
-        end
-
-      page.within("[data-test-selector='datepicker-#{key}-date']") do
-        find("button", text: "Today").click
+      page.within("[data-test-selector='datepicker-#{date}-date-field--today']") do
+        find("a", text: "Today").click
       end
     end
 

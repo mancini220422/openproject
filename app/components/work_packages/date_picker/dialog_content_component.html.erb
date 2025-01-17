@@ -1,7 +1,8 @@
 <%=
   content_tag("turbo-frame", id: "wp-datepicker-dialog--content") do
     component_wrapper(data: { "application-target": "dynamic",
-                              controller: "work-packages--date-picker--preview" },
+                              controller: "work-packages--date-picker--preview",
+                              test_selector: "op-datepicker-modal" },
                       class: "wp-datepicker-dialog--content") do
       component_collection do |collection|
         if schedulable? && has_relations?
