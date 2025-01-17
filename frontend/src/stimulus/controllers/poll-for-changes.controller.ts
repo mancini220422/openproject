@@ -56,7 +56,7 @@ export default class PollForChangesController extends ApplicationController {
     super.connect();
 
     if (this.intervalValue !== 0) {
-      this.interval = setInterval(() => {
+      this.interval = window.setInterval(() => {
         void this.triggerTurboStream();
       }, this.intervalValue || 10_000);
     }
