@@ -527,7 +527,7 @@ export class OpAutocompleterComponent<T extends IAutocompleteItem = IAutocomplet
       this.initialDebounce = false;
       return 0;
     }
-    return 50;
+    return 250;
   }
 
   writeValue(value:T|T[]|null):void {
