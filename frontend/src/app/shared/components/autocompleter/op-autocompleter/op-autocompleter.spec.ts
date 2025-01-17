@@ -80,6 +80,7 @@ describe('autocompleter', () => {
     fixture.componentInstance.virtualScroll = true;
     fixture.componentInstance.classes = 'wp-relations-autocomplete';
     fixture.componentInstance.defaultData = true;
+    fixture.componentInstance.debounceTimeMs = 0;
 
     // @ts-ignore
     opAutocompleterServiceSpy.loadData.and.returnValue(of(workPackagesStub));
