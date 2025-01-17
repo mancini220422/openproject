@@ -99,7 +99,7 @@ export class AttributeModelLoaderService {
       .values$()
       .pipe(
         take(1),
-        tap((val) => console.log(`VAL ${val}`), (err) => console.error(`ERR ${err}`)),
+        tap({ next: (val) => console.log(`VAL ${val}`), error: (err) => console.error(`ERR ${err}`) }),
       );
   }
 

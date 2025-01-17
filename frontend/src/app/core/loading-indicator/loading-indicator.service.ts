@@ -38,11 +38,11 @@ export function withLoadingIndicator<T>(indicator:LoadingIndicator, delayStopTim
     indicator.start();
 
     return source$.pipe(
-      tap(
-        () => indicator.delayedStop(delayStopTime),
-        () => indicator.stop(),
-        () => indicator.stop(),
-      ),
+      tap({
+        next: () => indicator.delayedStop(delayStopTime),
+        error: () => indicator.stop(),
+        complete: () => indicator.stop(),
+      }),
     );
   };
 }
@@ -52,11 +52,11 @@ export function withDelayedLoadingIndicator<T>(indicator:() => LoadingIndicator)
     setTimeout(() => indicator().start());
 
     return source$.pipe(
-      tap(
-        () => undefined,
-        () => indicator().stop(),
-        () => indicator().stop(),
-      ),
+      tap({
+        next: () => undefined,
+        error: () => indicator().stop(),
+        complete: () => indicator().stop(),
+      }),
     );
   };
 }

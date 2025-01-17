@@ -86,15 +86,15 @@ export class IanBellService {
       )
       .pipe(
         map((result) => result.total),
-        tap(
-          (count) => {
+        tap({
+          next: (count) => {
             this.store.update({ totalUnread: count });
           },
-          (error) => {
+          error: (error) => {
             console.error('Failed to load notifications: %O', error);
             this.store.update({ totalUnread: -1 });
           },
-        ),
+        }),
         catchError(() => EMPTY),
       );
   }
