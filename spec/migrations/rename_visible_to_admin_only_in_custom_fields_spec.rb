@@ -39,6 +39,7 @@ RSpec.describe RenameVisibleToAdminOnlyInCustomFields, type: :model do
     # Roll back the migration so we can migrate up
     before do
       ActiveRecord::Migration.suppress_messages { described_class.new.migrate(:down) }
+      CustomField.reset_column_information
     end
 
     # Silencing migration logs, since we are not interested in that during testing
