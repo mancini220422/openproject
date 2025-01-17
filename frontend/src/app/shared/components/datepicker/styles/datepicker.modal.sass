@@ -13,15 +13,6 @@
     // will be overwritten on mobile
     max-width: 320px
 
-    &_wide
-      max-width: 600px
-
-  &--dates-container
-    display: grid
-    grid-template-columns: 1fr 1fr 150px
-    grid-gap: $spot-spacing-1
-    margin: 0 $spot-spacing-1
-
   &--date-field
     &_current,
     &_current:hover
@@ -31,12 +22,6 @@
       // size of the element does not change.
       border: 2px solid var(--control-checked-color)
       margin: -1px
-
-  &--date-container
-    display: inline-grid
-
-  &--hidden-link
-    visibility: hidden
 
   &--flatpickr-instance.inline
     margin: 0.5rem auto 0  auto !important
@@ -50,13 +35,6 @@
 
     &--flatpickr-instance
       align-self: center
-
-    &--dates-container
-      grid-template-columns: 1fr 1fr
-
-    &--date-form
-      &:only-child
-        grid-column: 1 / 3
 
 .flatpickr-wrapper
   // Make flatpickr behave correctly when it is instantiated
