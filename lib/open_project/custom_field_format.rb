@@ -30,18 +30,29 @@ module OpenProject
   class CustomFieldFormat
     include Redmine::I18n
 
-    cattr_accessor :available
+    cattr_reader :available
     @@available = {}
 
-    attr_accessor :name, :order, :label, :edit_as, :class_names, :formatter
+    attr_reader :name, :order, :label, :edit_as, :class_names
 
-    def initialize(name, label:, order:, edit_as: name, only: nil, formatter: "CustomValue::StringStrategy")
-      self.name = name
-      self.label = label
-      self.order = order
-      self.edit_as = edit_as
-      self.class_names = only
-      self.formatter = formatter
+    def initialize(name,
+                   label:,
+                   order:,
+                   edit_as: name,
+                   only: nil,
+                   multi_value_possible: false,
+                   formatter: "CustomValue::StringStrategy")
+      @name = name
+      @label = label
+      @order = order
+      @edit_as = edit_as
+      @class_names = only
+      @multi_value_possible = multi_value_possible
+      @formatter = formatter
+    end
+
+    def multi_value_possible?
+      @multi_value_possible
     end
 
     def formatter
@@ -56,7 +67,7 @@ module OpenProject
 
       # Registers a custom field format
       def register(custom_field_format, _options = {})
-        @@available[custom_field_format.name] = custom_field_format unless @@available.keys.include?(custom_field_format.name)
+        @@available[custom_field_format.name] = custom_field_format unless @@available.include?(custom_field_format.name)
       end
 
       def available_formats
@@ -69,10 +80,15 @@ module OpenProject
 
       def all_for_field(custom_field)
         class_name = custom_field.class.customized_class.name
+        all_for_class_name(class_name)
+      end
 
+      def all_for_class_name(class_name)
         available
           .values
           .select { |field| field.class_names.nil? || field.class_names.include?(class_name) }
+          .sort_by(&:order)
+          .reject { |format| format.label.nil? }
       end
     end
   end

@@ -296,7 +296,7 @@ class CustomField < ApplicationRecord
   end
 
   def multi_value_possible?
-    version? || user? || list? || field_format_hierarchy?
+    OpenProject::CustomFieldFormat.find_by(name: field_format)&.multi_value_possible?
   end
 
   def allow_non_open_versions_possible?

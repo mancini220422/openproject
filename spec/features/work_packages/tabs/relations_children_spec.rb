@@ -5,6 +5,8 @@ require "spec_helper"
 require "support/edit_fields/edit_field"
 
 RSpec.describe "Relations children tab", :js, :with_cuprite do
+  include CustomFieldsHelpers
+
   shared_let(:normal_cf) { create(:string_wp_custom_field, is_required: false) }
   shared_let(:required_cf) { create(:string_wp_custom_field, is_required: true) }
   shared_let(:type_milestone) { create(:type_milestone) }
@@ -118,20 +120,13 @@ RSpec.describe "Relations children tab", :js, :with_cuprite do
     let!(:user) { create(:admin) }
 
     before do
-      # Introspect FactoryBot to find all traits used to create work package custom fields
-      traits = FactoryBot.factories[:wp_custom_field].defined_traits
-      traits = traits.reject { |t| t.name == "multi_value" }
-      traits = traits.map { |t| t.name.to_sym }
-
-      traits.each do |trait|
-        [true, false].each do |required| # rubocop:disable Performance/CollectionLiteralInLoop
-          cf = create(:wp_custom_field,
-                      trait,
-                      is_required: required)
+      factory_bot_custom_field_traits_for("WorkPackage")
+        .product([true, false])
+        .each do |trait, is_required|
+          cf = create(:wp_custom_field, trait, is_required:)
           project.types.first.custom_fields << cf
           project.work_package_custom_fields << cf
         end
-      end
     end
 
     it "displays a field for each required custom field" do
