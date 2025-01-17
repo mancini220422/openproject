@@ -239,7 +239,8 @@ module Journals
         agenda_items: :agenda_itemable,
         attachable?: :attachable,
         customizable?: :customizable,
-        file_links: :storable
+        file_links: :storable,
+        life_cycle_steps: :project_life_cycle_step
       }
 
       associations.each do |is_associated, association|
@@ -276,6 +277,13 @@ module Journals
     def cleanup_predecessor_customizable(predecessor)
       cleanup_predecessor(predecessor,
                           "customizable_journals",
+                          :journal_id,
+                          :id)
+    end
+
+    def cleanup_predecessor_project_life_cycle_step(predecessor)
+      cleanup_predecessor(predecessor,
+                          "project_life_cycle_step_journals",
                           :journal_id,
                           :id)
     end
@@ -443,6 +451,29 @@ module Journals
           AND custom_values.customized_type = :journable_class_name
           AND custom_values.value IS NOT NULL
           AND custom_values.value != ''
+      SQL
+    end
+
+    def insert_project_life_cycle_step_sql
+      sanitize(<<~SQL, journable_id:)
+        INSERT INTO
+          project_life_cycle_step_journals (
+            journal_id,
+            life_cycle_step_id,
+            start_date,
+            end_date,
+            active
+          )
+        SELECT
+          #{id_from_inserted_journal_sql},
+          project_life_cycle_steps.id,
+          project_life_cycle_steps.start_date,
+          project_life_cycle_steps.end_date,
+          project_life_cycle_steps.active
+        FROM project_life_cycle_steps
+        WHERE
+          #{only_if_created_sql}
+          AND project_life_cycle_steps.project_id = :journable_id
       SQL
     end
 
@@ -650,6 +681,29 @@ module Journals
           OR (customizable_journals.value IS NULL AND custom_values.value IS NOT NULL AND custom_values.value != '')
           OR (#{normalize_newlines_sql('customizable_journals.value')} !=
               #{normalize_newlines_sql('custom_values.value')})
+      SQL
+    end
+
+    def project_life_cycle_step_changes_sql
+      sanitize(<<~SQL, journable_id:)
+        SELECT
+          max_journals.journable_id
+        FROM
+          max_journals
+        LEFT OUTER JOIN
+          project_life_cycle_step_journals
+        ON
+          project_life_cycle_step_journals.journal_id = max_journals.id
+        FULL JOIN
+          (SELECT *
+           FROM project_life_cycle_steps
+           WHERE project_life_cycle_steps.project_id = :journable_id) life_cycle_steps
+        ON
+          life_cycle_steps.id = project_life_cycle_step_journals.life_cycle_step_id
+        WHERE
+          life_cycle_steps.start_date IS DISTINCT FROM project_life_cycle_step_journals.start_date
+          OR life_cycle_steps.end_date IS DISTINCT FROM project_life_cycle_step_journals.end_date
+          OR life_cycle_steps.active IS DISTINCT FROM project_life_cycle_step_journals.active
       SQL
     end
 
