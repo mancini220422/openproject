@@ -98,7 +98,7 @@ module WorkPackages
         text_field_options = default_field_options(name).merge(
           name:,
           value: field_value(name),
-          disabled:,
+          disabled: name == :duration ? false : disabled, # duration is always editable
           label:,
           caption: caption(name),
           data: {
