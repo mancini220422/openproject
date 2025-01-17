@@ -98,6 +98,7 @@ class Journal < ApplicationRecord
   has_many :agenda_item_journals, class_name: "Journal::MeetingAgendaItemJournal", dependent: :delete_all
   has_many :attachable_journals, class_name: "Journal::AttachableJournal", dependent: :delete_all
   has_many :customizable_journals, class_name: "Journal::CustomizableJournal", dependent: :delete_all
+  has_many :project_life_cycle_step_journals, class_name: "Journal::ProjectLifeCycleStepJournal", dependent: :delete_all
   has_many :storable_journals, class_name: "Journal::StorableJournal", dependent: :delete_all
 
   has_many :notifications, dependent: :destroy
