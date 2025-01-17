@@ -933,9 +933,6 @@ en:
 
     project_menu_details: "Details"
 
-    scheduling:
-      manual: "Manual scheduling"
-
     sort:
       sorted_asc: "Ascending sort applied, "
       sorted_dsc: "Descending sort applied, "

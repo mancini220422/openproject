@@ -29,8 +29,18 @@
  */
 
 import { DialogPreviewController } from '../dialog/preview.controller';
+import { TimezoneService } from 'core-app/core/datetime/timezone.service';
 
 export default class PreviewController extends DialogPreviewController {
+  private timezoneService:TimezoneService;
+
+  async connect() {
+    super.connect();
+
+    const context = await window.OpenProject.getPluginContext();
+    this.timezoneService = context.services.timezone;
+  }
+
   markFieldAsTouched(event:{ target:HTMLInputElement }) {
     super.markFieldAsTouched(event);
   }
@@ -69,5 +79,18 @@ export default class PreviewController extends DialogPreviewController {
     }
 
     return field.value;
+  }
+
+  setTodayForField(event:unknown) {
+    (event as Event).preventDefault();
+
+    const targetFieldID = (event as { params:{ fieldReference:string } }).params.fieldReference;
+    if (targetFieldID) {
+      const inputField = document.getElementById(targetFieldID);
+      if (inputField) {
+        (inputField as HTMLInputElement).value = this.timezoneService.formattedISODate(Date.now());
+        inputField.dispatchEvent(new Event('input'));
+      }
+    }
   }
 }

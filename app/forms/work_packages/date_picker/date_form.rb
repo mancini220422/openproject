@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # -- copyright
 # OpenProject is an open source project management software.
 # Copyright (C) the OpenProject GmbH
@@ -98,10 +100,22 @@ module WorkPackages
           value: field_value(name),
           disabled:,
           label:,
+          caption: caption(name),
           validation_message: validation_message(name)
         )
 
         group.text_field(**text_field_options)
+      end
+
+      def caption(field)
+        text = I18n.t(:label_today).capitalize
+
+        return text if @disabled
+
+        render(Primer::Beta::Link.new(href: "", data: {
+                                        action: "click->work-packages--date-picker--preview#setTodayForField",
+                                        "work-packages--date-picker--preview-field-reference-param": "work_package_#{field}"
+                                      })) { text }
       end
 
       def hidden_touched_field(group, name:)
