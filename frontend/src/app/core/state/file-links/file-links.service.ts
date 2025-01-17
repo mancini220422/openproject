@@ -77,7 +77,7 @@ export class FileLinksResourceService extends ResourceStoreService<IFileLink> {
         switchMap((collection) => from(collection._embedded.elements)),
         groupBy(
           (fileLink) => fileLink._links.storage.href,
-          (fileLink) => fileLink,
+          { element: (fileLink) => fileLink },
         ),
         mergeMap((group$) => {
           const seed = { storage: group$.key, fileLinks: [] as IFileLink[] };
