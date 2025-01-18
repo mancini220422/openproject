@@ -339,7 +339,6 @@ group :development, :test do
   gem "byebug"
 
   gem "pry-byebug", "~> 3.10.0", platforms: [:mri]
-  gem "pry-doc"
   gem "pry-rails", "~> 0.3.6"
   gem "pry-rescue", "~> 1.6.0"
 
