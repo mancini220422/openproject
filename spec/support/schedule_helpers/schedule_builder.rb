@@ -57,7 +57,7 @@ module ScheduleHelpers
 
     def create_follows_relations(follower)
       chart.predecessors_by_follower(follower).each do |predecessor|
-        follows_relations[from: follower, to: predecessor] =
+        follows_relations[{ from: follower, to: predecessor }] =
           FactoryBot.create(:follows_relation,
                             from: create_work_package(follower),
                             to: create_work_package(predecessor),
