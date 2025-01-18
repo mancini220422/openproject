@@ -1,4 +1,4 @@
-FROM ruby:3.3.4-bullseye AS develop
+FROM ruby:3.4.1-bullseye AS develop
 MAINTAINER operations@openproject.com
 
 ARG DEV_UID=1000

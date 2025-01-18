@@ -1,4 +1,4 @@
-ARG RUBY_VERSION="3.3.4"
+ARG RUBY_VERSION="3.4.1"
 FROM ruby:${RUBY_VERSION}-bookworm AS base
 LABEL maintainer="operations@openproject.com"
 
