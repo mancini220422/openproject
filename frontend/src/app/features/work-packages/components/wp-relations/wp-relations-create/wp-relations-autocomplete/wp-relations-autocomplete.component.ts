@@ -103,6 +103,7 @@ export class WorkPackageRelationsAutocompleteComponent extends OpAutocompleterCo
   }
 
   getAutocompleterData(query:string|null):Observable<HalResource[]> {
+    console.log("DO I GET CALLED?")
     // Return when the search string is empty
     if (query === null || query.length === 0) {
       return of([]);
@@ -120,6 +121,7 @@ export class WorkPackageRelationsAutocompleteComponent extends OpAutocompleterCo
         map((collection) => collection.elements),
         catchError((error:unknown) => {
           this.notificationService.handleRawError(error);
+          console.log("CATCH AN ERROR", error)
           return of([]);
         }),
       );

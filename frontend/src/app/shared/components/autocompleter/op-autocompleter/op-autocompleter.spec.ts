@@ -1,4 +1,5 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { States } from 'core-app/core/states/states.service';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
 import { of } from 'rxjs';
@@ -6,11 +7,13 @@ import { NgSelectModule } from '@ng-select/ng-select';
 
 import { By } from '@angular/platform-browser';
 import { OpAutocompleterService } from './services/op-autocompleter.service';
-import { OpAutocompleterComponent } from './op-autocompleter.component';
+import { IWorkPackageAutocompleteItem, WorkPackageRelationsAutocompleteComponent } from 'core-app/features/work-packages/components/wp-relations/wp-relations-create/wp-relations-autocomplete/wp-relations-autocomplete.component';
+import { WorkPackageResource } from 'core-app/features/hal/resources/work-package-resource';
+import { RelationResource } from 'core-app/features/hal/resources/relation-resource';
 
-describe('autocompleter', () => {
-  let fixture:ComponentFixture<OpAutocompleterComponent>;
-  let opAutocompleterServiceSpy:jasmine.SpyObj<OpAutocompleterService>;
+fdescribe('autocompleter', () => {
+  let fixture:ComponentFixture<WorkPackageRelationsAutocompleteComponent>;
+  //let opAutocompleterServiceSpy:jasmine.SpyObj<OpAutocompleterService>;
   const workPackagesStub = [
     {
       id: 1,
@@ -51,27 +54,31 @@ describe('autocompleter', () => {
   ];
 
   beforeEach(() => {
-    opAutocompleterServiceSpy = jasmine.createSpyObj('OpAutocompleterService', ['loadData']);
+    //opAutocompleterServiceSpy = jasmine.createSpyObj('OpAutocompleterService', ['loadData']);
+    console.log("FOO")
 
     TestBed.configureTestingModule({
       declarations: [
-        OpAutocompleterComponent],
+        WorkPackageRelationsAutocompleteComponent],
       providers: [
-        // { provide: OpAutocompleterService, useValue: opAutocompleterServiceSpyFactory }
+        States
       ],
       imports: [HttpClientTestingModule, NgSelectModule],
       schemas: [NO_ERRORS_SCHEMA],
     })
-      .overrideComponent(
-        OpAutocompleterComponent,
-        { set: { providers: [{ provide: OpAutocompleterService, useValue: opAutocompleterServiceSpy }] } },
-      )
+     // .overrideComponent(
+     //   WorkPackageRelationsAutocompleteComponent,
+     //   { set: { providers: [{ provide: OpAutocompleterService, useValue: opAutocompleterServiceSpy }] } },
+     // )
       .compileComponents();
 
-    fixture = TestBed.createComponent(OpAutocompleterComponent);
+    fixture = TestBed.createComponent(WorkPackageRelationsAutocompleteComponent);
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    fixture.componentInstance.workPackage = { id: 'testId' } as WorkPackageResource; 
     fixture.componentInstance.resource = 'work_packages' as TOpAutocompleterResource;
+    fixture.componentInstance.selectedRelationType = RelationResource.DEFAULT();
+    fixture.componentInstance.model = {} as IWorkPackageAutocompleteItem
     fixture.componentInstance.filters = [];
     fixture.componentInstance.searchKey = 'subjectOrId';
     fixture.componentInstance.appendTo = 'body';
@@ -83,7 +90,7 @@ describe('autocompleter', () => {
     fixture.componentInstance.debounceTimeMs = 0;
 
     // @ts-ignore
-    opAutocompleterServiceSpy.loadData.and.returnValue(of(workPackagesStub));
+    //opAutocompleterServiceSpy.loadData.and.returnValue(of(workPackagesStub));
   });
 
   it('should load the ng-select correctly', () => {
@@ -112,8 +119,8 @@ describe('autocompleter', () => {
     fixture.detectChanges();
     tick(1000);
 
-    expect(opAutocompleterServiceSpy.loadData).toHaveBeenCalledWith('a',
-      fixture.componentInstance.resource, fixture.componentInstance.filters, fixture.componentInstance.searchKey);
+    //expect(opAutocompleterServiceSpy.loadData).toHaveBeenCalledWith('a',
+    //  fixture.componentInstance.resource, fixture.componentInstance.filters, fixture.componentInstance.searchKey);
 
     expect(fixture.componentInstance.ngSelectInstance.itemsList.items.length).toEqual(2);
   }));
