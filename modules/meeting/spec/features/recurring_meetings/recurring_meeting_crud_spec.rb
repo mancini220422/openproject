@@ -95,7 +95,23 @@ RSpec.describe "Recurring meetings CRUD",
       click_on "Delete permanently"
     end
 
-    expect(page).to have_current_path meetings_path # check path
+    expect(page).to have_current_path meetings_path
+
+    expect_flash(type: :success, message: "Successful deletion.")
+    show_page.expect_no_meeting date: "12/31/2024 01:30 PM"
+  end
+
+  it "can delete a recurring meeting from the project show page and return to the index page" do
+    show_page.visit_project!
+
+    show_page.delete_meeting_series
+    show_page.in_delete_dialog do
+      page.check "I understand that this deletion cannot be reversed"
+
+      click_on "Delete permanently"
+    end
+
+    expect(page).to have_current_path project_meetings_path(project)
 
     expect_flash(type: :success, message: "Successful deletion.")
     show_page.expect_no_meeting date: "12/31/2024 01:30 PM"

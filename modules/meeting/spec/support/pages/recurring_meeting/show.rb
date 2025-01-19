@@ -38,6 +38,12 @@ module Pages::RecurringMeeting
       self.meeting = meeting
     end
 
+    def visit_project!
+      visit(project_path)
+
+      wait_for_reload
+    end
+
     def path
       recurring_meeting_path(meeting)
     end
