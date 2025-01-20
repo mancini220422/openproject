@@ -33,7 +33,7 @@ module Acts::Journalized
         original_data = original ? normalize_newlines(journaled_attributes(original)) : {}
 
         normalize_newlines(journaled_attributes(changed))
-          .select { |attribute, new_value| no_nil_to_empty_strings?(original_data, attribute, new_value) }
+          .reject { |attribute, new_value| equal_ignoring_empty_string?(original_data[attribute], new_value) }
           .to_h { |attribute, new_value| [attribute, [original_data[attribute], new_value]] }
           .with_indifferent_access
       end
@@ -66,9 +66,12 @@ module Acts::Journalized
         end
       end
 
-      def no_nil_to_empty_strings?(normalized_old_data, attribute, new_value)
-        old_value = normalized_old_data[attribute]
-        new_value != old_value && ([new_value, old_value] - ["", nil]).present?
+      def equal_ignoring_empty_string?(old_value, new_value)
+        ignoring_empty_string(old_value) == ignoring_empty_string(new_value)
+      end
+
+      def ignoring_empty_string(value)
+        value unless value == ""
       end
 
       def journaled_attributes(object)
