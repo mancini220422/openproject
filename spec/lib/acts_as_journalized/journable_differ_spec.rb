@@ -166,4 +166,40 @@ RSpec.describe Acts::Journalized::JournableDiffer do
       end
     end
   end
+
+  describe ".association_changes_multiple_attributes" do
+    let(:original) do
+      build(:journal, project_life_cycle_step_journals: [
+              build_stubbed(:project_life_cycle_step_journal, life_cycle_step_id: 1, active: false),
+              build_stubbed(:project_life_cycle_step_journal, life_cycle_step_id: 3, active: true),
+              build_stubbed(:project_life_cycle_step_journal, life_cycle_step_id: 4, active: true,
+                                                              start_date: Date.new(2024, 1, 16),
+                                                              end_date: Date.new(2024, 1, 17))
+            ])
+    end
+
+    let(:changed) do
+      build(:journal, project_life_cycle_step_journals: [
+              build_stubbed(:project_life_cycle_step_journal, life_cycle_step_id: 1, active: true),
+              build_stubbed(:project_life_cycle_step_journal, life_cycle_step_id: 2, active: true),
+              build_stubbed(:project_life_cycle_step_journal, life_cycle_step_id: 3, active: false),
+              build_stubbed(:project_life_cycle_step_journal, life_cycle_step_id: 4, active: true,
+                                                              start_date: Date.new(2024, 1, 17),
+                                                              end_date: Date.new(2024, 1, 18))
+            ])
+    end
+
+    it "returns the changes" do
+      params = [original, changed, "project_life_cycle_step_journals", "project_life_cycle_steps", :life_cycle_step_id,
+                %i[active start_date end_date]]
+      expect(described_class.association_changes_multiple_attributes(*params))
+        .to eq(
+          "project_life_cycle_steps_1_active" => ["false", "true"],
+          "project_life_cycle_steps_2_active" => [nil, "true"],
+          "project_life_cycle_steps_3_active" => ["true", "false"],
+          "project_life_cycle_steps_4_end_date" => ["2024-01-17", "2024-01-18"],
+          "project_life_cycle_steps_4_start_date" => ["2024-01-16", "2024-01-17"]
+        )
+    end
+  end
 end
