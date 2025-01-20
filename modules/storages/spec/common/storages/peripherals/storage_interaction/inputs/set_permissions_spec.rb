@@ -34,7 +34,7 @@ RSpec.describe Storages::Peripherals::StorageInteraction::Inputs::SetPermissions
   describe ".new" do
     it "discourages direct instantiation" do
       expect { described_class.new(file_id: "file_id", user_permissions: []) }
-        .to raise_error(NoMethodError, /private method `new'/)
+        .to raise_error(NoMethodError, /private method 'new'/)
     end
   end
 

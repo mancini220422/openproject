@@ -137,7 +137,7 @@ RSpec.describe Storages::Peripherals::StorageInteraction::OneDrive::SetPermissio
               .with(
                 error_code: :error,
                 message: nil,
-                data: %r{/lib/httpx/response.rb:262:in `full_message': timed out while waiting on select \(HTTPX::ConnectTimeoutError\)\n$}
+                data: %r{/lib/httpx/response.rb:262:in 'full_message': timed out while waiting on select \(HTTPX::ConnectTimeoutError\)\n$}
               ).once
       # rubocop:enable Layout/LineLength
     end
