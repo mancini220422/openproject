@@ -61,8 +61,8 @@ module Acts::Journalized
       private
 
       def normalize_newlines(data)
-        data.each_with_object({}) do |e, h|
-          h[e[0]] = (e[1].is_a?(String) ? e[1].gsub("\r\n", "\n") : e[1])
+        data.transform_values do |value|
+          value.is_a?(String) ? value.gsub("\r\n", "\n") : value
         end
       end
 
