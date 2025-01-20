@@ -88,6 +88,16 @@ module API
                    datetime_formatter.format_duration_from_hours(represented.hours) if represented.hours
                  end
 
+        date_time_property :start_time,
+                           exec_context: :decorator,
+                           getter: ->(*) { represented.start_timestamp },
+                           if: ->(*) { TimeEntry.can_track_start_and_end_time? }
+
+        date_time_property :end_time,
+                           exec_context: :decorator,
+                           getter: ->(*) { represented.end_timestamp },
+                           if: ->(*) { TimeEntry.can_track_start_and_end_time? }
+
         date_time_property :created_at
         date_time_property :updated_at
 

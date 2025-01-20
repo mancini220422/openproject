@@ -38,5 +38,11 @@ FactoryBot.define do
     after(:build) do |time_entry|
       time_entry.project ||= time_entry.work_package.project
     end
+
+    trait :with_start_and_end_time do
+      time_zone { "Asia/Tokyo" }
+      start_time { 390 } # 6:30 AM
+      hours { 2.5 }
+    end
   end
 end
