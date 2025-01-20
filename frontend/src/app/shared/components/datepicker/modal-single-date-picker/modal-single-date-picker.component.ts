@@ -57,7 +57,7 @@ import {
 @Component({
   selector: 'op-modal-single-date-picker',
   templateUrl: './modal-single-date-picker.component.html',
-  styleUrls: ['../styles/datepicker.modal.sass', './modal-single-date-picker.component.sass'],
+  styleUrls: ['./modal-single-date-picker.component.sass'],
   encapsulation: ViewEncapsulation.None,
   providers: [
     {

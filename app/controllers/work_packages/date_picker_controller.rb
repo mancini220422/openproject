@@ -149,7 +149,17 @@ class WorkPackages::DatePickerController < ApplicationController
   end
 
   def focused_field
-    params[:field]
+    trigger = params[:field]
+
+    # Decide which field to focus next
+    case trigger
+    when "work_package[start_date]"
+      :due_date
+    when "work_package[duration]"
+      :duration
+    else
+      :start_date
+    end
   end
 
   def find_work_package

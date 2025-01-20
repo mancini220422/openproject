@@ -55,7 +55,6 @@ import { DeviceService } from 'core-app/core/browser/device.service';
 @Component({
   selector: 'op-basic-single-date-picker',
   templateUrl: './basic-single-date-picker.component.html',
-  styleUrls: ['../styles/datepicker.modal.sass'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   providers: [

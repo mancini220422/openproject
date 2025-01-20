@@ -81,6 +81,21 @@ export default class PreviewController extends DialogPreviewController {
     return field.value;
   }
 
+  highlightField(e:Event) {
+    const newHighlightedField = e.target;
+    if (newHighlightedField) {
+      Array.from(document.getElementsByClassName('op-datepicker-modal--date-field_current')).forEach(
+        (el) => {
+          el.classList.remove('op-datepicker-modal--date-field_current');
+          el.removeAttribute('data-qa-highlighted');
+        },
+      );
+
+      (newHighlightedField as HTMLElement).classList.add('op-datepicker-modal--date-field_current');
+      (newHighlightedField as HTMLElement).dataset.qaHighlighted = 'true';
+    }
+  }
+
   setTodayForField(event:unknown) {
     (event as Event).preventDefault();
 

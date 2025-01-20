@@ -1,5 +1,3 @@
-@import '../../app/spot/styles/sass/variables'
-@import '../../global_styles/openproject/variables'
 .op-datepicker-modal
   display: flex
   flex-direction: column
@@ -16,12 +14,7 @@
   &--date-field
     &_current,
     &_current:hover
-      // We want this to feel like the focus outline, but we cannot make it an actual outline
-      // because that would overwrite the focus outline when the input field is focused.
-      // So we make a border 2px wide like the outline, and then reduce margins by 1px so the
-      // size of the element does not change.
-      border: 2px solid var(--control-checked-color)
-      margin: -1px
+      border: 2px solid var(--control-checked-color) !important
 
   &--flatpickr-instance.inline
     margin: 0.5rem auto 0  auto !important

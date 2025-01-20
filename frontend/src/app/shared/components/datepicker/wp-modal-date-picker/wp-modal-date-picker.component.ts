@@ -59,9 +59,6 @@ import { filter } from 'rxjs/operators';
       hidden>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  styleUrls: [
-    '../styles/datepicker.modal.sass',
-  ],
 })
 export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements AfterViewInit {
   @Input() public ignoreNonWorkingDays:boolean;
@@ -73,13 +70,15 @@ export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements
   @Input() public isSchedulable:boolean = true;
   @Input() public minimalSchedulingDate:Date|null;
 
-  @Input() fieldName:'start_date'|'due_date' = 'start_date';
   @Input() startDateFieldId:string;
   @Input() dueDateFieldId:string;
+  @Input() durationFieldId:string;
 
   @Input() isMilestone:boolean = false;
 
   @ViewChild('flatpickrTarget') flatpickrTarget:ElementRef;
+
+  fieldName:'start_date'|'due_date'|'duration' = 'start_date';
 
   private datePickerInstance:DatePicker;
 
@@ -149,20 +148,22 @@ export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements
           this.ensureHoveredSelection(instance.calendarContainer);
         },
         onChange: (dates:Date[], _datestr, instance) => {
+          this.fieldName = this.getActiveField();
+
           if (this.isMilestone) {
             this.startDate = dates[0];
-            this.setDateFieldAndFocus(this.startDate, this.startDateFieldId, null);
+            this.updateDateField(this.startDate, this.startDateFieldId);
 
             instance.setDate(this.startDate);
           } else if (this.fieldName === 'due_date') {
             this.dueDate = dates[0];
-            this.setDateFieldAndFocus(this.dueDate, this.dueDateFieldId, this.startDateFieldId);
+            this.updateDateField(this.dueDate, this.dueDateFieldId);
             this.fieldName = 'start_date';
 
             instance.setDate([this.startDate, this.dueDate]);
           } else {
             this.startDate = dates[0];
-            this.setDateFieldAndFocus(this.startDate, this.startDateFieldId, this.dueDateFieldId);
+            this.updateDateField(this.startDate, this.startDateFieldId);
             this.fieldName = 'due_date';
 
             instance.setDate([this.startDate, this.dueDate]);
@@ -211,16 +212,28 @@ export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements
       .subscribe(() => calendarContainer.classList.add('flatpickr-container-suppress-hover'));
   }
 
-  private setDateFieldAndFocus(date:Date, fieldId:string | null, nextFieldId:string | null):void {
+  private getActiveField():'start_date'|'due_date'|'duration' {
+    const activeField = document.getElementsByClassName('op-datepicker-modal--date-field_current')[0];
+
+    if (!activeField) {
+      return this.fieldName;
+    }
+
+    switch (activeField.id) {
+      case this.dueDateFieldId:
+        return 'due_date';
+      case this.durationFieldId:
+        return 'duration';
+      default:
+        return 'start_date';
+    }
+  }
+
+  private updateDateField(date:Date, fieldId:string | null):void {
     if (fieldId) {
       const field = document.getElementById(fieldId) as HTMLInputElement;
       field.value = this.timezoneService.formattedISODate(date);
       field.dispatchEvent(new Event('input'));
-    }
-
-    // Toggle focus to the next field
-    if (nextFieldId) {
-      document.getElementById(nextFieldId)?.focus();
     }
   }
 }

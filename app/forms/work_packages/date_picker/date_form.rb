@@ -101,6 +101,7 @@ module WorkPackages
           disabled: name == :duration ? false : disabled, # duration is always editable
           label:,
           caption: caption(name),
+          classes: "op-datepicker-modal--date-field #{'op-datepicker-modal--date-field_current' if @focused_field == name}",
           validation_message: validation_message(name)
         )
 
@@ -147,8 +148,12 @@ module WorkPackages
 
       def default_field_options(name)
         data = { "work-packages--date-picker--preview-target": "fieldInput",
-                 action: "work-packages--date-picker--preview#markFieldAsTouched",
+                 action: "work-packages--date-picker--preview#markFieldAsTouched focus->work-packages--date-picker--preview#highlightField",
                  test_selector: "op-datepicker-modal--#{name.to_s.dasherize}-field" }
+
+        if @focused_field == name
+          data[:qa_highlighted] = "true"
+        end
 
         if @focused_field == name
           data[:focus] = "true"
