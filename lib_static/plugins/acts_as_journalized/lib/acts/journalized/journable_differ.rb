@@ -94,13 +94,7 @@ module Acts::Journalized
           old_value.to_s.strip == new_value.to_s.strip
         end
 
-        to_changes_format(changes, association_name.to_s)
-      end
-
-      def to_changes_format(references, key)
-        references.each_with_object({}) do |(id, (old_value, new_value)), result|
-          result["#{key}_#{id}"] = [old_value, new_value]
-        end
+        changes.transform_keys { |id| "#{association_name}_#{id}" }
       end
 
       def merge_reference_journals_by_id(old_journals, new_journals, id_key, value)
