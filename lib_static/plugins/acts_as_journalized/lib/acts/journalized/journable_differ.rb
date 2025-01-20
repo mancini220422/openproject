@@ -33,8 +33,8 @@ module Acts::Journalized
         original_data = original ? normalize_newlines(journaled_attributes(original)) : {}
 
         normalize_newlines(journaled_attributes(changed))
-          .reject { |attribute, new_value| equal_ignoring_empty_string?(original_data[attribute], new_value) }
           .to_h { |attribute, new_value| [attribute, [original_data[attribute], new_value]] }
+          .reject { |_, (old_value, new_value)| equal_ignoring_empty_string?(old_value, new_value) }
           .with_indifferent_access
       end
 
