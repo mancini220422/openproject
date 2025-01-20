@@ -39,6 +39,7 @@ RSpec.describe Relations::DeleteService do
   shared_let(:type_task) { create(:type_task, :default) }
   shared_let(:type_with_mandatory_cf) do
     create(:type,
+           position: type_task.position + 1,
            name: "Type with mandatory custom field",
            custom_fields: [mandatory_custom_field])
   end
