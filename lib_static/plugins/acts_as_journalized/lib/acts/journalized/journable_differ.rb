@@ -85,14 +85,10 @@ module Acts::Journalized
       end
 
       def get_association_changes(original, changed, association, association_name, key, value)
-        old_journals = original&.send(association)&.map(&:attributes) || []
-        new_journals = changed.send(association).map(&:attributes)
+        original_journals = original&.send(association)&.map(&:attributes) || []
+        changed_journals = changed.send(association).map(&:attributes)
 
-        changes_on_association(old_journals, new_journals, association_name, key, value)
-      end
-
-      def changes_on_association(original, current, association_name, key, value)
-        merged_journals = merge_reference_journals_by_id(original, current, key.to_s, value.to_s)
+        merged_journals = merge_reference_journals_by_id(original_journals, changed_journals, key.to_s, value.to_s)
 
         changes = added_references(merged_journals)
                     .merge(removed_references(merged_journals))
