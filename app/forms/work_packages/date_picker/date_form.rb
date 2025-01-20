@@ -167,7 +167,8 @@ module WorkPackages
 
       def default_field_options(name)
         data = { "work-packages--date-picker--preview-target": "fieldInput",
-                 action: "work-packages--date-picker--preview#markFieldAsTouched focus->work-packages--date-picker--preview#highlightField",
+                 action: "work-packages--date-picker--preview#markFieldAsTouched " \
+                         "focus->work-packages--date-picker--preview#highlightField",
                  test_selector: "op-datepicker-modal--#{name.to_s.dasherize}-field" }
 
         if @focused_field == name
