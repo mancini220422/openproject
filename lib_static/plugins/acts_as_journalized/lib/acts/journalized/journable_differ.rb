@@ -90,26 +90,11 @@ module Acts::Journalized
 
         merged_journals = merge_reference_journals_by_id(original_journals, changed_journals, key.to_s, value.to_s)
 
-        changes = added_references(merged_journals)
-                    .merge(removed_references(merged_journals))
-                    .merge(changed_references(merged_journals))
+        changes = merged_journals.reject do |_, (old_value, new_value)|
+          old_value.to_s.strip == new_value.to_s.strip
+        end
 
         to_changes_format(changes, association_name.to_s)
-      end
-
-      def added_references(merged_references)
-        merged_references
-          .select { |_, (old_value, new_value)| old_value.to_s.empty? && new_value.present? }
-      end
-
-      def removed_references(merged_references)
-        merged_references
-          .select { |_, (old_value, new_value)| old_value.present? && new_value.to_s.empty? }
-      end
-
-      def changed_references(merged_references)
-        merged_references
-          .select { |_, (old_value, new_value)| old_value.present? && new_value.present? && old_value.strip != new_value.strip }
       end
 
       def to_changes_format(references, key)
