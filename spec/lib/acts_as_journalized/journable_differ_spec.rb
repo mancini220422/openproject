@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # -- copyright
 # OpenProject is an open source project management software.
 # Copyright (C) the OpenProject GmbH
@@ -54,12 +56,14 @@ RSpec.describe Acts::Journalized::JournableDiffer do
 
       it "returns the changes" do
         expect(described_class.changes(original, changed))
-          .to eql("subject" => [original.subject, changed.subject],
-                  "author_id" => [original.author_id, changed.author_id],
-                  "status_id" => [original.status_id, changed.status_id],
-                  "schedule_manually" => [false, nil],
-                  "ignore_non_working_days" => [true, false],
-                  "estimated_hours" => [1.0, nil])
+          .to eq(
+            "subject" => [original.subject, changed.subject],
+            "author_id" => [original.author_id, changed.author_id],
+            "status_id" => [original.status_id, changed.status_id],
+            "schedule_manually" => [false, nil],
+            "ignore_non_working_days" => [true, false],
+            "estimated_hours" => [1.0, nil]
+          )
       end
     end
 
@@ -93,11 +97,13 @@ RSpec.describe Acts::Journalized::JournableDiffer do
         # The description field changes from nil to '', but we want filter those transitions out,
         # hence the expected hash does not contain the description related change.
         expect(described_class.changes(original, changed))
-          .to eql("subject" => [original.subject, changed.subject],
-                  "status_id" => [original.status_id, changed.status_id],
-                  "schedule_manually" => [nil, false],
-                  "ignore_non_working_days" => [false, true],
-                  "estimated_hours" => [nil, 1.0])
+          .to eq(
+            "subject" => [original.subject, changed.subject],
+            "status_id" => [original.status_id, changed.status_id],
+            "schedule_manually" => [nil, false],
+            "ignore_non_working_days" => [false, true],
+            "estimated_hours" => [nil, 1.0]
+          )
       end
     end
   end
@@ -125,7 +131,7 @@ RSpec.describe Acts::Journalized::JournableDiffer do
       it "returns the changes" do
         params = [original, changed, "custom_values", "custom_field", :custom_field_id, :value]
         expect(described_class.association_changes(*params))
-          .to eql(
+          .to eq(
             "custom_field_1" => ["1", ""],
             "custom_field_3" => ["", "2"]
           )
@@ -153,8 +159,10 @@ RSpec.describe Acts::Journalized::JournableDiffer do
       it "returns the changes" do
         params = [original, changed, "custom_values", "custom_field", :custom_field_id, :value]
         expect(described_class.association_changes(*params))
-          .to eql("custom_field_1" => [nil, "t"],
-                  "custom_field_2" => ["1", "2"])
+          .to eq(
+            "custom_field_1" => [nil, "t"],
+            "custom_field_2" => ["1", "2"]
+          )
       end
     end
   end
