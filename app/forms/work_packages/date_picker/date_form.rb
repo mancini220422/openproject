@@ -108,15 +108,18 @@ module WorkPackages
         group.text_field(**text_field_options)
       end
 
-      def caption(field)
+      def caption(name)
+        return if duration_field?(name)
+
         text = I18n.t(:label_today).capitalize
 
         return text if @disabled
 
-        render(Primer::Beta::Link.new(href: "", data: {
-                                        action: "click->work-packages--date-picker--preview#setTodayForField",
-                                        "work-packages--date-picker--preview-field-reference-param": "work_package_#{field}",
-                                        test_selector: "op-datepicker-modal--#{field.to_s.dasherize}-field--today"
+        render(Primer::Beta::Link.new(href: "",
+                                      data: {
+                                        action: "work-packages--date-picker--preview#setTodayForField",
+                                        "work-packages--date-picker--preview-field-reference-param": "work_package_#{name}",
+                                        test_selector: "op-datepicker-modal--#{name.to_s.dasherize}-field--today"
                                       })) { text }
       end
 
@@ -129,6 +132,10 @@ module WorkPackages
 
       def touched(name)
         @touched_field_map["#{name}_touched"] || false
+      end
+
+      def duration_field?(name)
+        name == :duration
       end
 
       def disabled?(name)
