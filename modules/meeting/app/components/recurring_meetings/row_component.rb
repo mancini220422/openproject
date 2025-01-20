@@ -193,9 +193,11 @@ module RecurringMeetings
       menu.with_item(
         label: I18n.t(:label_recurring_meeting_cancel),
         scheme: :danger,
-        href: delete_scheduled_recurring_meeting_path(model.recurring_meeting.id, start_time: model.start_time.iso8601),
-        form_arguments: {
-          method: :post, data: { confirm: I18n.t("text_are_you_sure"), turbo: false }
+        href: polymorphic_path([:delete_scheduled_dialog, current_project, model.recurring_meeting],
+                               start_time: model.start_time.iso8601),
+        tag: :a,
+        content_arguments: {
+          data: { controller: "async-dialog" }
         }
       ) do |item|
         item.with_leading_visual_icon(icon: :trash)

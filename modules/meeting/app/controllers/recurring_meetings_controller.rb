@@ -167,6 +167,13 @@ class RecurringMeetingsController < ApplicationController
     redirect_to action: :show, id: @recurring_meeting, status: :see_other
   end
 
+  def delete_scheduled_dialog
+    respond_with_dialog RecurringMeetings::DeleteDialogComponent.new(
+      meeting: @recurring_meeting,
+      project: @project
+    )
+  end
+
   def delete_scheduled
     if @scheduled.update(cancelled: true)
       flash[:notice] = I18n.t(:notice_successful_cancel)

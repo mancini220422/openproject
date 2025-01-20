@@ -39,6 +39,8 @@ Rails.application.routes.draw do
     resources :recurring_meetings, only: %i[index new create show destroy] do
       member do
         get :delete_dialog
+        get :delete_scheduled_dialog
+        post :delete_scheduled
       end
     end
   end
@@ -68,6 +70,7 @@ Rails.application.routes.draw do
       get :details_dialog
       get :download_ics
       get :delete_dialog
+      get :delete_scheduled_dialog
       post :init
       post :delete_scheduled
       post :template_completed
