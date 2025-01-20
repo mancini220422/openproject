@@ -33,9 +33,6 @@ class Meeting::ProjectAutocompleter < ApplicationForm
       id: "project_id",
       label: Project.model_name.human,
       required: true,
-      data: {
-        "test-selector": "project_id"
-      },
       autocomplete_options: {
         with_search_icon: true,
         openDirectly: false,
@@ -43,7 +40,10 @@ class Meeting::ProjectAutocompleter < ApplicationForm
         dropdownPosition: "bottom",
         inputName: "project_id",
         inputValue: @project&.id,
-        filters: [{ name: "user_action", operator: "=", values: ["meetings/create"] }]
+        filters: [{ name: "user_action", operator: "=", values: ["meetings/create"] }],
+        data: {
+          "test-selector": "project_id"
+        }
       }
     )
   end
