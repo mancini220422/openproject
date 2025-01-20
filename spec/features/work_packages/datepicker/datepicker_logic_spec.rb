@@ -244,7 +244,7 @@ RSpec.describe "Datepicker modal logic test cases (WP #43539)", :js, with_settin
       datepicker.expect_due_date "2021-02-12"
       datepicker.expect_duration 3
 
-      datepicker.clear_duration_with_icon
+      datepicker.clear_duration
 
       datepicker.expect_start_date "2021-02-09"
       datepicker.expect_due_date ""
@@ -266,7 +266,7 @@ RSpec.describe "Datepicker modal logic test cases (WP #43539)", :js, with_settin
       datepicker.expect_due_date "2021-02-12"
       datepicker.expect_duration 3
 
-      datepicker.clear_duration_with_icon
+      datepicker.clear_duration
 
       datepicker.expect_start_date "2021-02-09"
       datepicker.expect_due_date ""
@@ -279,7 +279,7 @@ RSpec.describe "Datepicker modal logic test cases (WP #43539)", :js, with_settin
       datepicker.expect_due_date "2021-02-09"
       datepicker.expect_duration 3
 
-      datepicker.clear_duration_with_icon
+      datepicker.clear_duration
 
       datepicker.expect_start_date "2021-02-05"
       datepicker.expect_due_date ""

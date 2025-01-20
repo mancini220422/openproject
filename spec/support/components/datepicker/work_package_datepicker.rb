@@ -86,7 +86,7 @@ module Components
     end
 
     def expect_due_highlighted
-      expect(container).to have_css('[data-test-selector="op-datepicker-modal--end-date-field"][data-qa-highlighted]')
+      expect(container).to have_css('[data-test-selector="op-datepicker-modal--due-date-field"][data-qa-highlighted]')
     end
 
     def duration_field
@@ -127,34 +127,38 @@ module Components
     end
 
     def expect_manual_scheduling_mode
-      expect(container).to have_checked_field("scheduling", visible: :all)
+      expect(container)
+        .to have_css('[data-test-selector="op-datepicker-modal--scheduling_manual"][data-qa-selected]="true"')
     end
 
     def expect_automatic_scheduling_mode
-      expect(container).to have_unchecked_field("scheduling", visible: :all)
+      expect(container)
+        .to have_css('[data-test-selector="op-datepicker-modal--scheduling_automatic"][data-qa-selected]="true"')
     end
 
     def toggle_scheduling_mode
-      find("label", text: "Manual scheduling").click
-    end
-
-    def scheduling_mode_input
-      container.find_field "scheduling", visible: :all
+      within_test_selector "op-datepicker-modal--scheduling" do
+        find_css('[data-qa-selected]="false"').click
+      end
     end
 
     def expect_ignore_non_working_days_disabled
-      expect(container).to have_field("weekdays_only", disabled: true)
+      expect(container)
+        .to have_field("work_package[ignore_non_working_days]", disabled: true)
     end
 
     def expect_ignore_non_working_days_enabled
-      expect(container).to have_field("weekdays_only", disabled: false)
+      expect(container)
+        .to have_field("work_package[ignore_non_working_days]", disabled: false)
     end
 
     def expect_ignore_non_working_days(val, disabled: false)
       if val
-        expect(container).to have_unchecked_field("weekdays_only", disabled:)
+        expect(container)
+          .to have_field("work_package[ignore_non_working_days]", checked: false, disabled:)
       else
-        expect(container).to have_checked_field("weekdays_only", disabled:)
+        expect(container)
+          .to have_field("work_package[ignore_non_working_days]", checked: true, disabled:)
       end
     end
 
@@ -164,14 +168,6 @@ module Components
 
     def clear_duration
       set_duration("")
-    end
-
-    def clear_duration_with_icon
-      duration_field.click
-
-      page
-        .find('[data-test-selector="op-datepicker-modal--duration-field"] .spot-text-field--clear-button')
-        .click
     end
   end
 end

@@ -134,6 +134,8 @@ export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements
 
   private initializeDatepicker() {
     this.datePickerInstance?.destroy();
+    const ignoreNonWorkingDaysTemp = this.ignoreNonWorkingDays;
+
     this.datePickerInstance = new DatePicker(
       this.injector,
       '#flatpickr-input',
@@ -173,7 +175,7 @@ export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements
         onDayCreate: async (dObj:Date[], dStr:string, fp:flatpickr.Instance, dayElem:DayElement) => {
           onDayCreate(
             dayElem,
-            this.ignoreNonWorkingDays,
+            ignoreNonWorkingDaysTemp,
             await this.datePickerInstance?.isNonWorkingDay(dayElem.dateObj),
             this.isDayDisabled(dayElem),
           );

@@ -12,16 +12,24 @@
           first_row.with_column do
             render(Primer::Alpha::FormControl.new(label: I18n.t("work_packages.datepicker_modal.mode.title"))) do |component|
               component.with_input do
-                render(Primer::Alpha::SegmentedControl.new("aria-label": I18n.t("work_packages.datepicker_modal.mode.title"))) do |control|
+                render(Primer::Alpha::SegmentedControl.new("aria-label": I18n.t("work_packages.datepicker_modal.mode.title"), test_selector: "op-datepicker-modal--scheduling",)) do |control|
                   control.with_item(tag: :a,
                                     href: work_package_datepicker_dialog_content_path(params.merge(schedule_manually: true).permit!),
-                                    data: { turbo_stream: true },
+                                    data: {
+                                      turbo_stream: true,
+                                      qa_selected: schedule_manually
+                                    },
+                                    test_selector: "op-datepicker-modal--scheduling_manual",
                                     label: I18n.t("work_packages.datepicker_modal.mode.manual"),
                                     title: I18n.t("work_packages.datepicker_modal.mode.manual"),
                                     selected: schedule_manually)
                   control.with_item(tag: :a,
                                     href: work_package_datepicker_dialog_content_path(params.merge(schedule_manually: false).permit!),
-                                    data: { turbo_stream: true },
+                                    data: {
+                                      turbo_stream: true,
+                                      qa_selected: !schedule_manually
+                                    },
+                                    test_selector: "op-datepicker-modal--scheduling_automatic",
                                     disabled: work_package.new_record?,
                                     label: I18n.t("work_packages.datepicker_modal.mode.automatic"),
                                     title: I18n.t("work_packages.datepicker_modal.mode.automatic"),
@@ -36,6 +44,7 @@
                                                label: I18n.t("work_packages.datepicker_modal.ignore_non_working_days.title"),
                                                checked: !work_package.ignore_non_working_days,
                                                disabled: disabled_checkbox?,
+                                               test_selector: "op-datepicker-modal--ignore-non-working-days",
                                                value: 0,
                                                unchecked_value: 1,
                                                data: { "work-packages--date-picker--preview-target": "fieldInput",
