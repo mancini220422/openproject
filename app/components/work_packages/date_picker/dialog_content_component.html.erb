@@ -55,13 +55,15 @@
 
         collection.with_component(Primer::Alpha::Dialog::Footer.new) do
           component_collection do |footer|
-            footer.with_component(Primer::ButtonComponent.new(data: { action: "work-packages--date-picker--preview#cancel" })) do
+            footer.with_component(Primer::ButtonComponent.new(data: { action: "work-packages--date-picker--preview#cancel" },
+                                                              test_selector: "op-datepicker-modal--action")) do
               I18n.t("button_cancel")
             end
 
             footer.with_component(Primer::ButtonComponent.new(scheme: :primary,
                                                               type: :submit,
                                                               form: DIALOG_FORM_ID,
+                                                              test_selector: "op-datepicker-modal--action",
                                                               disabled: !schedulable?)) do
               I18n.t("button_save")
             end

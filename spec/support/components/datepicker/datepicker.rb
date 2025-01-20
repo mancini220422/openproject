@@ -45,10 +45,15 @@ module Components
 
     def expect_visible
       expect(container).to have_css(".flatpickr-calendar .flatpickr-current-month", wait: 10)
+
+      # For whatever reason, the stimulus controller in the WorkPackage Datepicker needs some time to be loaded.
+      # So please, do not remove this line.
+      wait_for_network_idle
     end
 
     def expect_not_visible
       expect(container).to have_no_css(".flatpickr-calendar .flatpickr-current-month", wait: 10)
+      wait_for_network_idle
     end
 
     ##

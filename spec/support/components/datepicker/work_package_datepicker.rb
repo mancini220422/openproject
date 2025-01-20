@@ -20,28 +20,23 @@ module Components
     ##
     # Expect duration
     def expect_duration(value)
-      value =
-        if value.is_a?(Regexp)
-          value
-        elsif value.nil? || value == ""
-          ""
-        else
-          I18n.t("js.units.day", count: value)
-        end
+      if value.nil? || value == ""
+        value = ""
+      end
 
       expect(container).to have_field("work_package[duration]", with: value, wait: 10)
     end
 
     def milestone_date_field
-      container.find_field "date"
+      container.find_field "work_package[start_date]"
     end
 
     def start_date_field
-      container.find_field "startDate"
+      container.find_field "work_package[start_date]"
     end
 
     def due_date_field
-      container.find_field "endDate"
+      container.find_field "work_package[due_date]"
     end
 
     def focus_milestone_date
@@ -145,10 +140,6 @@ module Components
 
     def scheduling_mode_input
       container.find_field "scheduling", visible: :all
-    end
-
-    def ignore_non_working_days_input
-      container.find_field "weekdays_only", visible: :all
     end
 
     def expect_ignore_non_working_days_disabled
