@@ -94,11 +94,11 @@ module WorkPackages
 
       private
 
-      def text_field(group, name:, label:, disabled: @disabled)
+      def text_field(group, name:, label:)
         text_field_options = default_field_options(name).merge(
           name:,
           value: field_value(name),
-          disabled: name == :duration ? false : disabled, # duration is always editable
+          disabled: disabled?(name),
           label:,
           caption: caption(name),
           classes: "op-datepicker-modal--date-field #{'op-datepicker-modal--date-field_current' if @focused_field == name}",
@@ -129,6 +129,18 @@ module WorkPackages
 
       def touched(name)
         @touched_field_map["#{name}_touched"] || false
+      end
+
+      def disabled?(name)
+        if name == :duration
+          if !@schedule_manually && @work_package.children.any?
+            return true
+          end
+
+          return false
+        end
+
+        @disabled
       end
 
       def field_value(name)

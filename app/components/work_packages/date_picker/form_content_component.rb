@@ -69,6 +69,10 @@ module WorkPackages
         !schedule_manually
       end
 
+      def disabled_checkbox?
+        !schedule_manually && work_package.children.any?
+      end
+
       def parse_focused_field(focused_field)
         %i[start_date due_date duration].include?(focused_field) ? focused_field : :start_date
       end
