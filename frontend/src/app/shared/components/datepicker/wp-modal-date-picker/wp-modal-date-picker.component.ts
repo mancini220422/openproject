@@ -64,8 +64,8 @@ export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements
   @Input() public ignoreNonWorkingDays:boolean;
   @Input() public scheduleManually:boolean;
 
-  @Input() public startDate:Date;
-  @Input() public dueDate:Date;
+  @Input() public startDate:Date|null;
+  @Input() public dueDate:Date|null;
 
   @Input() public isSchedulable:boolean = true;
   @Input() public minimalSchedulingDate:Date|null;
@@ -120,10 +120,10 @@ export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements
 
     switch (details.field) {
       case 'work_package[start_date]':
-        this.startDate = new Date(details.value);
+        this.startDate = this.toDate(details.value);
         break;
       case 'work_package[due_date]':
-        this.dueDate = new Date(details.value);
+        this.dueDate = this.toDate(details.value);
         break;
       case 'work_package[ignore_non_working_days]':
         this.ignoreNonWorkingDays = details.value !== 'true';
@@ -137,14 +137,28 @@ export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements
     this.initializeDatepickerSubject.next();
   }
 
+  private toDate(date:string):Date|null {
+    if (date) {
+      return new Date(date);
+    }
+    return null;
+  }
+
   private initializeDatepicker() {
     this.datePickerInstance?.destroy();
     const ignoreNonWorkingDaysTemp = this.ignoreNonWorkingDays;
+    const initialDates = [];
+    if (this.startDate) {
+      initialDates.push(this.startDate);
+    }
+    if (this.dueDate && !this.isMilestone) {
+      initialDates.push(this.dueDate);
+    }
 
     this.datePickerInstance = new DatePicker(
       this.injector,
       '#flatpickr-input',
-      this.isMilestone ? this.startDate : [this.startDate || '', this.dueDate || ''],
+      initialDates,
       {
         mode: this.isMilestone ? 'single' : 'range',
         showMonths: this.deviceService.isMobile ? 1 : 2,
@@ -161,19 +175,19 @@ export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements
             this.startDate = dates[0];
             this.updateDateField(this.startDate, this.startDateFieldId);
 
-            instance.setDate(this.startDate);
+            instance.setDate(this.startDate || '');
           } else if (this.fieldName === 'due_date') {
             this.dueDate = dates[0];
             this.updateDateField(this.dueDate, this.dueDateFieldId);
             this.fieldName = 'start_date';
 
-            instance.setDate([this.startDate, this.dueDate]);
+            instance.setDate([this.startDate || '', this.dueDate || '']);
           } else {
             this.startDate = dates[0];
             this.updateDateField(this.startDate, this.startDateFieldId);
             this.fieldName = 'due_date';
 
-            instance.setDate([this.startDate, this.dueDate]);
+            instance.setDate([this.startDate || '', this.dueDate || '']);
           }
         },
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
