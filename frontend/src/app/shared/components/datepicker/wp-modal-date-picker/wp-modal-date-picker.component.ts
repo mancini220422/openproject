@@ -47,8 +47,8 @@ import { DatePicker } from '../datepicker';
 import { UntilDestroyedMixin } from 'core-app/shared/helpers/angular/until-destroyed.mixin';
 import { PathHelperService } from 'core-app/core/path-helper/path-helper.service';
 import { populateInputsFromDataset } from 'core-app/shared/components/dataset-inputs';
-import { fromEvent } from 'rxjs';
-import { filter } from 'rxjs/operators';
+import { fromEvent, Subject } from 'rxjs';
+import { debounceTime, filter } from 'rxjs/operators';
 
 @Component({
   selector: 'op-wp-modal-date-picker',
@@ -81,6 +81,7 @@ export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements
   fieldName:'start_date'|'due_date'|'duration' = 'start_date';
 
   private datePickerInstance:DatePicker;
+  private initializeDatepickerSubject = new Subject<void>();
 
   constructor(
     readonly injector:Injector,
@@ -94,10 +95,15 @@ export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements
   ) {
     super();
     populateInputsFromDataset(this);
+
+    // To make sure the datepicker is reinitialized only once when multiple change events are received
+    this.initializeDatepickerSubject.pipe(
+      debounceTime(0),
+    ).subscribe(() => this.initializeDatepicker());
   }
 
   ngAfterViewInit():void {
-    this.initializeDatepicker();
+    this.initializeDatepickerSubject.next();
 
     document.addEventListener('date-picker:input-changed', this.changeListener.bind(this));
   }
@@ -127,9 +133,8 @@ export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements
         return;
     }
 
-    window.setTimeout(() => {
-      this.initializeDatepicker();
-    });
+    // Emit an event to the subject, which will be debounced and trigger the datepicker initialization
+    this.initializeDatepickerSubject.next();
   }
 
   private initializeDatepicker() {
