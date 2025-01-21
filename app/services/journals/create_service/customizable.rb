@@ -40,7 +40,7 @@ module Journals
     end
 
     def insert_customizable_sql
-      sanitize(<<~SQL, journable_id:, journable_class_name:)
+      sanitize(<<~SQL.squish, journable_id:, journable_class_name:)
         INSERT INTO
           customizable_journals (
             journal_id,
@@ -62,7 +62,7 @@ module Journals
     end
 
     def customizable_changes_sql
-      sanitize(<<~SQL, journable_id:, customized_type: journable_class_name)
+      sanitize(<<~SQL.squish, journable_id:, customized_type: journable_class_name)
         SELECT
           max_journals.journable_id
         FROM

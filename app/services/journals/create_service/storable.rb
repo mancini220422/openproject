@@ -40,7 +40,7 @@ module Journals
     end
 
     def insert_storable_sql
-      sanitize(<<~SQL, journable_id:, journable_class_name:)
+      sanitize(<<~SQL.squish, journable_id:, journable_class_name:)
         INSERT INTO
           storages_file_links_journals (
             journal_id,
@@ -62,7 +62,7 @@ module Journals
     end
 
     def storable_changes_sql
-      sanitize(<<~SQL, journable_id:, container_type: journable_class_name)
+      sanitize(<<~SQL.squish, journable_id:, container_type: journable_class_name)
         SELECT
           max_journals.journable_id
         FROM

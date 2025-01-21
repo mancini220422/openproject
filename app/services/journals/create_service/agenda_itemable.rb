@@ -40,7 +40,7 @@ module Journals
     end
 
     def insert_agenda_itemable_sql
-      sanitize(<<~SQL, journable_id:)
+      sanitize(<<~SQL.squish, journable_id:)
         INSERT INTO
           meeting_agenda_item_journals (
             journal_id,
@@ -75,7 +75,7 @@ module Journals
     end
 
     def agenda_itemable_changes_sql
-      sanitize(<<~SQL, journable_id:)
+      sanitize(<<~SQL.squish, journable_id:)
         SELECT
           max_journals.journable_id
         FROM

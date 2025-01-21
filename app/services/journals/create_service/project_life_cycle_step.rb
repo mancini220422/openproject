@@ -40,7 +40,7 @@ module Journals
     end
 
     def insert_project_life_cycle_step_sql
-      sanitize(<<~SQL, journable_id:)
+      sanitize(<<~SQL.squish, journable_id:)
         INSERT INTO
           project_life_cycle_step_journals (
             journal_id,
@@ -63,7 +63,7 @@ module Journals
     end
 
     def project_life_cycle_step_changes_sql
-      sanitize(<<~SQL, journable_id:)
+      sanitize(<<~SQL.squish, journable_id:)
         SELECT
           max_journals.journable_id
         FROM
