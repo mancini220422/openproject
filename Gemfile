@@ -212,7 +212,6 @@ gem "mini_magick", "~> 5.0.1", require: false
 gem "validate_url"
 
 # Storages support code
-gem "dry-auto_inject"
 gem "dry-container"
 gem "dry-monads"
 gem "dry-validation"
@@ -409,3 +408,4 @@ end
 gem "openproject-octicons", "~>19.20.0 "
 gem "openproject-octicons_helper", "~>19.20.0 "
 gem "openproject-primer_view_components", "~>0.52.1"
+
