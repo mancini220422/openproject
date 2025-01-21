@@ -183,8 +183,10 @@ module Users::Scopes
         # The last quarter is the one smaller than the latest time. But needs to be at least equal to the first quarter.
         last_quarter = [first_quarter, latest_time.change(min: latest_time.min / 15 * 15)].max
 
-        (first_quarter.to_i..last_quarter.to_i)
-          .step(15.minutes)
+        quarters = (first_quarter..last_quarter).step(15.minutes).to_a
+        quarters = quarters.size > 0 ? [first_quarter] : quarters
+
+        quarters
           .map do |time|
           Time.zone.at(time)
         end
