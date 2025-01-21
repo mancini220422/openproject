@@ -59,15 +59,15 @@ export class OpenProject {
   }
 
   public get urlRoot():string {
-    return jQuery('meta[name=app_base_path]').attr('content') || '';
+    return this.getMetaElement('app_base_path')?.content || "";
   }
 
   public get environment():string {
-    return jQuery('meta[name=openproject_initializer]').data('environment');
+    return this.getMetaElement('openproject_initializer')?.dataset.environment || "";
   }
 
   public get edition():string {
-    return jQuery('meta[name=openproject_initializer]').data('edition');
+    return this.getMetaElement('openproject_initializer')?.dataset.edition || "";
   }
 
   public get isStandardEdition():boolean {
@@ -99,6 +99,10 @@ export class OpenProject {
     } catch (e) {
       console.error('Failed to access your browsers local storage. Is your local database corrupted?');
     }
+  }
+
+  private getMetaElement(name: string):HTMLMetaElement | null {
+    return document.querySelector(`meta[name=${name}]`);
   }
 }
 
