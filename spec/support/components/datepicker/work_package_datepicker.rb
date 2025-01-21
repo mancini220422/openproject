@@ -98,9 +98,7 @@ module Components
     end
 
     def set_today(date)
-      page.within("[data-test-selector='datepicker-#{date}-date-field--today']") do
-        find("a", text: "Today").click
-      end
+      page.find_test_selector("op-datepicker-modal--#{date}-date-field--today").click
     end
 
     def save!(text: I18n.t(:button_save))
@@ -137,8 +135,8 @@ module Components
     end
 
     def toggle_scheduling_mode
-      within_test_selector "op-datepicker-modal--scheduling" do
-        find_css('[data-qa-selected]="false"').click
+      page.within_test_selector "op-datepicker-modal--scheduling" do
+        page.find('[data-qa-selected="false"]').click
       end
     end
 

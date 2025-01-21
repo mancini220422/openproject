@@ -138,11 +138,20 @@ module WorkPackages
           .uniq
       end
 
+      def test_selector
+        if scheme == :warning
+          "op-modal-banner-warning"
+        else
+          "op-modal-banner-info"
+        end
+      end
+
       def banner_options
         {
           scheme:,
           full: true,
-          icon: :info
+          icon: :info,
+          test_selector:
         }
       end
     end

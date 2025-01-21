@@ -42,9 +42,9 @@ class DateEditField < EditField
 
   def input_selector
     if property_name == "combinedDate"
-      "input[name=startDate]"
+      "input[name=work_package[start_date]"
     else
-      "input[name=#{property_name}]"
+      "input[name=work_package[#{property_name.underscore}]"
     end
   end
 

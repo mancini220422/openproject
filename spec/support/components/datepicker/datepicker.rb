@@ -39,8 +39,8 @@ module Components
     ##
     # Clear all values
     def clear!
-      set_field(container.find_field("startDate"), "", wait_for_changes_to_be_applied: false)
-      set_field(container.find_field("endDate"), "", wait_for_changes_to_be_applied: false)
+      set_field(container.find_field("work_package[start_date]"), "", wait_for_changes_to_be_applied: false)
+      set_field(container.find_field("work_package[due_date]"), "", wait_for_changes_to_be_applied: false)
     end
 
     def expect_visible
