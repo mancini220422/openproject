@@ -70,6 +70,8 @@ export abstract class DialogPreviewController extends Controller {
       }
     });
 
+    // if the debounce value is changed, the following test helper must be kept
+    // in sync: `spec/support/edit_fields/progress_edit_field.rb`, method `#wait_for_preview_to_complete`
     this.debouncedPreview = debounce((event:Event) => { void this.preview(event); }, 200);
 
     // Turbo supports morphing, by adding the <turbo-frame refresh="morph">
