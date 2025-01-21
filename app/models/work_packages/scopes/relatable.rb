@@ -202,11 +202,11 @@ module WorkPackages::Scopes
         if relation_type == Relation::TYPE_RELATES
           # Bypassing the recursive query in this case as only children and parent needs to be excluded.
           # Using this more complicated statement since
-          # where.not(parent:id: work_package.id)
+          # where.not(parent_id: work_package.id)
           # will lead to
           # "parent_id != 123" which excludes
           # work packages having parent_id NULL.
-          where.not(id: where(id: work_package.parent_id).or(where(parent_id: work_package.id)).select(:id))
+          where.not(id: unscoped.where(id: work_package.parent_id).or(unscoped.where(parent_id: work_package.id)).select(:id))
         else
           sql = <<~SQL.squish
             WITH
