@@ -31,15 +31,6 @@
 module Acts::Journalized
   class JournableDiffer
     class << self
-      def changes(original, changed)
-        original_data = original ? normalize_newlines(journaled_attributes(original)) : {}
-
-        normalize_newlines(journaled_attributes(changed))
-          .to_h { |attribute, new_value| [attribute, [original_data[attribute], new_value]] }
-          .reject { |_, (old_value, new_value)| equal_ignoring_empty_string?(old_value, new_value) }
-          .with_indifferent_access
-      end
-
       def association_changes(original, changed, *)
         get_association_changes(original, changed, *)
       end
@@ -61,28 +52,6 @@ module Acts::Journalized
       end
 
       private
-
-      def normalize_newlines(data)
-        data.transform_values do |value|
-          value.is_a?(String) ? value.gsub("\r\n", "\n") : value
-        end
-      end
-
-      def equal_ignoring_empty_string?(old_value, new_value)
-        ignoring_empty_string(old_value) == ignoring_empty_string(new_value)
-      end
-
-      def ignoring_empty_string(value)
-        value unless value == ""
-      end
-
-      def journaled_attributes(object)
-        if object.is_a?(Journal::BaseJournal)
-          object.journaled_attributes.stringify_keys
-        else
-          object.attributes.slice(*object.class.journal_class.journaled_attributes.map(&:to_s))
-        end
-      end
 
       def get_association_changes(original, changed, association, association_name, key, value)
         original_journals = original&.send(association)&.map(&:attributes) || []

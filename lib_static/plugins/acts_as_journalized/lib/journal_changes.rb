@@ -50,7 +50,7 @@ module JournalChanges
   end
 
   def get_data_changes
-    ::Acts::Journalized::JournableDiffer.changes(predecessor&.data, data)
+    ::Acts::Journalized::Differ::Model.changes(predecessor&.data, data)
   end
 
   def get_attachments_changes

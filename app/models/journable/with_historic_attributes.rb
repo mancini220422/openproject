@@ -236,7 +236,7 @@ class Journable::WithHistoricAttributes < SimpleDelegator
 
     return unless historic_journable
 
-    changes = ::Acts::Journalized::JournableDiffer.changes(__getobj__, historic_journable)
+    changes = ::Acts::Journalized::Differ::Model.changes(__getobj__, historic_journable)
 
     # In the other occurrences of JournableDiffer.association_changes calls, we are using the plural
     # of the association name (`custom_fields` in this instance), to map the association fields. That
