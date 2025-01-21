@@ -62,7 +62,7 @@ module Journals
       SQL
     end
 
-    def project_life_cycle_step_changes_sql
+    def changes_project_life_cycle_step_sql
       sanitize(<<~SQL.squish, journable_id:)
         SELECT
           max_journals.journable_id

@@ -61,7 +61,7 @@ module Journals
       SQL
     end
 
-    def storable_changes_sql
+    def changes_storable_sql
       sanitize(<<~SQL.squish, journable_id:, container_type: journable_class_name)
         SELECT
           max_journals.journable_id

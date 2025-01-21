@@ -74,7 +74,7 @@ module Journals
       SQL
     end
 
-    def agenda_itemable_changes_sql
+    def changes_agenda_itemable_sql
       sanitize(<<~SQL.squish, journable_id:)
         SELECT
           max_journals.journable_id

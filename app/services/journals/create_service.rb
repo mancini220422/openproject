@@ -472,13 +472,13 @@ module Journals
         SELECT
            *
         FROM
-          (#{data_changes_sql}) data_changes
+          (#{changes_data_sql}) data_changes
       SQL
 
       for_supported_associations do |association|
         sql += <<~SQL
           FULL JOIN
-            (#{send(:"#{association}_changes_sql")}) #{association}_changes
+            (#{send(:"changes_#{association}_sql")}) #{association}_changes
           ON
             #{association}_changes.journable_id = data_changes.journable_id
         SQL
@@ -487,7 +487,7 @@ module Journals
       sql
     end
 
-    def data_changes_sql
+    def changes_data_sql
       sanitize(<<~SQL, journable_id:)
         SELECT
           #{journable_table_name}.id journable_id
