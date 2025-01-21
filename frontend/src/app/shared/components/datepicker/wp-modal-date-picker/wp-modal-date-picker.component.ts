@@ -49,6 +49,7 @@ import { PathHelperService } from 'core-app/core/path-helper/path-helper.service
 import { populateInputsFromDataset } from 'core-app/shared/components/dataset-inputs';
 import { fromEvent, Subject } from 'rxjs';
 import { debounceTime, filter } from 'rxjs/operators';
+import * as _ from 'lodash';
 
 @Component({
   selector: 'op-wp-modal-date-picker',
@@ -144,21 +145,18 @@ export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements
     return null;
   }
 
+  private currentDates():Date[] {
+    return _.compact([this.startDate, this.dueDate]);
+  }
+
   private initializeDatepicker() {
     this.datePickerInstance?.destroy();
     const ignoreNonWorkingDaysTemp = this.ignoreNonWorkingDays;
-    const initialDates = [];
-    if (this.startDate) {
-      initialDates.push(this.startDate);
-    }
-    if (this.dueDate && !this.isMilestone) {
-      initialDates.push(this.dueDate);
-    }
 
     this.datePickerInstance = new DatePicker(
       this.injector,
       '#flatpickr-input',
-      initialDates,
+      this.currentDates(),
       {
         mode: this.isMilestone ? 'single' : 'range',
         showMonths: this.deviceService.isMobile ? 1 : 2,
@@ -168,28 +166,7 @@ export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements
 
           this.ensureHoveredSelection(instance.calendarContainer);
         },
-        onChange: (dates:Date[], _datestr, instance) => {
-          this.fieldName = this.getActiveField();
-
-          if (this.isMilestone) {
-            this.startDate = dates[0];
-            this.updateDateField(this.startDate, this.startDateFieldId);
-
-            instance.setDate(this.startDate || '');
-          } else if (this.fieldName === 'due_date') {
-            this.dueDate = dates[0];
-            this.updateDateField(this.dueDate, this.dueDateFieldId);
-            this.fieldName = 'start_date';
-
-            instance.setDate([this.startDate || '', this.dueDate || '']);
-          } else {
-            this.startDate = dates[0];
-            this.updateDateField(this.startDate, this.startDateFieldId);
-            this.fieldName = 'due_date';
-
-            instance.setDate([this.startDate || '', this.dueDate || '']);
-          }
-        },
+        onChange: this.onFlatpickrChange.bind(this),
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         onDayCreate: async (dObj:Date[], dStr:string, fp:flatpickr.Instance, dayElem:DayElement) => {
           onDayCreate(
@@ -203,6 +180,90 @@ export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       this.flatpickrTarget.nativeElement,
     );
+  }
+
+  private onFlatpickrChange(dates:Date[], _datestr:string, instance:flatpickr.Instance) {
+    this.fieldName = this.getActiveField();
+
+    if (this.isMilestone) {
+      this.setStartDate(dates[0]);
+      instance.setDate(dates[0]);
+    } else {
+      const selectedDate:Date = this.lastClickedDate(dates) || dates[0];
+      if (this.fieldName === 'due_date') {
+        this.setDueDate(selectedDate);
+        this.fieldName = 'start_date';
+      } else {
+        this.setStartDate(selectedDate);
+        this.fieldName = 'due_date';
+      }
+      instance.setDate(this.currentDates());
+    }
+  }
+
+  private lastClickedDate(changedDates:Date[]):Date|null {
+    const flatPickrDates = changedDates.map((date) => this.timezoneService.formattedISODate(date));
+    const fieldDates = _.compact([this.startDate, this.dueDate])
+                        .map((date) => this.timezoneService.formattedISODate(date));
+    if (flatPickrDates.length === 1) {
+      return this.toDate(flatPickrDates[0]);
+    }
+    const diff = _.difference(flatPickrDates, fieldDates);
+    return this.toDate(diff[0]);
+  }
+
+  // Sets the start date to the given date.
+  //
+  // If the given date is after the due date, then there are two cases:
+  //   - if only one date is already set, then dates are swapped so that start
+  //     date is before due date.
+  //   - if both dates are already set, then the due date is cleared because it
+  //     can't be before the start date.
+  private setStartDate(date:Date) {
+    if (this.dueDate && date > this.dueDate) {
+      if (this.startDate) {
+        // if both dates are set and the clicked date is after the due date,
+        // then the start date is set to the clicked date the due date is cleared
+        this.startDate = date;
+        this.dueDate = null;
+      } else {
+        // else one of the two dates is not set, so we are smart and swap them
+        this.startDate = this.dueDate;
+        this.dueDate = date;
+      }
+      this.updateDateField(this.dueDate, this.dueDateFieldId);
+    } else {
+      // simply set the start date
+      this.startDate = date;
+    }
+    this.updateDateField(this.startDate, this.startDateFieldId);
+  }
+
+  // Sets the due date to the given date.
+  //
+  // If the given date is before the start date, then there are two cases:
+  //   - if only one date is already set, then dates are swapped so that start
+  //     date is before due date.
+  //   - if both dates are already set, then the start date is cleared because
+  //     it can't be after the due date.
+  private setDueDate(date:Date) {
+    if (this.startDate && this.startDate > date) {
+      if (this.dueDate) {
+        // if both dates are set and the clicked date is before the start date,
+        // then the due date is set to the clicked date the start date is cleared
+        this.startDate = null;
+        this.dueDate = date;
+      } else {
+        // else one of the two dates is not set, so we are smart and swap them
+        this.dueDate = this.startDate;
+        this.startDate = date;
+      }
+      this.updateDateField(this.startDate, this.startDateFieldId);
+    } else {
+      // simply set the due date
+      this.dueDate = date;
+    }
+    this.updateDateField(this.dueDate, this.dueDateFieldId);
   }
 
   private isDayDisabled(dayElement:DayElement):boolean {
@@ -250,10 +311,14 @@ export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements
     }
   }
 
-  private updateDateField(date:Date, fieldId:string | null):void {
+  private updateDateField(date:Date|null, fieldId:string | null):void {
     if (fieldId) {
       const field = document.getElementById(fieldId) as HTMLInputElement;
-      field.value = this.timezoneService.formattedISODate(date);
+      if (date) {
+        field.value = this.timezoneService.formattedISODate(date);
+      } else {
+        field.value = '';
+      }
       field.dispatchEvent(new Event('input'));
     }
   }
