@@ -53,7 +53,7 @@
         end
       end
 
-      if schedulable
+      if show_date_form
         body.with_row(mb: 3, classes: "FormControl-horizontalGroup--sm-vertical") do
           render(WorkPackages::DatePicker::DateForm.new(f,
                                                         work_package:,

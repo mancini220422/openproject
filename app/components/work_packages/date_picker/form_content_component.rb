@@ -34,10 +34,10 @@ module WorkPackages
       include OpPrimer::ComponentHelpers
       include OpTurbo::Streamable
 
-      attr_accessor :form_id, :schedulable, :work_package, :schedule_manually, :focused_field, :touched_field_map
+      attr_accessor :form_id, :show_date_form, :work_package, :schedule_manually, :focused_field, :touched_field_map
 
       def initialize(form_id:,
-                     schedulable:,
+                     show_date_form:,
                      work_package:,
                      schedule_manually: true,
                      focused_field: :start_date,
@@ -45,7 +45,7 @@ module WorkPackages
         super
 
         @form_id = form_id
-        @schedulable = schedulable
+        @show_date_form = show_date_form
         @work_package = work_package
         @schedule_manually = ActiveModel::Type::Boolean.new.cast(schedule_manually)
         @focused_field = parse_focused_field(focused_field)

@@ -5,7 +5,7 @@
                               test_selector: "op-datepicker-modal" },
                       class: "wp-datepicker-dialog--content") do
       component_collection do |collection|
-        if schedulable? && has_relations?
+        if show_banner?
           collection.with_component(WorkPackages::DatePicker::BannerComponent.new(work_package:, manually_scheduled: schedule_manually))
         end
 
@@ -16,7 +16,7 @@
               tab.with_text { I18n.t("work_packages.datepicker_modal.tabs.dates") }
               tab.with_panel  do
                 render(WorkPackages::DatePicker::FormContentComponent.new(form_id: DIALOG_FORM_ID,
-                                                                          schedulable: schedulable?,
+                                                                          show_date_form: content_editable?,
                                                                           work_package:,
                                                                           schedule_manually:,
                                                                           focused_field:,
@@ -64,7 +64,7 @@
                                                               type: :submit,
                                                               form: DIALOG_FORM_ID,
                                                               test_selector: "op-datepicker-modal--action",
-                                                              disabled: !schedulable?)) do
+                                                              disabled: !content_editable?)) do
               I18n.t("button_save")
             end
           end
