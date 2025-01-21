@@ -232,7 +232,9 @@ RSpec.describe "Datepicker modal logic test cases (WP #43539)", :js, with_settin
     end
   end
 
-  describe "when all values set, removing duration through icon (scenario 6a)" do
+  describe "when all values set, removing duration through icon (scenario 6a)",
+           skip: "TODO: the duration field no longer has a 'x' icon to clear the field. " \
+                 "If it's not to be added back, we should remove this test." do
     let(:current_attributes) do
       {
         start_date: Date.parse("2021-02-09"),
