@@ -53,13 +53,14 @@ module WorkPackages
       def initialize(work_package:,
                      schedule_manually:,
                      disabled:,
+                     is_milestone:,
                      focused_field: :start_date,
                      touched_field_map: {})
         super()
 
         @work_package = work_package
         @schedule_manually = schedule_manually
-        @is_milestone = work_package.milestone?
+        @is_milestone = is_milestone
         @focused_field = focused_field
         @touched_field_map = touched_field_map
         @disabled = disabled
@@ -87,7 +88,7 @@ module WorkPackages
           hidden_touched_field(group, name: :schedule_manually)
 
           group.fields_for(:initial) do |builder|
-            WorkPackages::DatePicker::InitialValuesForm.new(builder, work_package:)
+            WorkPackages::DatePicker::InitialValuesForm.new(builder, work_package:, is_milestone: @is_milestone)
           end
         end
       end

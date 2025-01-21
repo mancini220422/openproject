@@ -33,18 +33,22 @@ module WorkPackages
     class InitialValuesForm < ApplicationForm
       attr_reader :work_package
 
-      def initialize(work_package:)
+      def initialize(work_package:, is_milestone:)
         super()
 
         @work_package = work_package
+        @is_milestone = is_milestone
       end
 
       form do |form|
         hidden_initial_field(form, name: :start_date)
-        hidden_initial_field(form, name: :due_date)
-        hidden_initial_field(form, name: :duration)
         hidden_initial_field(form, name: :ignore_non_working_days)
         hidden_initial_field(form, name: :schedule_manually)
+
+        unless @is_milestone
+          hidden_initial_field(form, name: :due_date)
+          hidden_initial_field(form, name: :duration)
+        end
       end
 
       private

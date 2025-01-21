@@ -58,6 +58,7 @@
           render(WorkPackages::DatePicker::DateForm.new(f,
                                                         work_package:,
                                                         schedule_manually:,
+                                                        is_milestone: milestone?,
                                                         focused_field:,
                                                         touched_field_map:,
                                                         disabled: disabled?))
@@ -71,7 +72,7 @@
                                           ignore_non_working_days: work_package.ignore_non_working_days,
                                           schedule_manually:,
                                           is_schedulable: !disabled?,
-                                          is_milestone: work_package.is_milestone?,
+                                          is_milestone: milestone?,
                                           start_date_field_id: "work_package_start_date",
                                           due_date_field_id: "work_package_due_date",
                                           duration_field_id: "work_package_duration"

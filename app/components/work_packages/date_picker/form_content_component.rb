@@ -69,6 +69,13 @@ module WorkPackages
         !schedule_manually
       end
 
+      def milestone?
+        # Either the work package is a milestone OR in the create form, the angular 'date' field was triggered OR
+        # in the WorkPackage create form, the datepicker dialog was already updated via Turbo
+        # in which case the field param is overwritten and we have to check whether there is a due date field
+        @milestone ||= @work_package.milestone? || params[:field] == "date" || params[:work_package][:due_date].nil?
+      end
+
       def disabled_checkbox?
         !schedule_manually && work_package.children.any?
       end
