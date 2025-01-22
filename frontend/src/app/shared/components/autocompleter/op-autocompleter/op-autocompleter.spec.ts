@@ -7,6 +7,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { By } from '@angular/platform-browser';
 import { OpAutocompleterService } from './services/op-autocompleter.service';
 import { OpAutocompleterComponent } from './op-autocompleter.component';
+import { TOpAutocompleterResource } from './typings';
 
 describe('autocompleter', () => {
   let fixture:ComponentFixture<OpAutocompleterComponent>;
