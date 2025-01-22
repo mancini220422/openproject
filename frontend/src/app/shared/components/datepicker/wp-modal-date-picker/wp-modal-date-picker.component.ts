@@ -107,6 +107,7 @@ export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements
     this.initializeDatepickerSubject.next();
 
     document.addEventListener('date-picker:input-changed', this.changeListener.bind(this));
+    document.addEventListener('date-picker:input-focused', this.focusListener.bind(this));
   }
 
   // eslint-disable-next-line @angular-eslint/use-lifecycle-interface
@@ -114,6 +115,7 @@ export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements
     super.ngOnDestroy();
 
     document.removeEventListener('date-picker:input-changed', this.changeListener.bind(this));
+    document.removeEventListener('date-picker:input-focused', this.focusListener.bind(this));
   }
 
   changeListener(event:CustomEvent) {
@@ -138,6 +140,17 @@ export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements
     this.initializeDatepickerSubject.next();
   }
 
+  focusListener(event:CustomEvent) {
+    const details = (event.detail as { field:string });
+
+    if (`work_package[${this.fieldName}]` !== details.field) {
+      // In case a different field is focused, we re-initialize the datepicker to allow for example
+      // * disabling different dates
+      // * switching between single and range mode in certain edge case (see getter for mode below)
+      this.initializeDatepickerSubject.next();
+    }
+  }
+
   private toDate(date:string):Date|null {
     if (date) {
       return new Date(date);
@@ -151,6 +164,7 @@ export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements
 
   private initializeDatepicker() {
     this.datePickerInstance?.destroy();
+    this.fieldName = this.getActiveField();
     const ignoreNonWorkingDaysTemp = this.ignoreNonWorkingDays;
 
     this.datePickerInstance = new DatePicker(
@@ -158,7 +172,7 @@ export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements
       '#flatpickr-input',
       this.currentDates(),
       {
-        mode: this.isMilestone ? 'single' : 'range',
+        mode: this.mode,
         showMonths: this.deviceService.isMobile ? 1 : 2,
         inline: true,
         onReady: (_date, _datestr, instance) => {
@@ -180,6 +194,22 @@ export class OpWpModalDatePickerComponent extends UntilDestroyedMixin implements
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       this.flatpickrTarget.nativeElement,
     );
+  }
+
+  private get mode():'single'|'range' {
+    if (this.isMilestone) {
+      return 'single';
+    }
+
+    // This is a very special case in which only one date is set, and we want to modify exactly that date again.
+    // Then it does not make sense to display a range as we are only changing one date
+    if (this.currentDates().length === 1) {
+      if ((this.startDate !== null && this.fieldName === 'start_date') || (this.dueDate !== null && this.fieldName === 'due_date')) {
+        return 'single';
+      }
+    }
+
+    return 'range';
   }
 
   private onFlatpickrChange(dates:Date[], _datestr:string, instance:flatpickr.Instance) {

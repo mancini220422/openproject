@@ -91,8 +91,16 @@ export default class PreviewController extends DialogPreviewController {
         },
       );
 
-      (newHighlightedField as HTMLElement).classList.add('op-datepicker-modal--date-field_current');
-      (newHighlightedField as HTMLElement).dataset.qaHighlighted = 'true';
+      (newHighlightedField as HTMLInputElement).classList.add('op-datepicker-modal--date-field_current');
+      (newHighlightedField as HTMLInputElement).dataset.qaHighlighted = 'true';
+
+      document.dispatchEvent(
+        new CustomEvent('date-picker:input-focused', {
+          detail: {
+            field: (newHighlightedField as HTMLInputElement).name,
+          },
+        }),
+      );
     }
   }
 
