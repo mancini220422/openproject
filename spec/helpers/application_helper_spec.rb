@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 #-- copyright
 # OpenProject is an open source project management software.
 # Copyright (C) the OpenProject GmbH
@@ -176,8 +178,18 @@ RSpec.describe ApplicationHelper do
       created = "2023-06-02"
       author = build(:user, firstname: "<b>Hello</b>", lastname: "world")
       author.save! validate: false
+
+      esc_name = "&lt;b&gt;Hello&lt;/b&gt; world"
+
+      exp_str = <<-HTML.squish
+        Added by
+        <a title="User #{esc_name}" class="op-hover-card--preview-trigger"
+          data-hover-card-url="/users/#{author.id}/hover_card" href="/users/#{author.id}">#{esc_name}</a>
+        at 2023-06-02
+      HTML
+
       expect(authoring_at(created, author))
-        .to eq("Added by <a href=\"/users/#{author.id}\">&lt;b&gt;Hello&lt;/b&gt; world</a> at 2023-06-02")
+        .to eq(exp_str)
     end
   end
 

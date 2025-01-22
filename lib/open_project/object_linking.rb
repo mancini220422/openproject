@@ -150,7 +150,9 @@ module OpenProject
       if options.delete(:hover_card) { true }
         options[clazz_key] = [options[clazz_key], "op-hover-card--preview-trigger"].compact.join(" ")
         options[:data] ||= {}
-        options[:data][:hover_card_url] = hover_card_user_path(user)
+        # This method is called from components that do not have direct access to the routes, so we make the call to
+        # the path helpers explicit:
+        options[:data][:hover_card_url] = Rails.application.routes.url_helpers.hover_card_user_path(user)
       end
 
       options
