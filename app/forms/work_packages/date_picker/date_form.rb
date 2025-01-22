@@ -106,6 +106,12 @@ module WorkPackages
           validation_message: validation_message(name)
         )
 
+        if name == :duration
+          text_field_options = text_field_options.merge(
+            trailing_visual: { text: { text: I18n.t("datetime.units.day.other") } }
+          )
+        end
+
         group.text_field(**text_field_options)
       end
 
