@@ -61,7 +61,7 @@ module WorkPackages
         @work_package = work_package
         @schedule_manually = schedule_manually
         @is_milestone = is_milestone
-        @focused_field = focused_field
+        @focused_field = update_focused_field
         @touched_field_map = touched_field_map
         @disabled = disabled
       end
@@ -106,7 +106,7 @@ module WorkPackages
           validation_message: validation_message(name)
         )
 
-        if name == :duration
+        if duration_field?(name)
           text_field_options = text_field_options.merge(
             trailing_visual: { text: { text: I18n.t("datetime.units.day.other") } }
           )
@@ -143,6 +143,22 @@ module WorkPackages
 
       def duration_field?(name)
         name == :duration
+      end
+
+      def update_focused_field
+        return @focused_field if @focused_field == :duration
+
+        if @focused_field.nil?
+          @focused_field = :start_date
+        end
+
+        opposite_field = @focused_field == :start_date ? :due_date : :start_date
+
+        if field_value(@focused_field).present? && field_value(opposite_field).nil?
+          opposite_field
+        else
+          @focused_field
+        end
       end
 
       def disabled?(name)
