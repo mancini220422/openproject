@@ -1073,7 +1073,7 @@ GEM
       nokogiri (>= 1.16.8)
     secure_headers (7.1.0)
     securerandom (0.4.1)
-    selenium-devtools (0.131.0)
+    selenium-devtools (0.132.0)
       selenium-webdriver (~> 4.2)
     selenium-webdriver (4.27.0)
       base64 (~> 0.2)
