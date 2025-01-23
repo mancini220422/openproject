@@ -437,7 +437,7 @@ GEM
     coercible (1.0.0)
       descendants_tracker (~> 0.0.1)
     color_conversion (0.1.2)
-    colored2 (4.0.0)
+    colored2 (4.0.3)
     commonmarker (2.0.2.1)
       rb_sys (~> 0.9)
     compare-xml (0.66)
