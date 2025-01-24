@@ -438,7 +438,7 @@ GEM
       descendants_tracker (~> 0.0.1)
     color_conversion (0.1.2)
     colored2 (4.0.0)
-    commonmarker (2.0.2.1)
+    commonmarker (2.0.4)
       rb_sys (~> 0.9)
     compare-xml (0.66)
       nokogiri (~> 1.8)
